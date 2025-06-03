@@ -55,5 +55,5 @@ include_directories(library)
 
 set(CMAKE_XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS "-o linker-signed")
 
-file(GLOB RAY_TRACING_SRC src/*.cpp src/*.hpp)
+file(GLOB_RECURSE RAY_TRACING_SRC src/*.cpp src/*.hpp)
 add_executable(RealTimeRayTracingEngine ${RAY_TRACING_SRC})

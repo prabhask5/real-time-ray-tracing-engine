@@ -14,6 +14,16 @@ cmake -B build/Debug -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/Debug
 ```
 
+Then to run the compiled binary, use the following command, which will write to a .ppm file:
+
+```bash
+# For debug
+build/Debug/RealTimeRayTracingEngine > output/image.ppm
+
+# For release
+build/Release/RealTimeRayTracingEngine > output/image.ppm
+```
+
 ### Development
 
 This project uses custom githooks to format .cpp/.hpp files, to change the folder used to run githook scripts from use the following commands:
