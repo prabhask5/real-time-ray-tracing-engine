@@ -3,11 +3,16 @@
 class Ray;       // From Ray.hpp.
 class Interval;  // From Interval.hpp.
 class HitRecord; // From HitRecord.hpp.
+class AABB;      // From AABB.hpp.
 
 // Defines an object that can be hit by a light ray.
 class Hittable {
 public:
   virtual ~Hittable() = default;
+
+  // Getter functions.
+
+  virtual AABB get_bounding_box() const = 0;
 
   // Action functions.
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../optimization/AABB.hpp"
 #include <Hittable.hpp>
 #include <HittableTypes.hpp>
 #include <vector>
@@ -8,6 +9,12 @@
 class HittableList : public Hittable {
 public:
   HittableList();
+
+  // Getter const methods.
+
+  AABB get_bounding_box() const override;
+
+  std::vector<HittablePtr> &get_objects();
 
   // Action methods.
 
@@ -19,4 +26,5 @@ public:
 
 private:
   std::vector<HittablePtr> m_objects;
+  AABB m_bbox;
 };

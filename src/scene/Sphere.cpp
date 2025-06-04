@@ -7,6 +7,8 @@
 Sphere::Sphere(const Point3 &center, double radius, MaterialPtr material)
     : m_center(center), m_radius(radius), m_material(material) {}
 
+AABB Sphere::get_bounding_box() const { return m_bbox; }
+
 bool Sphere::hit(const Ray &ray, Interval t_values, HitRecord &record) const {
   // Let the ray be: r(t) = origin + t * direction
   // We want to find t such that: [r(t) - center]^2 = radius^2

@@ -8,6 +8,12 @@ public:
 
   Interval(double min, double max) : m_min(min), m_max(max) {}
 
+  // Create the interval tightly enclosing the two input intervals.
+  Interval(const Interval &a, const Interval &b) {
+    m_min = a.min() <= b.min() ? a.min() : b.min();
+    m_max = a.max() >= b.max() ? a.max() : b.max();
+  }
+
   // Getter const methods.
 
   double min() const { return m_min; }
@@ -28,10 +34,21 @@ public:
     return x;
   }
 
+  // Make a new interval that is expanded by the delta value.
+  Interval expand(double delta) const {
+    double padding = delta / 2;
+    return Interval(m_min - padding, m_max + padding);
+  }
+
+  void set_interval(double min, double max) {
+    m_min = min;
+    m_max = max;
+  }
+
 private:
   double m_min;
   double m_max;
 };
 
-static inline const Interval EMPTY = Interval(+INF, -INF);
-static inline const Interval UNIVERSE = Interval(-INF, +INF);
+static inline const Interval EMPTY_INTERVAL = Interval(+INF, -INF);
+static inline const Interval UNIVERSE_INTERVAL = Interval(-INF, +INF);
