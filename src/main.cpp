@@ -1,9 +1,9 @@
 #include "core/HittableList.hpp"
 #include "core/StaticCamera.hpp"
-#include "scene/DielectricMaterial.hpp"
-#include "scene/LambertianMaterial.hpp"
-#include "scene/MetalMaterial.hpp"
-#include "scene/Sphere.hpp"
+#include "scene/materials/DielectricMaterial.hpp"
+#include "scene/materials/LambertianMaterial.hpp"
+#include "scene/materials/MetalMaterial.hpp"
+#include "scene/objects/Sphere.hpp"
 #include <memory>
 
 int main() {
