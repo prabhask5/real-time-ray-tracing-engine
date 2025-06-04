@@ -3,6 +3,7 @@
 class Ray;       // From Ray.hpp.
 class Interval;  // From Interval.hpp.
 class HitRecord; // From HitRecord.hpp.
+class AABB;      // From AABB.hpp.
 
 // Defines an object that can be hit by a light ray.
 class Hittable {
@@ -21,4 +22,6 @@ public:
   // to determine if the ray intersected with the hittable during that time.
   virtual bool hit(const Ray &ray, Interval t_values,
                    HitRecord &record) const = 0;
+
+  virtual bool bounding_box(AABB &output_box) const = 0;
 };

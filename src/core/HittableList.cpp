@@ -1,4 +1,5 @@
 #include "HittableList.hpp"
+#include "AABB.hpp"
 #include "HitRecord.hpp"
 #include <Interval.hpp>
 
@@ -24,4 +25,26 @@ bool HittableList::hit(const Ray &ray, Interval t_values,
   }
 
   return hit_anything;
+}
+
+bool HittableList::bounding_box(AABB &output_box) const {
+  if (m_objects.empty())
+    return false;
+
+  AABB temp_box;
+  bool first_box = true;
+
+  for (const auto &object : m_objects) {
+    if (!object->bounding_box(temp_box))
+      return false;
+    output_box =
+        first_box ? temp_box : AABB::surrounding_box(output_box, temp_box);
+    first_box = false;
+  }
+
+  return true;
+}
+
+const std::vector<HittablePtr> &HittableList::objects() const {
+  return m_objects;
 }

@@ -1,4 +1,5 @@
 #include "Sphere.hpp"
+#include "../core/AABB.hpp"
 #include "../core/HitRecord.hpp"
 #include "../core/Ray.hpp"
 #include <Interval.hpp>
@@ -42,5 +43,11 @@ bool Sphere::hit(const Ray &ray, Interval t_values, HitRecord &record) const {
   record.set_face_normal(ray, outward_normal);
   record.material = m_material;
 
+  return true;
+}
+
+bool Sphere::bounding_box(AABB &output_box) const {
+  output_box = AABB(m_center - Vec3(m_radius, m_radius, m_radius),
+                    m_center + Vec3(m_radius, m_radius, m_radius));
   return true;
 }

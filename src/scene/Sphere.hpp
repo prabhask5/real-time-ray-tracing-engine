@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../core/AABB.hpp"
 #include <Hittable.hpp>
 #include <MaterialTypes.hpp>
 #include <Vec3.hpp>
@@ -11,6 +12,8 @@ public:
   Sphere(const Point3 &center, double radius, MaterialPtr material);
 
   bool hit(const Ray &ray, Interval t_values, HitRecord &record) const override;
+
+  bool bounding_box(AABB &output_box) const override;
 
 private:
   Point3 m_center;

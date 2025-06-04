@@ -1,5 +1,6 @@
 #include "core/HittableList.hpp"
 #include "core/StaticCamera.hpp"
+#include "scene/BVHNode.hpp"
 #include "scene/DielectricMaterial.hpp"
 #include "scene/LambertianMaterial.hpp"
 #include "scene/MetalMaterial.hpp"
@@ -28,6 +29,9 @@ int main() {
       std::make_shared<MetalMaterial>(Color(0.7, 0.6, 0.5), 0.0);
   world.add(std::make_shared<Sphere>(Point3(4, 1, 0), 1.0, material_three));
 
+  // Build BVH for acceleration.
+  BVHNode bvh(world.objects());
+
   // Set up static camera.
 
   StaticCameraConfig cam_config = {.aspect_ratio = 16.0 / 9.0,
@@ -45,5 +49,5 @@ int main() {
 
   StaticCamera cam(cam_config);
 
-  cam.render(world);
+  cam.render(bvh);
 }
