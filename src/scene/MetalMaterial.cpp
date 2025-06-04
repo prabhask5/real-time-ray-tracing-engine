@@ -4,7 +4,7 @@
 #include <Vec3Utility.hpp>
 
 MetalMaterial::MetalMaterial(const Color &albedo, double fuzz)
-    : m_albedo(m_albedo), m_fuzz(fuzz) {}
+    : m_albedo(albedo), m_fuzz(fuzz) {}
 
 bool MetalMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
                             Color &attenuation, Ray &scattered) const {
