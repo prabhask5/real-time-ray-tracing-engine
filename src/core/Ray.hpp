@@ -13,11 +13,17 @@ public:
 
   Ray(const Point3 &origin, const Vec3 &direction);
 
+  Ray(const Point3 &origin, const Vec3 &direction, double time);
+
   // Gets the point we're at when t = 0.
   const Point3 &origin() const;
 
   // Gets the vector that defines the ray's direction.
   const Vec3 &direction() const;
+
+  // Gets the moment in time when the ray exists or is "cast". Crucial for
+  // implementing motion blur and time-varying scenes in ray tracing.
+  const double time() const;
 
   // Solves the parametric equation at the parametric time value t.
   Point3 at(double t) const;
@@ -25,4 +31,5 @@ public:
 private:
   Point3 m_origin;
   Vec3 m_direction;
+  double m_time;
 };

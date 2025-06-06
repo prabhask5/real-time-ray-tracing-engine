@@ -11,6 +11,9 @@ class Sphere : public Hittable {
 public:
   Sphere(const Point3 &center, double radius, MaterialPtr material);
 
+  Sphere(const Point3 &before_center, const Point3 &after_center, double radius,
+         MaterialPtr material);
+
   // Getter const methods.
 
   AABB get_bounding_box() const override;

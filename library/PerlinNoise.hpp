@@ -45,9 +45,9 @@ public:
 
   // Generates turbulant noise, used for visual complexity like smoke or clouds.
   double turb(const Point3 &p, int depth) const {
-    auto accum = 0.0;
-    auto temp_p = p;
-    auto weight = 1.0;
+    double accum = 0.0;
+    Point3 temp_p = p;
+    double weight = 1.0;
 
     for (int i = 0; i < depth; i++) {
       accum += weight * noise(temp_p);
@@ -92,10 +92,10 @@ private:
   // - - Blend all 8 values together
   double perlin_interp(const Vec3 c[2][2][2], double u, double v,
                        double w) const {
-    auto uu = u * u * (3 - 2 * u);
-    auto vv = v * v * (3 - 2 * v);
-    auto ww = w * w * (3 - 2 * w);
-    auto accum = 0.0;
+    double uu = u * u * (3 - 2 * u);
+    double vv = v * v * (3 - 2 * v);
+    double ww = w * w * (3 - 2 * w);
+    double accum = 0.0;
 
     for (int i = 0; i < 2; i++)
       for (int j = 0; j < 2; j++)

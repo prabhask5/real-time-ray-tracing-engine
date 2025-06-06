@@ -28,7 +28,7 @@ bool DielectricMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
   Vec3 direction;
 
   // Use Schlick's approximation for reflectance.
-  auto r0 = (1 - refraction_index) / (1 + refraction_index);
+  double r0 = (1 - refraction_index) / (1 + refraction_index);
   r0 = r0 * r0;
   double reflectance = r0 + (1 - r0) * std::pow((1 - cos_theta), 5);
 

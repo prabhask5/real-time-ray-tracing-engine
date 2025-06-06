@@ -10,15 +10,18 @@ std::vector<HittablePtr> &HittableList::get_objects() { return m_objects; }
 
 void HittableList::clear() { m_objects.clear(); }
 
-void HittableList::add(HittablePtr object) { m_objects.push_back(object); }
+void HittableList::add(HittablePtr object) {
+  m_objects.push_back(object);
+  m_bbox = AABB(m_bbox, object->get_bounding_box());
+}
 
 bool HittableList::hit(const Ray &ray, Interval t_values,
                        HitRecord &record) const {
   HitRecord temp_record;
   bool hit_anything = false;
-  auto closest_so_far = t_values.max();
+  double closest_so_far = t_values.max();
 
-  for (const auto &object : m_objects) {
+  for (const HittablePtr &object : m_objects) {
     if (object->hit(ray, Interval(t_values.min(), closest_so_far),
                     temp_record)) {
       hit_anything = true;

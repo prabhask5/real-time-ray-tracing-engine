@@ -10,21 +10,21 @@ int main() {
   HittableList world;
 
   // Make the ground diffuse.
-  auto ground_material =
+  MaterialPtr ground_material =
       std::make_shared<LambertianMaterial>(Color(0.5, 0.5, 0.5));
   world.add(
       std::make_shared<Sphere>(Point3(0, -1000, 0), 1000, ground_material));
 
   // Add spheres.
 
-  auto material_one = std::make_shared<DielectricMaterial>(1.5);
+  MaterialPtr material_one = std::make_shared<DielectricMaterial>(1.5);
   world.add(std::make_shared<Sphere>(Point3(0, 1, 0), 1.0, material_one));
 
-  auto material_two =
+  MaterialPtr material_two =
       std::make_shared<LambertianMaterial>(Color(0.4, 0.2, 0.1));
   world.add(std::make_shared<Sphere>(Point3(-4, 1, 0), 1.0, material_two));
 
-  auto material_three =
+  MaterialPtr material_three =
       std::make_shared<MetalMaterial>(Color(0.7, 0.6, 0.5), 0.0);
   world.add(std::make_shared<Sphere>(Point3(4, 1, 0), 1.0, material_three));
 
