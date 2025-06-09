@@ -12,7 +12,7 @@ BVHNode::BVHNode(std::vector<HittablePtr> &objects, size_t start, size_t end) {
   // hittable object.
   m_bbox = EMPTY_AABB; // We start empty.
 
-  for (int i = start; i < end; ++i)
+  for (size_t i = start; i < end; ++i)
     m_bbox = AABB(m_bbox, objects[i]->get_bounding_box());
 
   int axis = m_bbox.get_longest_axis();
