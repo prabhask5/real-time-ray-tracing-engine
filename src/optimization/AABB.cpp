@@ -1,5 +1,5 @@
 #include "AABB.hpp"
-#include "Ray.hpp"
+#include "../core/Ray.hpp"
 #include <Vec3.hpp>
 
 AABB::AABB() {}
@@ -30,7 +30,7 @@ const Interval &AABB::x() const { return m_x; }
 
 const Interval &AABB::y() const { return m_y; }
 
-const Interval &AABB::z() const { m_z; }
+const Interval &AABB::z() const { return m_z; }
 
 const Interval &AABB::get_axis_interval(int index) const {
   if (index == 1)
