@@ -2,26 +2,15 @@
 
 ## Get Started
 
-To compile the project, use the following commands:
+To download and build all dependencies, and compile and build the final project, use the provided script:
 
-```bash
-# Configure and build release binaries under `build/Release`
-cmake -B build/Release -DCMAKE_BUILD_TYPE=Release
-cmake --build build/Release
-
-# Configure and build debug binaries under `build/Debug`
-cmake -B build/Debug -DCMAKE_BUILD_TYPE=Debug
-cmake --build build/Debug
-```
+[build.sh](https://github.com/prabhask5/real-time-ray-tracing-engine/blob/main/build.sh)
 
 Then to run the compiled binary, use the following command, which will write to a .ppm file:
 
 ```bash
-# For debug
-build/Debug/RealTimeRayTracingEngine > output/image.ppm
-
 # For release
-build/Release/RealTimeRayTracingEngine > output/image.ppm
+bin/RealTimeRayTracingEngine > output/image.ppm
 ```
 
 ### Development
