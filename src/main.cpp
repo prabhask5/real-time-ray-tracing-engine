@@ -71,7 +71,7 @@ int main() {
 
                              .defocus_angle = 0};
 
-  StaticCamera cam(cam_config);
+  StaticCamera cam(cam_config, "image.ppm");
 
   // Use BVH Nodes for optimization.
   world = HittableList(std::make_shared<BVHNode>(world));

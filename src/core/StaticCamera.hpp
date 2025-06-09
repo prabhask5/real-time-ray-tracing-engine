@@ -3,13 +3,14 @@
 #include "CameraConfig.hpp"
 #include <Vec3.hpp>
 #include <Vec3Types.hpp>
+#include <string>
 
 class Hittable; // From Hittable.hpp.
 class Ray;      // From Ray.hpp.
 
 class StaticCamera {
 public:
-  StaticCamera(const CameraConfig &config);
+  StaticCamera(const CameraConfig &config, std::string output_file_name);
 
   // The main rendering loop:
   // - Calls initialize() to set up internal camera vectors.
@@ -52,6 +53,9 @@ private:
   Vec3 m_defocus_disk_v;
 
   // Camera config metadata.
+
+  // Output image file name.
+  std::string m_output_file;
 
   // Ratio of image width over height.
   double m_aspect_ratio;

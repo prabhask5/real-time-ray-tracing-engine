@@ -8,20 +8,32 @@
 #include <PDF.hpp>
 #include <PDFTypes.hpp>
 #include <Vec3Utility.hpp>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 
-StaticCamera::StaticCamera(const CameraConfig &config)
+StaticCamera::StaticCamera(const CameraConfig &config,
+                           std::string output_file_name)
     : m_aspect_ratio(config.aspect_ratio), m_image_width(config.image_width),
       m_samples_per_pixel(config.samples_per_pixel),
       m_max_depth(config.max_depth), m_vfov(config.vfov),
       m_lookfrom(config.lookfrom), m_lookat(config.lookat), m_vup(config.vup),
-      m_defocus_angle(config.defocus_angle), m_focus_dist(config.focus_dist) {}
+      m_defocus_angle(config.defocus_angle), m_focus_dist(config.focus_dist),
+      m_output_file(output_file_name) {}
 
 void StaticCamera::render(const Hittable &world, const Hittable &lights) {
   initialize();
 
-  // Writes to .ppm file by redirecting.
-  std::cout << "P3\n" << m_image_width << ' ' << m_image_height << "\n255\n";
+  if (!std::filesystem::exists("output"))
+    std::filesystem::create_directories("output");
+
+  std::ofstream image("output/" + m_output_file,
+                      std::ios::out | std::ios::trunc);
+  if (!image) {
+    std::cerr << "Failed to open output/image.ppm for writing." << std::endl;
+    return;
+  }
+  image << "P3\n" << m_image_width << ' ' << m_image_height << "\n255\n";
 
   for (int j = 0; j < m_image_height; j++) {
     std::clog << "\rScanlines remaining: " << (m_image_height - j) << ' '
@@ -45,8 +57,8 @@ void StaticCamera::render(const Hittable &world, const Hittable &lights) {
       }
 
       // Normalizes the summed pixel colors (averages by the number of samples)
-      // and converts to 8-bit [0,255] RGB and writes to standard output.
-      write_color(std::cout, m_pixel_samples_scale * pixel_color);
+      // and converts to 8-bit [0,255] RGB and writes to the .ppm file.
+      write_color(image, m_pixel_samples_scale * pixel_color);
     }
   }
 
