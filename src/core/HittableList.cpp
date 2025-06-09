@@ -32,3 +32,25 @@ bool HittableList::hit(const Ray &ray, Interval t_values,
 
   return hit_anything;
 }
+
+double HittableList::pdf_value(const Point3 &origin,
+                               const Vec3 &direction) const {
+  // For a list of hittable objects, the pdf value biasing should be just the
+  // average of all the pdf value biasing of the inner hittable objects.
+
+  double weight = 1.0 / m_objects.size();
+  double sum = 0.0;
+
+  for (const HittablePtr &object : m_objects)
+    sum += weight * object->pdf_value(origin, direction);
+
+  return sum;
+}
+
+Vec3 HittableList::random(const Point3 &origin) const {
+  // Randomly chooses one object in the list and returns a direction vector
+  // sampled from it.
+
+  int int_size = int(m_objects.size());
+  return m_objects[random_int(0, int_size - 1)]->random(origin);
+}
