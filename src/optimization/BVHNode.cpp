@@ -54,3 +54,22 @@ bool BVHNode::hit(const Ray &ray, Interval t_values, HitRecord &record) const {
 
   return left_hit || right_hit;
 }
+
+double BVHNode::pdf_value(const Point3 &origin, const Vec3 &direction) const {
+  // For a BVH node, the pdf value biasing should be just the average of all the
+  // pdf value biasing of the inner hittable objects. To do this, we can
+  // recursively get the children BVH node pdf values and take the average of
+  // both of those.
+
+  return 0.5 * m_left->pdf_value(origin, direction) +
+         0.5 * m_right->pdf_value(origin, direction);
+}
+
+Vec3 BVHNode::random(const Point3 &origin) const {
+  // Randomly chooses one BVH node child and returns a direction vector
+  // sampled from it, just random() recursively.
+
+  if (random_int(0, 1) == 0)
+    return m_left->random(origin);
+  return m_right->random(origin);
+}
