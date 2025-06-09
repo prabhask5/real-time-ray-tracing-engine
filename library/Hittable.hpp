@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Vec3.hpp"
+#include "Vec3Types.hpp"
+
 class Ray;       // From Ray.hpp.
 class Interval;  // From Interval.hpp.
 class HitRecord; // From HitRecord.hpp.
@@ -26,4 +29,19 @@ public:
   // to determine if the ray intersected with the hittable during that time.
   virtual bool hit(const Ray &ray, Interval t_values,
                    HitRecord &record) const = 0;
+
+  // Returns the probability density function (PDF) value for shooting a ray
+  // from origin in the given direction toward this object. To do smart light
+  // sampling (useful when adding light sources to an environment) we need to
+  // bias how much sampling we take from a particular direction. This PDF value
+  // is used to weight the color contribution from that direction properly.
+  virtual double pdf_value(const Point3 &origin, const Vec3 &direction) const {
+    return 0.0;
+  }
+
+  // Generates a random direction vector from the origin that aims toward the
+  // object, according to the object's own distribution. We let each hittable
+  // object define this to change how random sampling works for each type of
+  // object.
+  virtual Vec3 random(const Point3 &origin) const { return Vec3(1, 0, 0); }
 };
