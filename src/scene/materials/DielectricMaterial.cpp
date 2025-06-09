@@ -1,6 +1,7 @@
 #include "DielectricMaterial.hpp"
-#include "../core/HitRecord.hpp"
-#include "../core/Ray.hpp"
+#include "../../core/HitRecord.hpp"
+#include "../../core/Ray.hpp"
+#include "../../core/ScatterRecord.hpp"
 #include <Vec3.hpp>
 #include <Vec3Utility.hpp>
 
@@ -8,9 +9,14 @@ DielectricMaterial::DielectricMaterial(double refraction_index)
     : m_refraction_index(refraction_index) {}
 
 bool DielectricMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
-                                 Color &attenuation, Ray &scattered) const {
+                                 ScatterRecord &scatter_record) const {
   // No absorption or color change — fully transmits light.
-  attenuation = Color(1.0, 1.0, 1.0);
+  scatter_record.attenuation = Color(1.0, 1.0, 1.0);
+
+  // Set the skip pdf ray to represent a mirror reflection instead of diffuse
+  // scattering.
+  scatter_record.pdf_ptr = nullptr;
+  scatter_record.skip_pdf = true;
 
   // If hitting the front face -> divide (air -> glass).
   // If hitting from inside -> use material index (glass -> air).
@@ -39,7 +45,7 @@ bool DielectricMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
     direction = refract(unit_direction, record.normal, refraction_index);
 
   // Set the new scattered ray.
-  scattered = Ray(record.point, direction);
+  scatter_record.skip_pdf_ray = Ray(record.point, direction);
 
   return true;
 }

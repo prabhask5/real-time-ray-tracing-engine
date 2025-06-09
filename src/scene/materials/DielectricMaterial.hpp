@@ -8,8 +8,8 @@ class DielectricMaterial : public Material {
 public:
   DielectricMaterial(double refraction_index);
 
-  bool scatter(const Ray &hit_ray, const HitRecord &record, Color &attenuation,
-               Ray &scattered) const override;
+  bool scatter(const Ray &hit_ray, const HitRecord &record,
+               ScatterRecord &scatter_record) const override;
 
 public:
   // Refractive index in vacuum or air, or the ratio of the material's
