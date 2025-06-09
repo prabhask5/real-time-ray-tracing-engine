@@ -57,6 +57,7 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 include_directories(library)
+include_directories(${CMAKE_INSTALL_PREFIX}/include)
 
 set(CMAKE_XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS "-o linker-signed")
 
@@ -65,7 +66,8 @@ add_executable(RealTimeRayTracingEngine ${RAY_TRACING_SRC})
 
 # Find dependencies.
 find_package(SDL3 REQUIRED)
+find_package(SDL3_ttf REQUIRED)
 
-target_link_libraries(RealTimeRayTracingEngine PUBLIC SDL3::SDL3)
+target_link_libraries(RealTimeRayTracingEngine PUBLIC SDL3::SDL3 SDL3_ttf::SDL3_ttf)
 
 install(TARGETS RealTimeRayTracingEngine RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/bin)
