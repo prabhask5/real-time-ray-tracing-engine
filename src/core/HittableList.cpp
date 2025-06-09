@@ -4,6 +4,8 @@
 
 HittableList::HittableList() {}
 
+HittableList::HittableList(HittablePtr object) { add(object); };
+
 AABB HittableList::get_bounding_box() const { return m_bbox; }
 
 std::vector<HittablePtr> &HittableList::get_objects() { return m_objects; }

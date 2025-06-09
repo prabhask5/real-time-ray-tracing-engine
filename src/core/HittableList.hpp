@@ -10,6 +10,8 @@ class HittableList : public Hittable {
 public:
   HittableList();
 
+  HittableList(HittablePtr object);
+
   // Getter const methods.
 
   AABB get_bounding_box() const override;
