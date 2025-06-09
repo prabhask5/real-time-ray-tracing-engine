@@ -16,7 +16,7 @@ public:
   // pixel in the scene, and output it either to a file or a dynamic window.
   virtual void render(const Hittable &world, const Hittable &lights) = 0;
 
-private:
+protected:
   // Internal metadata.
 
   // Rendered image height.
@@ -81,7 +81,6 @@ private:
   // Distance from camera lookfrom point to plane of perfect focus.
   double m_focus_dist = 10;
 
-protected:
   // Calculates all internal fields used to construct rays.
   void initialize();
 
