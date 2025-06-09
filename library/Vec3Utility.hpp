@@ -85,3 +85,18 @@ inline Vec3 refract(const Vec3 &ray, const Vec3 &normal,
       -std::sqrt(std::fabs(1.0 - r_out_perp.length_squared())) * normal;
   return r_out_perp + r_out_parallel;
 }
+
+// Generates a random unit vector that is biased toward the +z direction,
+// following a cosine-weighted distribution, commonly used in physically-based
+// rendering (PBR) to simulate diffuse reflection.
+inline Vec3 random_cosine_direction() {
+  double r1 = random_double();
+  double r2 = random_double();
+
+  double phi = 2 * PI * r1;
+  double x = std::cos(phi) * std::sqrt(r2);
+  double y = std::sin(phi) * std::sqrt(r2);
+  double z = std::sqrt(1 - r2);
+
+  return Vec3(x, y, z);
+}
