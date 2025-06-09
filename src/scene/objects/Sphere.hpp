@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../optimization/AABB.hpp"
+#include "../../core/Ray.hpp"
+#include "../../optimization/AABB.hpp"
 #include <Hittable.hpp>
 #include <MaterialTypes.hpp>
 #include <Vec3.hpp>
@@ -22,8 +23,12 @@ public:
 
   bool hit(const Ray &ray, Interval t_values, HitRecord &record) const override;
 
+  double pdf_value(const Point3 &origin, const Vec3 &direction) const override;
+
+  Vec3 random(const Point3 &origin) const override;
+
 private:
-  Point3 m_center;
+  Ray m_center;
   double m_radius;
   MaterialPtr m_material;
   AABB m_bbox;
