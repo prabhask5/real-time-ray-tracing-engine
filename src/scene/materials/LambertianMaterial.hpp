@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Material.hpp>
+#include <TextureTypes.hpp>
 #include <Vec3.hpp>
 #include <Vec3Types.hpp>
 
@@ -10,10 +11,14 @@ class LambertianMaterial : public Material {
 public:
   LambertianMaterial(const Color &albedo);
 
-  bool scatter(const Ray &hit_ray, const HitRecord &record, Color &attenuation,
-               Ray &scattered) const override;
+  LambertianMaterial(TexturePtr texture);
+
+  bool scatter(const Ray &hit_ray, const HitRecord &record,
+               ScatterRecord &scatter_record) const override;
+
+  double scattering_pdf(const Ray &hit_ray, const HitRecord &record,
+                        const Ray &scattered) const override;
 
 private:
-  // Defines the base color for the material.
-  Color m_albedo;
+  TexturePtr m_texture;
 };
