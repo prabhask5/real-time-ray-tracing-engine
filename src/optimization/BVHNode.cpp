@@ -1,7 +1,8 @@
 #include "BVHNode.hpp"
+#include "../core/HitRecord.hpp"
 #include "../core/HittableList.hpp"
 #include "AABBUtility.hpp"
-#include <HitRecord.hpp>
+#include <algorithm>
 
 BVHNode::BVHNode(HittableList list)
     : BVHNode(list.get_objects(), 0, list.get_objects().size()) {}

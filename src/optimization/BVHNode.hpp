@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AABB.hpp"
 #include <Hittable.hpp>
 #include <HittableTypes.hpp>
 #include <vector>
