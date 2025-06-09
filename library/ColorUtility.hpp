@@ -17,7 +17,7 @@ inline double linear_to_gamma(double linear_component) {
 
 // Applies gamma correction, Converts float RGB values ([0, 1]) to byte range
 // ([0, 255]), Writes them to a file/stream (like .ppm format).
-void write_color(std::ostream &out, const Color &pixel_color) {
+inline void write_color(std::ostream &out, const Color &pixel_color) {
   double r = pixel_color.x();
   double g = pixel_color.y();
   double b = pixel_color.z();

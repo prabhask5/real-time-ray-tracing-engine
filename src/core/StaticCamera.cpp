@@ -10,7 +10,7 @@
 #include <Vec3Utility.hpp>
 #include <iostream>
 
-StaticCamera::StaticCamera(const StaticCameraConfig &config)
+StaticCamera::StaticCamera(const CameraConfig &config)
     : m_aspect_ratio(config.aspect_ratio), m_image_width(config.image_width),
       m_samples_per_pixel(config.samples_per_pixel),
       m_max_depth(config.max_depth), m_vfov(config.vfov),

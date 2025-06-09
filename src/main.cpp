@@ -58,18 +58,18 @@ int main() {
 
   // Set up static camera.
 
-  StaticCameraConfig cam_config = {.aspect_ratio = 1.0,
-                                   .image_width = 600,
-                                   .samples_per_pixel = 100,
-                                   .max_depth = 50,
-                                   .background = Color(0, 0, 0),
+  CameraConfig cam_config = {.aspect_ratio = 1.0,
+                             .image_width = 600,
+                             .samples_per_pixel = 100,
+                             .max_depth = 50,
+                             .background = Color(0, 0, 0),
 
-                                   .vfov = 40,
-                                   .lookfrom = Point3(278, 278, -800),
-                                   .lookat = Point3(278, 278, 0),
-                                   .vup = Vec3(0, 1, 0),
+                             .vfov = 40,
+                             .lookfrom = Point3(278, 278, -800),
+                             .lookat = Point3(278, 278, 0),
+                             .vup = Vec3(0, 1, 0),
 
-                                   .defocus_angle = 0};
+                             .defocus_angle = 0};
 
   StaticCamera cam(cam_config);
 
