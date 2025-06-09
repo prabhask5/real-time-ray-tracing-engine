@@ -9,8 +9,8 @@ class MetalMaterial : public Material {
 public:
   MetalMaterial(const Color &albedo, double fuzz);
 
-  bool scatter(const Ray &hit_ray, const HitRecord &record, Color &attenuation,
-               Ray &scattered) const override;
+  bool scatter(const Ray &hit_ray, const HitRecord &record,
+               ScatterRecord &scatter_record) const override;
 
 private:
   // Defines the base color for the material.
