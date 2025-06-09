@@ -11,6 +11,7 @@ struct StaticCameraConfig {
   int image_width = 100;
   int samples_per_pixel = 10;
   int max_depth = 10;
+  Color background;
 
   double vfov = 90;
   Point3 lookfrom = Point3(0, 0, 0);
@@ -33,7 +34,7 @@ public:
   // - - Shoots samples_per_pixel rays with slight jitter.
   // - - Averages their returned colors.
   // - - Writes the result using write_color(...).
-  void render(const Hittable &world);
+  void render(const Hittable &world, const Hittable &lights);
 
 private:
   // Internal metadata.
@@ -79,6 +80,9 @@ private:
   // Maximum number of ray bounces into scene.
   int m_max_depth = 10;
 
+  // Scene background color.
+  Color m_background;
+
   // Vertical view angle (field of view).
   double m_vfov = 90;
 
@@ -101,8 +105,14 @@ private:
   void initialize();
 
   // Construct a camera ray originating from the defocus disk and directed at a
-  // randomly sampled point around the pixel location i, j.
-  Ray get_ray(int i, int j) const;
+  // randomly sampled point around the pixel location i, j for stratified sample
+  // square s_i, s_j.
+  Ray get_ray(int i, int j, int s_i, int s_j) const;
+
+  // Returns the vector to a random point in the square sub-pixel specified by
+  // grid indices s_i and s_j, for an idealized unit square pixel [-.5,-.5] to
+  // [+.5,+.5].
+  Vec3 sample_square_stratified(int s_i, int s_j) const;
 
   // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit
   // square.
@@ -121,5 +131,6 @@ private:
   // - - Multiplies by attenuation and continues recursion.
   // - If it hits nothing:
   // - - Returns a gradient sky color.
-  Color ray_color(const Ray &r, int depth, const Hittable &world) const;
+  Color ray_color(const Ray &ray, int depth, const Hittable &world,
+                  const Hittable &lights) const;
 };

@@ -1,9 +1,12 @@
 #include "StaticCamera.hpp"
 #include "HitRecord.hpp"
-#include "Material.hpp"
 #include "Ray.hpp"
+#include "ScatterRecord.hpp"
 #include <ColorUtility.hpp>
 #include <Hittable.hpp>
+#include <Material.hpp>
+#include <PDF.hpp>
+#include <PDFTypes.hpp>
 #include <Vec3Utility.hpp>
 #include <iostream>
 
@@ -14,7 +17,7 @@ StaticCamera::StaticCamera(const StaticCameraConfig &config)
       m_lookfrom(config.lookfrom), m_lookat(config.lookat), m_vup(config.vup),
       m_defocus_angle(config.defocus_angle), m_focus_dist(config.focus_dist) {}
 
-void StaticCamera::render(const Hittable &world) {
+void StaticCamera::render(const Hittable &world, const Hittable &lights) {
   initialize();
 
   // Writes to .ppm file by redirecting.
@@ -26,16 +29,19 @@ void StaticCamera::render(const Hittable &world) {
     for (int i = 0; i < m_image_width; i++) {
       Color pixel_color(0, 0, 0);
 
-      // Shoots samples_per_pixel rays per pixel.
-      for (int sample = 0; sample < m_samples_per_pixel; sample++) {
-        // Beams a ray from the defocus disk at the camera's position to where
-        // near the pixel to simulate the light scattering. Slightly jitters
-        // each ray inside the pixel, helps with anti-aliasing.
-        Ray ray = get_ray(i, j);
+      // Shoots m_samples_per_pixel rays per pixel in a stratified grid pattern.
+      int sqrt_spp = int(std::sqrt(m_samples_per_pixel));
+      for (int s_j = 0; s_j < sqrt_spp; s_j++) {
+        for (int s_i = 0; s_i < sqrt_spp; s_i++) {
+          // Shoots a ray through a random subpixel region, stratified by s_i
+          // and s_j. This simulates camera defocus (depth of field) and
+          // performs anti-aliasing by jittering the ray within the pixel grid.
+          Ray ray = get_ray(i, j, s_i, s_j);
 
-        // Accumulates the color returned from each ray using recursive ray
-        // tracing.
-        pixel_color += ray_color(ray, m_max_depth, world);
+          // Traces the ray and accumulates the color contribution from this
+          // sample.
+          pixel_color += ray_color(ray, m_max_depth, world, lights);
+        }
       }
 
       // Normalizes the summed pixel colors (averages by the number of samples)
@@ -91,12 +97,13 @@ void StaticCamera::initialize() {
   m_defocus_disk_v = m_v * defocus_radius;
 }
 
-Ray StaticCamera::get_ray(int i, int j) const {
-  // Here we are getting a random vector within the pixel square, this makes
-  // sure each ray goes through a different point in the pixel, prevents
-  // aliasing. If this was not included, every ray would go through the center
-  // of the pixel.
-  Vec3 offset = sample_square();
+Ray StaticCamera::get_ray(int i, int j, int s_i, int s_j) const {
+  // Computes a jittered offset within the pixel grid cell defined by (s_i,
+  // s_j). This random offset ensures that each ray passes through a different
+  // point inside its subpixel, enabling stratified sampling and reducing
+  // aliasing artifacts. Without this, all rays would pass through the exact
+  // center of their subpixels.
+  Vec3 offset = sample_square_stratified(s_i, s_j);
 
   // This calculates the 3D world-space point that corresponds to pixel (i, j),
   // with subpixel jitter.
@@ -112,8 +119,20 @@ Ray StaticCamera::get_ray(int i, int j) const {
   // pixel sample and the ray origin.
   Vec3 ray_direction = pixel_sample - ray_origin;
 
+  double ray_time = random_double();
+
   // Returns the resulting ray from the origin and direction.
-  return Ray(ray_origin, ray_direction);
+  return Ray(ray_origin, ray_direction, ray_time);
+}
+
+Vec3 StaticCamera::sample_square_stratified(int s_i, int s_j) const {
+  int sqrt_spp = int(std::sqrt(m_samples_per_pixel));
+  double recip_sqrt_spp = 1.0 / sqrt_spp;
+
+  double px = ((s_i + random_double()) * recip_sqrt_spp) - 0.5;
+  double py = ((s_j + random_double()) * recip_sqrt_spp) - 0.5;
+
+  return Vec3(px, py, 0);
 }
 
 Vec3 StaticCamera::sample_square() const {
@@ -130,8 +149,8 @@ Point3 StaticCamera::defocus_disk_sample() const {
          (point[1] * m_defocus_disk_v);
 }
 
-Color StaticCamera::ray_color(const Ray &r, int depth,
-                              const Hittable &world) const {
+Color StaticCamera::ray_color(const Ray &ray, int depth, const Hittable &world,
+                              const Hittable &lights) const {
   // Base case: if we've exceeded the ray bounce limit, no more light is
   // gathered.
   if (depth <= 0)
@@ -139,30 +158,66 @@ Color StaticCamera::ray_color(const Ray &r, int depth,
 
   HitRecord record;
 
+  // If the ray hits nothing, return the background color.
+  if (!world.hit(ray, Interval(0.001, INF), record))
+    return m_background;
+
   // If the ray hits a hittable objct, we store the hit record and calculate the
-  // scattering basec on the material.
-  if (world.hit(r, Interval(0.001, INF), record)) {
-    Ray scattered;
-    Color attenuation;
+  // scattering based on the material.
+  ScatterRecord scatter_record;
+  Color emitted_color =
+      record.material->emitted(ray, record, record.u, record.v, record.point);
 
-    // ONLY in the case that the material does not absorb the ray (scatter ret
-    // is true), we proceed with increased depth.
-    if (record.material->scatter(r, record, attenuation, scattered))
-      return attenuation * ray_color(scattered, depth - 1, world);
+  // If the material does not scatter, we just return the material's emitted
+  // color for that point.
+  if (!record.material->scatter(ray, record, scatter_record))
+    return emitted_color;
 
-    // If the material absorbs the ray, no more light is gathered.
-    return Color(0, 0, 0);
-  }
+  // If the material scatters the ray in a specific direction without using a
+  // PDF, follow that ray recursively and scale the result by the attenuation.
+  // This ONLY happens when the material chooses to bypass the PDF sampling
+  // logic.
+  if (scatter_record.skip_pdf)
+    return scatter_record.attenuation *
+           ray_color(scatter_record.skip_pdf_ray, depth - 1, world, lights);
 
-  // Generates a simple sky gradient for rays that miss all objects in the scene
-  // — it's the background color of the scene.
-  Vec3 unit_direction = unit_vector(r.direction());
-  double a =
-      0.5 *
-      (unit_direction.y() +
-       1.0); // Determines the gradient between blue and white to show the sky.
-  return (1.0 - a) * Color(1.0, 1.0, 1.0) +
-         a * Color(0.5, 0.7,
-                   1.0); // We can see this very clearly here, the first color
-                         // is white, and the second is blue.
+  // Create a PDF that samples directions toward the light sources from the hit
+  // point. This helps concentrate rays toward bright areas for better rendering
+  // efficiency.
+  PDFPtr light_ptr = std::make_shared<HittablePDF>(lights, record.point);
+
+  // Combine two PDFs: one from the material's scattering function and one
+  // toward the lights. This is a mixture of importance sampling strategies to
+  // improve convergence.
+  MixturePDF p(light_ptr, scatter_record.pdf_ptr);
+
+  // Generate a new scattered ray based on the mixture PDF.
+  // This ray originates from the hit point and is aimed in a sampled direction.
+  Ray scattered = Ray(record.point, p.generate(), ray.time());
+
+  // Compute the probability density function (PDF) value of the sampled
+  // direction. This is used to correctly scale the Monte Carlo estimate.
+  double pdf_value = p.value(scattered.direction());
+
+  // Ask the material what its theoretical scattering PDF is for this
+  // interaction. This is needed for physically-based importance sampling.
+  double scattering_pdf =
+      record.material->scattering_pdf(ray, record, scattered);
+
+  // Recursively trace the scattered ray to get the color that arrives along it.
+  // This captures indirect lighting and multiple bounces.
+  Color sample_color = ray_color(scattered, depth - 1, world, lights);
+
+  // Scale the returned color by:
+  /// - `attenuation`: how much the material reduces the ray's energy.
+  /// - `scattering_pdf`: how likely the material is to scatter in that
+  /// direction.
+  /// - `1 / pdf_value`: normalizes the estimate based on how likely we were to
+  /// choose this ray.
+  Color scattered_color =
+      (scatter_record.attenuation * scattering_pdf * sample_color) / pdf_value;
+
+  // Add any emitted light from the surface (like glowing surfaces) to the
+  // scattered result.
+  return emitted_color + scattered_color;
 }
