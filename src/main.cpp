@@ -1,5 +1,6 @@
 #include "core/HittableList.hpp"
 #include "core/StaticCamera.hpp"
+#include "optimization/BVHNode.hpp"
 #include "scene/materials/DielectricMaterial.hpp"
 #include "scene/materials/DiffuseLightMaterial.hpp"
 #include "scene/materials/LambertianMaterial.hpp"
@@ -71,6 +72,10 @@ int main() {
                                    .defocus_angle = 0};
 
   StaticCamera cam(cam_config);
+
+  // Use BVH Nodes for optimization.
+  world = HittableList(std::make_shared<BVHNode>(world));
+  lights = HittableList(std::make_shared<BVHNode>(lights));
 
   cam.render(world, lights);
 }
