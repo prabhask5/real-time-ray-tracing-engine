@@ -1,5 +1,5 @@
 #include "core/HittableList.hpp"
-#include "core/StaticCamera.hpp"
+#include "core/camera/StaticCamera.hpp"
 #include "optimization/BVHNode.hpp"
 #include "scene/materials/DielectricMaterial.hpp"
 #include "scene/materials/DiffuseLightMaterial.hpp"

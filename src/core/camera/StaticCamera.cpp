@@ -1,5 +1,5 @@
 #include "StaticCamera.hpp"
-#include "Ray.hpp"
+#include "../Ray.hpp"
 #include <ColorUtility.hpp>
 #include <Vec3Utility.hpp>
 #include <filesystem>

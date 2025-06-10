@@ -1,6 +1,6 @@
 #include "Camera.hpp"
-#include "HitRecord.hpp"
-#include "ScatterRecord.hpp"
+#include "../HitRecord.hpp"
+#include "../ScatterRecord.hpp"
 #include <ColorUtility.hpp>
 #include <Material.hpp>
 #include <PDF.hpp>
