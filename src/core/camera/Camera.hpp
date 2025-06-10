@@ -12,6 +12,8 @@ class Camera {
 public:
   Camera(const CameraConfig &config);
 
+  virtual ~Camera();
+
   // The main rendering loop. This class is overridden by the specific camera
   // implementation, but uses ray tracing to find the simulated color of each
   // pixel in the scene, and output it either to a file or a dynamic window.

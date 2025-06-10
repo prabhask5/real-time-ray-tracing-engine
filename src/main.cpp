@@ -1,5 +1,6 @@
 #include "core/camera/DynamicCamera.hpp"
 #include "core/camera/StaticCamera.hpp"
+#include "input/CLI.hpp"
 #include "scene/materials/DielectricMaterial.hpp"
 #include "scene/materials/DiffuseLightMaterial.hpp"
 #include "scene/materials/LambertianMaterial.hpp"
@@ -12,7 +13,15 @@
 #include <Hittable.hpp>
 #include <memory>
 
-int main() {
+int main(int argc, char **argv) {
+  CLIOptions options = parse_cli(argc, argv);
+  if (options.help) {
+    print_help();
+    return 0;
+  } else if (options.any_errors) {
+    return 0;
+  }
+
   HittableList world;
 
   auto red = std::make_shared<LambertianMaterial>(Color(.65, .05, .05));
@@ -57,9 +66,9 @@ int main() {
 
   CameraConfig cam_config = {
       .aspect_ratio = 1.0,
-      .image_width = 600,
-      .samples_per_pixel = 100,
-      .max_depth = 50,
+      .image_width = options.width,
+      .samples_per_pixel = options.samples,
+      .max_depth = options.depth,
       .background = Color(0, 0, 0),
 
       .vfov = 40,
@@ -68,15 +77,17 @@ int main() {
       .vup = Vec3(0, 1, 0),
 
       .defocus_angle = 0,
-      .use_parallelism = true,
-      .use_bvh = true,
+      .use_parallelism = options.use_parallelism,
+      .use_bvh = options.use_bvh,
   };
 
-  // Set up static camera.
-  StaticCamera cam(cam_config, "image.ppm");
-
-  // // Set up dynamic camera.
-  // DynamicCamera cam(cam_config);
-
-  cam.render(world, lights);
+  if (options.use_static) {
+    // Set up static camera.
+    StaticCamera cam(cam_config, options.static_output_file);
+    cam.render(world, lights);
+  } else {
+    // Set up dynamic camera.
+    DynamicCamera cam(cam_config);
+    cam.render(world, lights);
+  }
 }

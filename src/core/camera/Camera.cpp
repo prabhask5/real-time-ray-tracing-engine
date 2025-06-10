@@ -13,6 +13,8 @@ Camera::Camera(const CameraConfig &config)
       m_defocus_angle(config.defocus_angle), m_focus_dist(config.focus_dist),
       m_use_parallelism(config.use_parallelism), m_use_bvh(config.use_bvh) {}
 
+Camera::~Camera() {}
+
 void Camera::initialize() {
   m_image_height = int(m_image_width / m_aspect_ratio);
   m_image_height = (m_image_height < 1) ? 1 : m_image_height;
