@@ -4,8 +4,9 @@
 #include <Vec3.hpp>
 #include <Vec3Types.hpp>
 
-class Hittable; // From Hittable.hpp.
-class Ray;      // From Ray.hpp.
+class Hittable;     // From Hittable.hpp.
+class HittableList; // From HittableList.hpp.
+class Ray;          // From Ray.hpp.
 
 class Camera {
 public:
@@ -14,7 +15,7 @@ public:
   // The main rendering loop. This class is overridden by the specific camera
   // implementation, but uses ray tracing to find the simulated color of each
   // pixel in the scene, and output it either to a file or a dynamic window.
-  virtual void render(const Hittable &world, const Hittable &lights) = 0;
+  virtual void render(HittableList &world, HittableList &lights) = 0;
 
 protected:
   // Internal metadata.
@@ -83,6 +84,9 @@ protected:
 
   // Control whether the render() function uses parallelism or not.
   bool m_use_parallelism = false;
+
+  // Control whether the world and lights are BVH nodes for input or not.
+  bool m_use_bvh = false;
 
 protected:
   // Calculates all internal fields used to construct rays.

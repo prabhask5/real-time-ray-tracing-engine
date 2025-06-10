@@ -19,4 +19,5 @@ struct CameraConfig {
   double focus_dist = 10;
 
   bool use_parallelism = false;
+  bool use_bvh = false;
 };
