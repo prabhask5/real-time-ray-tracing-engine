@@ -75,26 +75,26 @@ void DynamicCamera::render(const Hittable &world, const Hittable &lights) {
     int end_x = std::min(start_x + tile_size, m_image_width);
     int end_y = std::min(start_y + tile_size, m_image_height);
 
+    // Compute stratified sample index for this frame.
+    int sqrt_spp = int(std::sqrt(m_samples_per_pixel));
+    int total_strata = sqrt_spp * sqrt_spp;
+    int sample_index = m_frame % total_strata;
+
+    int s_i = sample_index % sqrt_spp;
+    int s_j = sample_index / sqrt_spp;
+
     // Ray trace the current tile, accumulate color per pixel.
     for (int j = start_y; j < end_y; ++j) {
       for (int i = start_x; i < end_x; ++i) {
-        // Shoots m_samples_per_pixel rays per pixel in a stratified grid
-        // pattern.
-        int sqrt_spp = int(std::sqrt(m_samples_per_pixel));
-        for (int s_j = 0; s_j < sqrt_spp; s_j++) {
-          for (int s_i = 0; s_i < sqrt_spp; s_i++) {
-            // Shoots a ray through a random subpixel region, stratified by s_i
-            // and s_j. This simulates camera defocus (depth of field) and
-            // performs anti-aliasing by jittering the ray within the pixel
-            // grid.
-            Ray ray = get_ray(i, j, s_i, s_j);
+        // Shoots a ray through a random subpixel region, stratified by s_i
+        // and s_j. This simulates camera defocus (depth of field) and
+        // performs anti-aliasing by jittering the ray within the pixel
+        // grid.
+        Ray ray = get_ray(i, j, s_i, s_j);
 
-            Color sample = ray_color(ray, m_max_depth, world,
-                                     lights); // Trace ray through the scene.
-            m_accumulation[j * m_image_width + i] +=
-                sample; // Accumulate sample.
-          }
-        }
+        Color sample = ray_color(ray, m_max_depth, world,
+                                 lights); // Trace ray through the scene.
+        m_accumulation[j * m_image_width + i] += sample; // Accumulate sample.
       }
     }
 
