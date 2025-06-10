@@ -26,6 +26,12 @@ public:
   void render(const Hittable &world, const Hittable &lights) override;
 
 private:
+  // Constants.
+
+  static const int MIN_TILE_SIZE = 16;
+  static const int DEFAULT_TILE_SIZE = 32;
+  static const int MAX_TILE_SIZE = 64;
+
   // Internal metadata for the dynamic camera.
 
   // Temporarily accumulates the running average of pixel colors over multiple
@@ -39,9 +45,13 @@ private:
   // converting it to [0–255] range.
   std::vector<unsigned char> m_pixels;
 
-  // Counts how many frames have been rendered since the last reset.
-  // Used to calculate the running average of color in m_accumulation.
-  // Reset to 0 if camera moves or scene changes.
+  // Counts how many samples of the pixel have already been taken for
+  // progressive rendering. We stop sampling once we've converged onto the num
+  // samples per pixel value. Used to calculate the running average of color in
+  // m_accumulation. Reset to 0 if camera moves or scene changes.
+  int m_samples_taken;
+
+  // Counts how many frames have been rendered, used to calculate FPS.
   int m_frame;
 
   // Stores the last time (in ticks) when the FPS counter was updated.
@@ -53,6 +63,11 @@ private:
   // Stores the current frames per second as a float.
   // Rendered on screen.
   double m_fps;
+
+  // Tile size to progressively render. We will dynamically change this value
+  // depending on FPS value currently. If FPS is high -> double to 64. If FPS is
+  // low -> halve to 16.
+  int m_tile_size;
 
   // SDL Objects.
 
@@ -82,5 +97,5 @@ private:
   void update_texture();
 
   // Directly draws the value in m_fps to the SDL window.
-  void draw_fps();
+  void draw_fps(bool converged);
 };

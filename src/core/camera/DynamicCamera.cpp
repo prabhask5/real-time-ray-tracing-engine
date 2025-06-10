@@ -5,8 +5,8 @@
 
 DynamicCamera::DynamicCamera(const CameraConfig &config)
     : Camera(config), m_window(nullptr), m_renderer(nullptr),
-      m_texture(nullptr), m_font(nullptr), m_frame(0), m_last_fps_time(0),
-      m_fps(0.0) {}
+      m_texture(nullptr), m_font(nullptr), m_frame(0), m_samples_taken(0),
+      m_last_fps_time(0), m_fps(0.0), m_tile_size(DEFAULT_TILE_SIZE) {}
 
 DynamicCamera::~DynamicCamera() {
   if (m_texture)
@@ -54,13 +54,10 @@ void DynamicCamera::render(const Hittable &world, const Hittable &lights) {
   // Allocate memory for color accumulation and pixel buffer (RGB8 per pixel).
   m_accumulation.assign(m_image_width * m_image_height, Color(0, 0, 0));
   m_pixels.assign(m_image_width * m_image_height * 3, 0);
-  m_frame = 0;
   m_last_fps_time = SDL_GetTicks(); // For measuring FPS.
 
   bool running = true;
   int tile = 0;
-  int tile_size =
-      32; // Number of pixels per tile (used for progressive rendering).
 
   while (running) {
     handle_events(
@@ -68,40 +65,45 @@ void DynamicCamera::render(const Hittable &world, const Hittable &lights) {
     if (!running)
       break;
 
-    // Compute tile bounds for partial image updates.
-    int tiles_x = (m_image_width + tile_size - 1) / tile_size;
-    int start_x = (tile % tiles_x) * tile_size;
-    int start_y = (tile / tiles_x) * tile_size;
-    int end_x = std::min(start_x + tile_size, m_image_width);
-    int end_y = std::min(start_y + tile_size, m_image_height);
-
-    // Compute stratified sample index for this frame.
+    // Stop sampling after convergence.
     int sqrt_spp = int(std::sqrt(m_samples_per_pixel));
     int total_strata = sqrt_spp * sqrt_spp;
-    int sample_index = m_frame % total_strata;
+    bool converged = (m_samples_taken >= total_strata);
 
-    int s_i = sample_index % sqrt_spp;
-    int s_j = sample_index / sqrt_spp;
+    // Compute tile bounds for partial image updates.
+    int tiles_x = (m_image_width + m_tile_size - 1) / m_tile_size;
+    int start_x = (tile % tiles_x) * m_tile_size;
+    int start_y = (tile / tiles_x) * m_tile_size;
+    int end_x = std::min(start_x + m_tile_size, m_image_width);
+    int end_y = std::min(start_y + m_tile_size, m_image_height);
 
-    // Ray trace the current tile, accumulate color per pixel.
-    for (int j = start_y; j < end_y; ++j) {
-      for (int i = start_x; i < end_x; ++i) {
-        // Shoots a ray through a random subpixel region, stratified by s_i
-        // and s_j. This simulates camera defocus (depth of field) and
-        // performs anti-aliasing by jittering the ray within the pixel
-        // grid.
-        Ray ray = get_ray(i, j, s_i, s_j);
+    if (!converged) {
+      // Compute stratified sample index for this frame.
+      int s_i = m_samples_taken % sqrt_spp;
+      int s_j = m_samples_taken / sqrt_spp;
 
-        Color sample = ray_color(ray, m_max_depth, world,
-                                 lights); // Trace ray through the scene.
-        m_accumulation[j * m_image_width + i] += sample; // Accumulate sample.
+      // Ray trace the current tile, accumulate color per pixel.
+      for (int j = start_y; j < end_y; ++j) {
+        for (int i = start_x; i < end_x; ++i) {
+          // Shoots a ray through a random subpixel region, stratified by s_i
+          // and s_j. This simulates camera defocus (depth of field) and
+          // performs anti-aliasing by jittering the ray within the pixel
+          // grid.
+          Ray ray = get_ray(i, j, s_i, s_j);
+
+          Color sample = ray_color(ray, m_max_depth, world,
+                                   lights); // Trace ray through the scene.
+          m_accumulation[j * m_image_width + i] += sample; // Accumulate sample.
+        }
       }
     }
 
     // Move to next tile. If finished a full frame, increment frame counter.
     tile++;
-    if (tile >= tiles_x * ((m_image_height + tile_size - 1) / tile_size)) {
+    if (tile >= tiles_x * ((m_image_height + m_tile_size - 1) / m_tile_size)) {
       tile = 0;
+      if (!converged)
+        m_samples_taken++;
       m_frame++;
     }
 
@@ -110,16 +112,23 @@ void DynamicCamera::render(const Hittable &world, const Hittable &lights) {
 
     // Update FPS counter every second.
     Uint64 now = SDL_GetTicks();
-    if (now - m_last_fps_time >= 1000) {
-      m_fps = 1000.0 * m_frame / (now - m_last_fps_time); // Frames per second.
+    Uint64 elapsed = now - m_last_fps_time;
+    if (elapsed >= 1000) {
+      m_fps = 1000.0 * m_frame / elapsed; // Frames per second.
       m_frame = 0;
       m_last_fps_time = now;
+
+      // Adjust tile size dynamically based on FPS.
+      if (!converged && m_fps > 30.0 && m_tile_size < MAX_TILE_SIZE)
+        m_tile_size = std::min(m_tile_size * 2, MAX_TILE_SIZE);
+      else if (!converged && m_fps < 15.0 && m_tile_size > MIN_TILE_SIZE)
+        m_tile_size = std::max(m_tile_size / 2, MIN_TILE_SIZE);
     }
 
     // Render to screen: clear, draw current image, draw FPS overlay.
     SDL_RenderClear(m_renderer);
     SDL_RenderTexture(m_renderer, m_texture, nullptr, nullptr);
-    draw_fps();                    // Renders the FPS text in top right corner.
+    draw_fps(converged);           // Renders the FPS text in top right corner.
     SDL_RenderPresent(m_renderer); // Swap back buffer to screen.
   }
 }
@@ -194,7 +203,8 @@ void DynamicCamera::handle_events(bool &running) {
   if (moved) {
     std::fill(m_accumulation.begin(), m_accumulation.end(),
               Color(0, 0, 0)); // Clear accumulated colors.
-    m_frame = 0;               // Reset frame count.
+    m_samples_taken =
+        0;        // Reset number of samples taken to restart ray tracing.
     initialize(); // Recalculate camera basis vectors and parameters.
   }
 }
@@ -204,9 +214,9 @@ void DynamicCamera::update_texture() {
   int total = m_image_width * m_image_height;
 
   // Compute a scale factor to average accumulated color samples over multiple
-  // frames and across all samples per pixel. Prevent division by zero by
-  // clamping the frame count to at least 1.
-  double scale = m_pixel_samples_scale / std::max(1, m_frame);
+  // frames. Prevent division by zero by
+  // clamping the samples taken count to at least 1.
+  double scale = 1.0 / std::max(1, m_samples_taken);
 
   // Loop through every pixel in the image.
   for (int i = 0; i < total; ++i) {
@@ -227,17 +237,20 @@ void DynamicCamera::update_texture() {
   SDL_UpdateTexture(m_texture, nullptr, m_pixels.data(), m_image_width * 3);
 }
 
-void DynamicCamera::draw_fps() {
+void DynamicCamera::draw_fps(bool converged) {
   // Early return if the font wasn't successfully loaded.
   if (!m_font)
     return;
 
-  // Format the FPS value into a string buffer.
-  char buffer[32];
-  std::snprintf(buffer, sizeof(buffer), "%0.1f fps", m_fps);
+  // Compose the label: FPS + (optional) convergence marker.
+  char buffer[64];
+  if (converged)
+    std::snprintf(buffer, sizeof(buffer), "%0.1f fps  ✓ Converged", m_fps);
+  else
+    std::snprintf(buffer, sizeof(buffer), "%0.1f fps", m_fps);
 
   // Define a white color to render the text in.
-  SDL_Color white{256, 256, 256, 256};
+  SDL_Color white{255, 255, 255, 255};
 
   // Create a surface containing the rendered text using anti-aliased blended
   // mode. This creates a temporary software surface.

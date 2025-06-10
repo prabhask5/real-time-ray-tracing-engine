@@ -17,4 +17,6 @@ struct CameraConfig {
 
   double defocus_angle = 0;
   double focus_dist = 10;
+
+  bool use_parallelism = false;
 };

@@ -81,6 +81,9 @@ protected:
   // Distance from camera lookfrom point to plane of perfect focus.
   double m_focus_dist = 10;
 
+  // Control whether the render() function uses parallelism or not.
+  bool m_use_parallelism = false;
+
 protected:
   // Calculates all internal fields used to construct rays.
   void initialize();

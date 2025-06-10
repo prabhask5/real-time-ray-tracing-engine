@@ -10,7 +10,8 @@ Camera::Camera(const CameraConfig &config)
       m_samples_per_pixel(config.samples_per_pixel),
       m_max_depth(config.max_depth), m_vfov(config.vfov),
       m_lookfrom(config.lookfrom), m_lookat(config.lookat), m_vup(config.vup),
-      m_defocus_angle(config.defocus_angle), m_focus_dist(config.focus_dist) {}
+      m_defocus_angle(config.defocus_angle), m_focus_dist(config.focus_dist),
+      m_use_parallelism(config.use_parallelism) {}
 
 void Camera::initialize() {
   m_image_height = int(m_image_width / m_aspect_ratio);
