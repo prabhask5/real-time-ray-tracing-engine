@@ -6,9 +6,6 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <vector>
 
-class Hittable; // From Hittable.hpp.
-class Ray;      // From Ray.hpp.
-
 class DynamicCamera : public Camera {
 public:
   DynamicCamera(const CameraConfig &config);
@@ -23,7 +20,7 @@ public:
   // - Supports interactive movement (WASD) and sample count adjustment (+/-).
   // - Tracks and displays frames-per-second (FPS) using an on-screen overlay.
   // - Continues until the user closes the window or presses ESC.
-  void render(const Hittable &world, const Hittable &lights) override;
+  void render(HittableList &world, HittableList &lights) override;
 
 private:
   // Constants.

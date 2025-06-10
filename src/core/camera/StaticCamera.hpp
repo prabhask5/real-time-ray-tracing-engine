@@ -4,9 +4,6 @@
 #include "CameraConfig.hpp"
 #include <string>
 
-class Hittable; // From Hittable.hpp.
-class Ray;      // From Ray.hpp.
-
 class StaticCamera : public Camera {
 public:
   StaticCamera(const CameraConfig &config, std::string output_file_name);
@@ -19,7 +16,7 @@ public:
   // - - Shoots samples_per_pixel rays with slight jitter.
   // - - Averages their returned colors.
   // - - Writes the result using write_color(...).
-  void render(const Hittable &world, const Hittable &lights) override;
+  void render(HittableList &world, HittableList &lights) override;
 
 private:
   // Camera config metadata.
