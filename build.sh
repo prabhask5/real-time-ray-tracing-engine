@@ -1,6 +1,7 @@
 #!/bin/bash
 
 exec &>logs/log.txt
+set -e
 set -x 
 
 RTRT_SOURCE_DIR=`pwd`
