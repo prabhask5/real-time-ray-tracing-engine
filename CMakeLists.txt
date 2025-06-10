@@ -70,4 +70,4 @@ find_package(SDL3_ttf REQUIRED)
 
 target_link_libraries(RealTimeRayTracingEngine PUBLIC SDL3::SDL3 SDL3_ttf::SDL3_ttf)
 
-install(TARGETS RealTimeRayTracingEngine RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/bin)
+install(TARGETS RealTimeRayTracingEngine RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/bin RENAME raytracer)
