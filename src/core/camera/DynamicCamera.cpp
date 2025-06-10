@@ -237,12 +237,12 @@ void DynamicCamera::draw_fps() {
   std::snprintf(buffer, sizeof(buffer), "%0.1f fps", m_fps);
 
   // Define a white color to render the text in.
-  SDL_Color black{0, 0, 0, 0};
+  SDL_Color white{256, 256, 256, 256};
 
   // Create a surface containing the rendered text using anti-aliased blended
   // mode. This creates a temporary software surface.
   SDL_Surface *surface =
-      TTF_RenderText_Blended(m_font, buffer, strlen(buffer), black);
+      TTF_RenderText_Blended(m_font, buffer, strlen(buffer), white);
   if (!surface)
     return;
 
