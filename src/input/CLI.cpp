@@ -105,10 +105,10 @@ void print_help() {
                "(default: 600)\n";
   std::cout << "  --samples <int>            Number of samples per pixel for "
                "ray tracing- higher number reduces fuzz, but increases "
-               "rendering time (default: 10)\n";
+               "rendering time (default: 100)\n";
   std::cout << "  --depth <int>              Number of recursive light bounces "
                "to track- higher number makes ray tracing better, but "
-               "increases rendering time (default: 10)\n";
+               "increases rendering time (default: 50)\n";
   std::cout << "\nExamples:\n";
   std::cout
       << "  raytracer --camera static --output render.ppm --parallel --bvh\n";

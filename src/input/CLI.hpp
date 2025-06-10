@@ -9,8 +9,8 @@ struct CLIOptions {
   bool use_parallelism = false;
   bool use_bvh = false;
   int width = 600;
-  int samples = 10;
-  int depth = 10;
+  int samples = 100;
+  int depth = 50;
   bool any_errors = false;
 };
 
