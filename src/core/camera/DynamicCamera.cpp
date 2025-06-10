@@ -204,8 +204,9 @@ void DynamicCamera::update_texture() {
   int total = m_image_width * m_image_height;
 
   // Compute a scale factor to average accumulated color samples over multiple
-  // frames. Prevent division by zero by clamping m_frame to at least 1.
-  double scale = 1.0 / std::max(1, m_frame);
+  // frames and across all samples per pixel. Prevent division by zero by
+  // clamping the frame count to at least 1.
+  double scale = m_pixel_samples_scale / std::max(1, m_frame);
 
   // Loop through every pixel in the image.
   for (int i = 0; i < total; ++i) {

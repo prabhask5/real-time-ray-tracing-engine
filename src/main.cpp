@@ -1,4 +1,5 @@
 #include "core/HittableList.hpp"
+#include "core/camera/DynamicCamera.hpp"
 #include "core/camera/StaticCamera.hpp"
 #include "optimization/BVHNode.hpp"
 #include "scene/materials/DielectricMaterial.hpp"
@@ -56,8 +57,6 @@ int main() {
   lights.add(
       std::make_shared<Sphere>(Point3(190, 90, 190), 90, empty_material));
 
-  // Set up static camera.
-
   CameraConfig cam_config = {.aspect_ratio = 1.0,
                              .image_width = 600,
                              .samples_per_pixel = 100,
@@ -71,7 +70,11 @@ int main() {
 
                              .defocus_angle = 0};
 
+  // Set up static camera.
   StaticCamera cam(cam_config, "image.ppm");
+
+  // // Set up dynamic camera.
+  // DynamicCamera cam(cam_config);
 
   // Use BVH Nodes for optimization.
   world = HittableList(std::make_shared<BVHNode>(world));
