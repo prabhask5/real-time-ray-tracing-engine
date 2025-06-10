@@ -40,9 +40,6 @@ double HittableList::pdf_value(const Point3 &origin,
   // For a list of hittable objects, the pdf value biasing should be just the
   // average of all the pdf value biasing of the inner hittable objects.
 
-  if (m_objects.empty())
-    return 0.0;
-
   double weight = 1.0 / m_objects.size();
   double sum = 0.0;
 
@@ -55,9 +52,6 @@ double HittableList::pdf_value(const Point3 &origin,
 Vec3 HittableList::random(const Point3 &origin) const {
   // Randomly chooses one object in the list and returns a direction vector
   // sampled from it.
-
-  if (m_objects.empty())
-    return Vec3(1, 0, 0);
 
   int int_size = int(m_objects.size());
   return m_objects[random_int(0, int_size - 1)]->random(origin);
