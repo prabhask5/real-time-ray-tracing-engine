@@ -21,12 +21,18 @@ public:
 
   // Submit a job to be executed by the pool. This call blocks until a
   // worker thread is available to take the job.
-  void submit_job(std::function<void()> &&job) {
+  void submit_job(std::function<void()> job) {
     std::unique_lock<std::mutex> lock(m_mutex);
+    if (m_stop)
+      return;
+
     m_job_finished.wait(lock, [this]() {
-      return m_jobs.size() + m_running_jobs < m_thread_count;
+      return m_stop || m_jobs.size() + m_running_jobs < m_thread_count;
     });
-    m_jobs.emplace(std::forward<std::function<void()>>(job));
+    if (m_stop)
+      return;
+
+    m_jobs.emplace(std::move(job));
     lock.unlock();
     m_job_available.notify_one();
   }
