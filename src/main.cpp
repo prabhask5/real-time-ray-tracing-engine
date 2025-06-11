@@ -141,6 +141,7 @@ int main(int argc, char **argv) {
       .max_depth = options.depth,
       .use_parallelism = options.use_parallelism,
       .use_bvh = options.use_bvh,
+      .use_gpu = options.use_gpu,
   };
 
   populate_cornell_box_scene(world, lights, cam_config);

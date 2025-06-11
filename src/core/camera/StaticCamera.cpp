@@ -14,6 +14,13 @@ StaticCamera::StaticCamera(const CameraConfig &config,
     : Camera(config), m_output_file(output_file_name) {}
 
 void StaticCamera::render(HittableList &world, HittableList &lights) {
+  if (m_use_gpu)
+    render_gpu(world, lights);
+  else
+    render_cpu(world, lights);
+}
+
+void StaticCamera::render_cpu(HittableList &world, HittableList &lights) {
   initialize();
 
   if (m_use_bvh) {
@@ -109,4 +116,11 @@ void StaticCamera::render(HittableList &world, HittableList &lights) {
   }
 
   std::clog << "\rDone.                 \n";
+}
+
+void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
+  // TODO: Implement CUDA-based rendering path.
+  // This skeleton is provided for future GPU acceleration.
+  // For now, fall back to CPU rendering.
+  render_cpu(world, lights);
 }

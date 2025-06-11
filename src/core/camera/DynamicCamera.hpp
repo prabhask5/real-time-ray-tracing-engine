@@ -23,6 +23,10 @@ public:
   void render(HittableList &world, HittableList &lights) override;
 
 private:
+  void render_cpu(HittableList &world, HittableList &lights);
+  void render_gpu(HittableList &world, HittableList &lights);
+
+private:
   // Constants.
 
   static const int MIN_TILE_SIZE = 16;

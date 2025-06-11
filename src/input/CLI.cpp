@@ -37,6 +37,8 @@ CLIOptions parse_cli(int argc, char **argv) {
       opts.use_parallelism = true;
     } else if (arg == "-b" || arg == "--bvh") {
       opts.use_bvh = true;
+    } else if (arg == "-g" || arg == "--gpu") {
+      opts.use_gpu = true;
     } else if (arg == "--width") {
       if (i + 1 < argc) {
         try {
@@ -101,6 +103,7 @@ void print_help() {
   std::cout << "  -p, --parallel             Enable multithreaded rendering\n";
   std::cout << "  -b, --bvh                  Use bounding volume hierarchy for "
                "scene acceleration\n";
+  std::cout << "  -g, --gpu                  Render using CUDA GPU kernels\n";
   std::cout << "  --width <int>              Image width for scene render "
                "(default: 600)\n";
   std::cout << "  --samples <int>            Number of samples per pixel for "
@@ -113,4 +116,5 @@ void print_help() {
   std::cout
       << "  raytracer --camera static --output render.ppm --parallel --bvh\n";
   std::cout << "  raytracer --camera dynamic --parallel\n";
+  std::cout << "  raytracer --camera static -g --parallel\n";
 }

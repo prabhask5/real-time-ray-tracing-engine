@@ -12,6 +12,7 @@ struct CLIOptions {
   int samples = 100;
   int depth = 50;
   bool any_errors = false;
+  bool use_gpu = false;
 };
 
 CLIOptions parse_cli(int argc, char **argv);

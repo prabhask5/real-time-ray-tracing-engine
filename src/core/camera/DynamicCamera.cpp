@@ -25,6 +25,13 @@ DynamicCamera::~DynamicCamera() {
 }
 
 void DynamicCamera::render(HittableList &world, HittableList &lights) {
+  if (m_use_gpu)
+    render_gpu(world, lights);
+  else
+    render_cpu(world, lights);
+}
+
+void DynamicCamera::render_cpu(HittableList &world, HittableList &lights) {
   initialize(); // Set up the camera basis vectors, viewplane, etc.
 
   if (m_use_bvh) {
@@ -325,4 +332,11 @@ void DynamicCamera::draw_fps(bool converged) {
   SDL_RenderTexture(m_renderer, text, nullptr, &dst);
 
   SDL_DestroyTexture(text); // Free the texture to avoid memory leaks.
+}
+
+void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
+  // TODO: Implement CUDA-based rendering path.
+  // This skeleton is provided for future GPU acceleration.
+  // For now, fall back to CPU rendering.
+  render_cpu(world, lights);
 }

@@ -20,4 +20,5 @@ struct CameraConfig {
 
   bool use_parallelism = false;
   bool use_bvh = false;
+  bool use_gpu = false;
 };

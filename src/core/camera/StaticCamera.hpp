@@ -19,6 +19,10 @@ public:
   void render(HittableList &world, HittableList &lights) override;
 
 private:
+  void render_cpu(HittableList &world, HittableList &lights);
+  void render_gpu(HittableList &world, HittableList &lights);
+
+private:
   // Camera config metadata.
 
   // Output image file name.

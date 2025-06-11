@@ -90,6 +90,9 @@ protected:
   // Control whether the world and lights are BVH nodes for input or not.
   bool m_use_bvh = false;
 
+  // Control whether to render using CUDA on the GPU.
+  bool m_use_gpu = false;
+
 protected:
   // Calculates all internal fields used to construct rays.
   void initialize();

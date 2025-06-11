@@ -13,7 +13,8 @@ Camera::Camera(const CameraConfig &config)
       m_vfov(config.vfov), m_lookfrom(config.lookfrom), m_lookat(config.lookat),
       m_vup(config.vup), m_defocus_angle(config.defocus_angle),
       m_focus_dist(config.focus_dist),
-      m_use_parallelism(config.use_parallelism), m_use_bvh(config.use_bvh) {}
+      m_use_parallelism(config.use_parallelism), m_use_bvh(config.use_bvh),
+      m_use_gpu(config.use_gpu) {}
 
 Camera::~Camera() {}
 
