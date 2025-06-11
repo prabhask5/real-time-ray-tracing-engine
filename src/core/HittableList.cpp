@@ -10,6 +10,10 @@ AABB HittableList::get_bounding_box() const { return m_bbox; }
 
 std::vector<HittablePtr> &HittableList::get_objects() { return m_objects; }
 
+const std::vector<HittablePtr> &HittableList::get_objects() const {
+  return m_objects;
+}
+
 void HittableList::clear() { m_objects.clear(); }
 
 void HittableList::add(HittablePtr object) {

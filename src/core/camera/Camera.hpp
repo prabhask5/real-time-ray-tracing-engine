@@ -121,6 +121,6 @@ protected:
   // - - Multiplies by attenuation and continues recursion.
   // - If it hits nothing:
   // - - Returns a gradient sky color.
-  Color ray_color(const Ray &ray, int depth, const Hittable &world,
-                  const Hittable &lights) const;
+  Color ray_color(const Ray &ray, int depth, const HittableList &world,
+                  const HittableList &lights) const;
 };

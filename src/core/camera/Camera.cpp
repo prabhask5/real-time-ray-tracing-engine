@@ -1,5 +1,6 @@
 #include "Camera.hpp"
 #include "../HitRecord.hpp"
+#include "../HittableList.hpp"
 #include "../ScatterRecord.hpp"
 #include <ColorUtility.hpp>
 #include <Material.hpp>
@@ -8,9 +9,10 @@
 Camera::Camera(const CameraConfig &config)
     : m_aspect_ratio(config.aspect_ratio), m_image_width(config.image_width),
       m_samples_per_pixel(config.samples_per_pixel),
-      m_max_depth(config.max_depth), m_vfov(config.vfov),
-      m_lookfrom(config.lookfrom), m_lookat(config.lookat), m_vup(config.vup),
-      m_defocus_angle(config.defocus_angle), m_focus_dist(config.focus_dist),
+      m_max_depth(config.max_depth), m_background(config.background),
+      m_vfov(config.vfov), m_lookfrom(config.lookfrom), m_lookat(config.lookat),
+      m_vup(config.vup), m_defocus_angle(config.defocus_angle),
+      m_focus_dist(config.focus_dist),
       m_use_parallelism(config.use_parallelism), m_use_bvh(config.use_bvh) {}
 
 Camera::~Camera() {}
@@ -111,8 +113,8 @@ Point3 Camera::defocus_disk_sample() const {
          (point[1] * m_defocus_disk_v);
 }
 
-Color Camera::ray_color(const Ray &ray, int depth, const Hittable &world,
-                        const Hittable &lights) const {
+Color Camera::ray_color(const Ray &ray, int depth, const HittableList &world,
+                        const HittableList &lights) const {
   // Base case: if we've exceeded the ray bounce limit, no more light is
   // gathered.
   if (depth <= 0)
@@ -146,7 +148,13 @@ Color Camera::ray_color(const Ray &ray, int depth, const Hittable &world,
   // Create a PDF that samples directions toward the light sources from the hit
   // point. This helps concentrate rays toward bright areas for better rendering
   // efficiency.
-  PDFPtr light_ptr = std::make_shared<HittablePDF>(lights, record.point);
+  // NOTE: In the case that the lights hittable list object is empty (there's no
+  // lights), we cannot use scattering from light sources, so we skip.
+  PDFPtr light_ptr;
+  if (lights.get_objects().empty())
+    light_ptr = scatter_record.pdf_ptr;
+  else
+    light_ptr = std::make_shared<HittablePDF>(lights, record.point);
 
   // Combine two PDFs: one from the material's scattering function and one
   // toward the lights. This is a mixture of importance sampling strategies to

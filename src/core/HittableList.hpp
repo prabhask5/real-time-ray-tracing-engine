@@ -18,6 +18,8 @@ public:
 
   std::vector<HittablePtr> &get_objects();
 
+  const std::vector<HittablePtr> &get_objects() const;
+
   // Action methods.
 
   void clear();
