@@ -28,8 +28,10 @@ void DynamicCamera::render(HittableList &world, HittableList &lights) {
   initialize(); // Set up the camera basis vectors, viewplane, etc.
 
   if (m_use_bvh) {
-    world = HittableList(std::make_shared<BVHNode>(world));
-    lights = HittableList(std::make_shared<BVHNode>(lights));
+    if (!world.get_objects().empty())
+      world = HittableList(std::make_shared<BVHNode>(world));
+    if (!lights.get_objects().empty())
+      lights = HittableList(std::make_shared<BVHNode>(lights));
   }
 
   // Initialize SDL subsystems.

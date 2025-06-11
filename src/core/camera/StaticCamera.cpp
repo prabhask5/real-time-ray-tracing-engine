@@ -17,8 +17,10 @@ void StaticCamera::render(HittableList &world, HittableList &lights) {
   initialize();
 
   if (m_use_bvh) {
-    world = HittableList(std::make_shared<BVHNode>(world));
-    lights = HittableList(std::make_shared<BVHNode>(lights));
+    if (!world.get_objects().empty())
+      world = HittableList(std::make_shared<BVHNode>(world));
+    if (!lights.get_objects().empty())
+      lights = HittableList(std::make_shared<BVHNode>(lights));
   }
 
   if (!std::filesystem::exists("output"))
