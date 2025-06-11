@@ -69,7 +69,10 @@ void DynamicCamera::render(HittableList &world, HittableList &lights) {
   ThreadPool pool(std::thread::hardware_concurrency());
 
   bool running = true;
-  int tile = 0;
+  int sqrt_spp = int(std::sqrt(m_samples_per_pixel));
+  int total_strata = sqrt_spp * sqrt_spp;
+  int num_tiles_x = (m_image_width + m_tile_size - 1) / m_tile_size;
+  int num_tiles_y = (m_image_height + m_tile_size - 1) / m_tile_size;
 
   while (running) {
     handle_events(
@@ -78,75 +81,72 @@ void DynamicCamera::render(HittableList &world, HittableList &lights) {
       break;
 
     // Stop sampling after convergence.
-    int sqrt_spp = int(std::sqrt(m_samples_per_pixel));
-    int total_strata = sqrt_spp * sqrt_spp;
     bool converged = (m_samples_taken >= total_strata);
 
-    // Compute tile bounds for partial image updates.
-    int tiles_x = (m_image_width + m_tile_size - 1) / m_tile_size;
-    int start_x = (tile % tiles_x) * m_tile_size;
-    int start_y = (tile / tiles_x) * m_tile_size;
-    int end_x = std::min(start_x + m_tile_size, m_image_width);
-    int end_y = std::min(start_y + m_tile_size, m_image_height);
-
     if (!converged) {
-      // Compute stratified sample index for this frame.
-      int s_i = m_samples_taken % sqrt_spp;
-      int s_j = m_samples_taken / sqrt_spp;
+      for (int tile = 0; tile < (num_tiles_x * num_tiles_y); ++tile) {
+        // Compute tile bounds for partial image updates.
+        int tile_r = tile / num_tiles_x;
+        int tile_c = tile % num_tiles_x;
+        int start_r = tile_r * m_tile_size;
+        int start_c = tile_c * m_tile_size;
+        int end_r = std::min(start_r + m_tile_size, m_image_height);
+        int end_c = std::min(start_c + m_tile_size, m_image_width);
 
-      if (m_use_parallelism) {
-        pool.start();
+        // Compute stratified sample index for this frame.
+        int s_i = m_samples_taken % sqrt_spp;
+        int s_j = m_samples_taken / sqrt_spp;
 
-        // Ray trace the current tile, accumulate color per pixel.
-        for (int j = start_y; j < end_y; ++j) {
-          pool.submit_job(
-              [this, &world, &lights, start_x, end_x, j, s_i, s_j]() {
-                for (int i = start_x; i < end_x; ++i) {
-                  // Shoots a ray through a random subpixel region, stratified
-                  // by s_i
-                  // and s_j. This simulates camera defocus (depth of field) and
-                  // performs anti-aliasing by jittering the ray within the
-                  // pixel grid.
-                  Ray ray = get_ray(i, j, s_i, s_j);
+        if (m_use_parallelism) {
+          pool.start();
 
-                  // Trace ray through the scene.
-                  Color sample = ray_color(ray, m_max_depth, world, lights);
+          // Ray trace the current tile, accumulate color per pixel.
+          for (int j = start_r; j < end_r; ++j) {
+            pool.submit_job([this, &world, &lights, tile_r, tile_c, start_c,
+                             end_c, j, s_i, s_j]() {
+              for (int i = start_c; i < end_c; ++i) {
+                // Shoots a ray through a random subpixel region, stratified
+                // by s_i
+                // and s_j. This simulates camera defocus (depth of field) and
+                // performs anti-aliasing by jittering the ray within the
+                // pixel grid.
+                Ray ray = get_ray(i, j, s_i, s_j);
 
-                  // Accumulate sample.
-                  m_accumulation[j * m_image_width + i] += sample;
-                }
-              });
-        }
+                // Trace ray through the scene.
+                Color sample = ray_color(ray, m_max_depth, world, lights);
 
-        pool.finish();
-      } else {
-        // Ray trace the current tile, accumulate color per pixel.
-        for (int j = start_y; j < end_y; ++j) {
-          for (int i = start_x; i < end_x; ++i) {
-            // Shoots a ray through a random subpixel region, stratified by s_i
-            // and s_j. This simulates camera defocus (depth of field) and
-            // performs anti-aliasing by jittering the ray within the pixel
-            // grid.
-            Ray ray = get_ray(i, j, s_i, s_j);
+                // Accumulate sample.
+                m_accumulation[j * m_image_width + i] += sample;
+              }
+            });
+          }
 
-            // Trace ray through the scene.
-            Color sample = ray_color(ray, m_max_depth, world, lights);
+          pool.finish();
+        } else {
+          // Ray trace the current tile, accumulate color per pixel.
+          for (int j = start_r; j < end_r; ++j) {
+            for (int i = start_c; i < end_c; ++i) {
+              // Shoots a ray through a random subpixel region, stratified by
+              // s_i and s_j. This simulates camera defocus (depth of field) and
+              // performs anti-aliasing by jittering the ray within the pixel
+              // grid.
+              Ray ray = get_ray(i, j, s_i, s_j);
 
-            // Accumulate sample.
-            m_accumulation[j * m_image_width + i] += sample;
+              // Trace ray through the scene.
+              Color sample = ray_color(ray, m_max_depth, world, lights);
+
+              // Accumulate sample.
+              m_accumulation[j * m_image_width + i] += sample;
+            }
           }
         }
       }
     }
 
-    // Move to next tile. If finished a full frame, increment frame counter.
-    tile++;
-    if (tile >= tiles_x * ((m_image_height + m_tile_size - 1) / m_tile_size)) {
-      tile = 0;
-      if (!converged)
-        m_samples_taken++;
-      m_frame++;
-    }
+    // Increment frame and sample counter.
+    if (!converged)
+      m_samples_taken++;
+    m_frame++;
 
     // Convert accumulated color buffer to byte pixels and upload to texture.
     update_texture();
