@@ -80,6 +80,13 @@ void DynamicCamera::render(HittableList &world, HittableList &lights) {
     if (!running)
       break;
 
+    // Recompute sampling and tiling parameters in case the user changed
+    // samples-per-pixel or the tile size was adjusted dynamically.
+    int sqrt_spp = int(std::sqrt(m_samples_per_pixel));
+    int total_strata = sqrt_spp * sqrt_spp;
+    int num_tiles_x = (m_image_width + m_tile_size - 1) / m_tile_size;
+    int num_tiles_y = (m_image_height + m_tile_size - 1) / m_tile_size;
+
     // Stop sampling after convergence.
     bool converged = (m_samples_taken >= total_strata);
 
