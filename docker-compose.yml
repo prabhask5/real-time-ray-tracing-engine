@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  raytracer:
+    build: .
+    container_name: raytracer
+    runtime: nvidia
+    environment:
+      - SDL_VIDEODRIVER=x11
+      - NVIDIA_VISIBLE_DEVICES=all
+      - DISPLAY=${DISPLAY}  # For GUI support (X11)
+    volumes:
+      - .:/real-time-ray-tracing-engine
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    stdin_open: true
+    tty: true

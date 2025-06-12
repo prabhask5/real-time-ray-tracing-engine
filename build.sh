@@ -5,22 +5,27 @@ exec &>logs/log.txt
 set -e
 set -x 
 
+# Determine if CUDA should be enabled.
+if [[ "$1" == "cuda" ]]; then
+    ENABLE_CUDA=ON
+elif [[ "$1" == "nocuda" ]]; then
+    ENABLE_CUDA=OFF
+else
+    if command -v nvcc &> /dev/null; then
+        ENABLE_CUDA=ON
+    else
+        ENABLE_CUDA=OFF
+    fi
+fi
+
+echo "CUDA support: $ENABLE_CUDA"
+
 RTRT_SOURCE_DIR=`pwd`
 DEPS_BUILD_DIR=$RTRT_SOURCE_DIR/deps
 
 mkdir -p $DEPS_BUILD_DIR 
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
-	CXXFLAGS="-DWAZOO_64_BIT -std=c++11 -stdlib=libc++"
-fi
-
-if [ -z "$1" ] 
-then
-    INSTALL_DIR=$DEPS_BUILD_DIR
-    echo "Install directory is not supplied, installing in $INSTALL_DIR/"
-else
-    INSTALL_DIR=$1
-fi
+INSTALL_DIR=$DEPS_BUILD_DIR
 
 SDL_PKG=3.2.16
 SDL_PKG_NAME=SDL3-$SDL_PKG
@@ -57,11 +62,19 @@ cd $RTRT_SOURCE_DIR
 mkdir -p build
 cd build
 
-# For MacOS target
-cmake -G Xcode .. -DSDL3_DIR=$INSTALL_DIR/lib/cmake/SDL3/ -DSDL3_ttf_DIR=$INSTALL_DIR/lib/cmake/SDL3_ttf/ -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX
+CMAKE_GENERATOR=""
+CMAKE_CMD_ARGS=(
+  -DSDL3_DIR=$INSTALL_DIR/lib/cmake/SDL3/
+  -DSDL3_ttf_DIR=$INSTALL_DIR/lib/cmake/SDL3_ttf/
+  -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX
+  -DENABLE_CUDA=$ENABLE_CUDA
+)
 
-# For Linux target
-# cmake .. -DSDL3_DIR=$INSTALL_DIR/lib/cmake/SDL3/ -DSDL3_ttf_DIR=$INSTALL_DIR/lib/cmake/SDL3_ttf/ -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX
+if [[ "$(uname)" == "Darwin" ]]; then
+    CMAKE_GENERATOR="-G Xcode"
+fi
+
+cmake $CMAKE_GENERATOR .. "${CMAKE_CMD_ARGS[@]}"
 
 cmake --build . --config Release
 cmake --install . --config Release

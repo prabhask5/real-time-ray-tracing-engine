@@ -1,10 +1,21 @@
-cmake_minimum_required(VERSION 3.15)
+option(ENABLE_CUDA "Enable CUDA support" ON)
+
+cmake_minimum_required(VERSION 3.20)
 project(RealTimeRayTracingEngine LANGUAGES CXX)
+if (ENABLE_CUDA)
+    enable_language(CUDA)
+endif()
 
 # C++ Standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# CUDA Standard
+if (ENABLE_CUDA)
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+endif()
 
 # Set the output directory for built objects and rpath for dylib files.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
@@ -61,8 +72,22 @@ include_directories(${CMAKE_INSTALL_PREFIX}/include)
 
 set(CMAKE_XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS "-o linker-signed")
 
-file(GLOB_RECURSE RAY_TRACING_SRC src/*.cpp src/*.hpp)
-add_executable(RealTimeRayTracingEngine ${RAY_TRACING_SRC})
+file(GLOB_RECURSE CPP_SRC src/*.cpp src/*.hpp)
+if (ENABLE_CUDA)
+    file(GLOB_RECURSE CUDA_SRC src/*.cu src/*.cuh)
+endif()
+
+add_executable(RealTimeRayTracingEngine ${CPP_SRC} $<IF:$<BOOL:${ENABLE_CUDA}>,${CUDA_SRC},>)
+if (ENABLE_CUDA)
+    set_target_properties(RealTimeRayTracingEngine PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+        CUDA_ARCHITECTURES "native"
+    )
+endif()
+
+if (ENABLE_CUDA)
+    target_compile_definitions(RealTimeRayTracingEngine PUBLIC USE_CUDA)
+endif()
 
 # Find dependencies.
 find_package(SDL3 REQUIRED)
