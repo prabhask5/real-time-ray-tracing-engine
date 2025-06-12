@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir -p logs
 exec &>logs/log.txt
 set -e
 set -x 
