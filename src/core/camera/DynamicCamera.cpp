@@ -6,10 +6,14 @@
 #include <ThreadPool.hpp>
 #include <Vec3Utility.hpp>
 
+const int DynamicCamera::MIN_TILE_SIZE;
+const int DynamicCamera::DEFAULT_TILE_SIZE;
+const int DynamicCamera::MAX_TILE_SIZE;
+
 DynamicCamera::DynamicCamera(const CameraConfig &config)
-    : Camera(config), m_window(nullptr), m_renderer(nullptr),
-      m_texture(nullptr), m_font(nullptr), m_frame(0), m_samples_taken(0),
-      m_last_fps_time(0), m_fps(0.0), m_tile_size(DEFAULT_TILE_SIZE) {}
+    : Camera(config), m_samples_taken(0), m_frame(0), m_last_fps_time(0),
+      m_fps(0.0), m_tile_size(DEFAULT_TILE_SIZE), m_window(nullptr),
+      m_renderer(nullptr), m_texture(nullptr), m_font(nullptr) {}
 
 DynamicCamera::~DynamicCamera() {
   if (m_texture)
@@ -76,10 +80,6 @@ void DynamicCamera::render_cpu(HittableList &world, HittableList &lights) {
   ThreadPool pool(std::thread::hardware_concurrency());
 
   bool running = true;
-  int sqrt_spp = int(std::sqrt(m_samples_per_pixel));
-  int total_strata = sqrt_spp * sqrt_spp;
-  int num_tiles_x = (m_image_width + m_tile_size - 1) / m_tile_size;
-  int num_tiles_y = (m_image_height + m_tile_size - 1) / m_tile_size;
 
   while (running) {
     handle_events(

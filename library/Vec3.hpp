@@ -10,11 +10,11 @@ public:
 
   // Getter methods const methods.
 
-  const double x() const { return m_coordinates[0]; }
+  double x() const { return m_coordinates[0]; }
 
-  const double y() const { return m_coordinates[1]; }
+  double y() const { return m_coordinates[1]; }
 
-  const double z() const { return m_coordinates[2]; }
+  double z() const { return m_coordinates[2]; }
 
   // Operator overloads for 3D Vector.
 

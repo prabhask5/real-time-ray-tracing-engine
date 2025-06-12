@@ -27,6 +27,18 @@ My local development environment does not come with access to a Nvidia GPU to pl
 ```bash
 # Update system and install Docker.
 sudo apt update && sudo apt install -y docker.io
+sudo apt upgrade -y
+
+# Add the graphics driver PPA
+sudo add-apt-repository ppa:graphics-drivers/ppa
+sudo apt update
+
+# Install gcc (NVIDIA driver dependency).
+sudo apt install -y gcc
+
+# Install the latest NVIDIA driver.
+sudo apt install -y nvidia-driver-570
+sudo reboot
 
 # Set up NVIDIA Container Toolkit.
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
@@ -61,9 +73,18 @@ cd real-time-ray-tracing-engine
 # Install docker-compose
 sudo apt install docker-compose
 
-# Build the Docker image with CUDA and your dependencies, and start an interactive container terminal to compile and execute the project through.
+# Build the Docker image with CUDA and your dependencies.
 docker-compose build
+
+# Clean up docker.
+docker container prune -f
+docker image prune -f
+docker volume prune -f
+docker network prune -f
+
+# Start an interactive container terminal to compile and execute the project through.
 docker-compose run raytracer bash
+
 
 # Inside the resulting container shell:
 ./build.sh
@@ -81,8 +102,11 @@ ssh -Y -i <.PEM FILE> ubuntu@<EC2_PUBLIC_IP>
 This project uses custom githooks to format .cpp/.hpp files, to change the folder used to run githook scripts from use the following commands:
 
 ```bash
-# Install dependency clang-format
+# Install dependency clang-format (Mac).
 brew install clang-format
+
+# Install dependency clang-format (Linux).
+sudo apt install -y clang-format
 
 chmod +x .githooks/pre-commit
 git config --local core.hooksPath .githooks/

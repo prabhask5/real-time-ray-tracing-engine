@@ -4,6 +4,9 @@
 #include "Plane.hpp"
 #include <MaterialTypes.hpp>
 
+std::shared_ptr<HittableList> make_box(const Point3 &a, const Point3 &b,
+                                       MaterialPtr mat);
+
 // Returns the 3D box (six sides) that contains the two opposite vertices a & b.
 std::shared_ptr<HittableList> make_box(const Point3 &a, const Point3 &b,
                                        MaterialPtr material) {

@@ -83,7 +83,7 @@ private:
   std::condition_variable m_job_available;
   std::condition_variable m_all_done;
 
-  std::atomic<bool> m_stop;
   size_t m_thread_count;
+  std::atomic<bool> m_stop;
   size_t m_running_jobs;
 };

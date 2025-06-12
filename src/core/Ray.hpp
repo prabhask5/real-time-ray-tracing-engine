@@ -23,7 +23,7 @@ public:
 
   // Gets the moment in time when the ray exists or is "cast". Crucial for
   // implementing motion blur and time-varying scenes in ray tracing.
-  const double time() const;
+  double time() const;
 
   // Solves the parametric equation at the parametric time value t.
   Point3 at(double t) const;

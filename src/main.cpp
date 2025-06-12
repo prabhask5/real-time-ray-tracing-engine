@@ -1,6 +1,7 @@
 #include "core/camera/DynamicCamera.hpp"
 #include "core/camera/StaticCamera.hpp"
 #include "input/CLI.hpp"
+#include "scene/Scene.hpp"
 #include "scene/materials/DielectricMaterial.hpp"
 #include "scene/materials/DiffuseLightMaterial.hpp"
 #include "scene/materials/LambertianMaterial.hpp"

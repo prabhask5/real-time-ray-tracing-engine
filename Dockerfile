@@ -6,9 +6,12 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     git \
     wget \
+    curl \
+    tar \
     libsdl2-dev \
     libx11-dev \
     libgl1-mesa-dev \
+    libfreetype6-dev \
     x11-apps \
     && rm -rf /var/lib/apt/lists/*
 

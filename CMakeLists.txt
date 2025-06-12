@@ -29,8 +29,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         -Wextra
         -Wpedantic
         -Wshadow
-        -Wconversion
-        -Wsign-conversion
         -Wold-style-cast
         -Wnon-virtual-dtor
         -Woverloaded-virtual
@@ -50,8 +48,6 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         -Wextra
         -Wpedantic
         -Wshadow
-        -Wconversion
-        -Wsign-conversion
         -Wold-style-cast
         -Wnon-virtual-dtor
         -Woverloaded-virtual

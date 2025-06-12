@@ -41,7 +41,6 @@ bool Plane::hit(const Ray &ray, Interval t_values, HitRecord &record) const {
   double alpha = dot_product(m_w, cross_product(planar_hitpt_vector, m_v_side));
   double beta = dot_product(m_w, cross_product(m_u_side, planar_hitpt_vector));
 
-  bool is_interior = true;
   Interval unit_interval = Interval(0, 1);
   // Given the hit point in plane coordinates, return false if it is outside the
   // primitive, otherwise set the hit record UV coordinates and return true.

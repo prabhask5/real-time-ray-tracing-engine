@@ -8,7 +8,7 @@ struct CameraConfig {
   int image_width = 600;
   int samples_per_pixel = 10;
   int max_depth = 10;
-  Color background;
+  Color background = Color(0, 0, 0);
 
   double vfov = 90;
   Point3 lookfrom = Point3(0, 0, 0);

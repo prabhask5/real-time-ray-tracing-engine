@@ -13,6 +13,6 @@ const Point3 &Ray::origin() const { return m_origin; }
 
 const Vec3 &Ray::direction() const { return m_direction; }
 
-const double Ray::time() const { return m_time; }
+double Ray::time() const { return m_time; }
 
 Point3 Ray::at(double t) const { return m_origin + t * m_direction; }
