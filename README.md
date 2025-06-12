@@ -45,6 +45,9 @@ newgrp docker
 git clone https://github.com/prabhask5/real-time-ray-tracing-engine.git
 cd real-time-ray-tracing-engine
 
+# Install docker-compose
+sudo apt install docker-compose
+
 # Build the Docker image with CUDA and your dependencies, and start an interactive container terminal to compile and execute the project through.
 docker-compose build
 docker-compose run raytracer bash
@@ -54,10 +57,10 @@ docker-compose run raytracer bash
 bin/raytracer [args]
 ```
 
-To be able to view the SDL3 window from your ssh terminal session on MacOS (you need to have XQuartz installed, running, and disable access control first):
+To be able to view the SDL3 window from your ssh terminal session on MacOS (you need to have XQuartz installed, running, and disable access control first) run the following command from the XQuartz terminal:
 
 ```bash
-ssh -X -i <.PEM FILE> ubuntu@<EC2_PUBLIC_IP>
+ssh -Y -i <.PEM FILE> ubuntu@<EC2_PUBLIC_IP>
 ```
 
 ## Development
