@@ -35,6 +35,19 @@ curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.li
   | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 
 sudo apt update && sudo apt install -y nvidia-container-toolkit
+
+# Add NVIDIA runtime config to Docker.
+sudo tee /etc/docker/daemon.json > /dev/null <<EOF
+{
+  "runtimes": {
+    "nvidia": {
+      "path": "nvidia-container-runtime",
+      "runtimeArgs": []
+    }
+  }
+}
+EOF
+
 sudo systemctl restart docker
 
 # Add yourself to docker group to avoid sudo.
