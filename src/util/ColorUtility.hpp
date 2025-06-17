@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Interval.hpp"
-#include "Vec3.hpp"
-#include "Vec3Types.hpp"
+#include "math/Interval.hpp"
+#include "math/Vec3.hpp"
+#include "../core/Vec3Types.hpp"
 #include <iostream>
 
 // Applies gamma correction with gamma = 2.0. This converts from linear color

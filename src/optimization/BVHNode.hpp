@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../core/Hittable.hpp"
+#include "../core/HittableTypes.hpp"
 #include "AABB.hpp"
-#include <Hittable.hpp>
-#include <HittableTypes.hpp>
 #include <vector>
 
 class HittableList; // From HittableList.hpp.

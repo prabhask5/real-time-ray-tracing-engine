@@ -2,9 +2,9 @@
 #include "../../core/HitRecord.hpp"
 #include "../../core/Ray.hpp"
 #include "../../core/ScatterRecord.hpp"
+#include "../../util/math/PDF.hpp"
+#include "../../util/math/Vec3Utility.hpp"
 #include "../textures/SolidColorTexture.hpp"
-#include <PDF.hpp>
-#include <Vec3Utility.hpp>
 
 LambertianMaterial::LambertianMaterial(const Color &albedo)
     : m_texture(std::make_shared<SolidColorTexture>(albedo)) {}

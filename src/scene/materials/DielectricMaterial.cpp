@@ -2,8 +2,8 @@
 #include "../../core/HitRecord.hpp"
 #include "../../core/Ray.hpp"
 #include "../../core/ScatterRecord.hpp"
-#include <Vec3.hpp>
-#include <Vec3Utility.hpp>
+#include "../../util/math/Vec3.hpp"
+#include "../../util/math/Vec3Utility.hpp"
 
 DielectricMaterial::DielectricMaterial(double refraction_index)
     : m_refraction_index(refraction_index) {}

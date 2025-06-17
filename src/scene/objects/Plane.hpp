@@ -1,10 +1,10 @@
 #pragma once
 
+#include "../../core/Hittable.hpp"
 #include "../../optimization/AABB.hpp"
-#include <Hittable.hpp>
-#include <Material.hpp>
-#include <MaterialTypes.hpp>
-#include <Vec3.hpp>
+#include "../../util/math/Vec3.hpp"
+#include "../materials/Material.hpp"
+#include "../materials/MaterialTypes.hpp"
 
 class Plane : public Hittable {
 public:

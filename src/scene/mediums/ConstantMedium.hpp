@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Hittable.hpp>
-#include <HittableTypes.hpp>
-#include <MaterialTypes.hpp>
-#include <TextureTypes.hpp>
-#include <Vec3Types.hpp>
+#include "../../core/Hittable.hpp"
+#include "../../core/HittableTypes.hpp"
+#include "../../core/Vec3Types.hpp"
+#include "../materials/MaterialTypes.hpp"
+#include "../textures/TextureTypes.hpp"
 
 // Represents a participating medium—such as smoke, fog, or gas—that can scatter
 // rays randomly inside a volume instead of just reflecting off surfaces. It

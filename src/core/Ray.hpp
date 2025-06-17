@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Vec3.hpp>
-#include <Vec3Types.hpp>
+#include "../util/math/Vec3.hpp"
+#include "Vec3Types.hpp"
 
 // Represents a light ray, represented through the parametric equation Vec3
 // point = r.origin() + t * r.direction(), t is how far along the way you are (t

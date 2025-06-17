@@ -1,7 +1,7 @@
 #include "DiffuseLightMaterial.hpp"
 #include "../../core/HitRecord.hpp"
+#include "../../util/math/Vec3.hpp"
 #include "../textures/SolidColorTexture.hpp"
-#include <Vec3.hpp>
 
 DiffuseLightMaterial::DiffuseLightMaterial(TexturePtr texture)
     : m_texture(texture) {}

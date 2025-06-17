@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Material.hpp>
+#include "Material.hpp"
 
 // Models transparent materials (like glass or water) that can both reflect and
 // refract rays.

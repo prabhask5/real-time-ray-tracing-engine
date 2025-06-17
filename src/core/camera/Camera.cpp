@@ -1,10 +1,10 @@
 #include "Camera.hpp"
+#include "../../scene/materials/Material.hpp"
+#include "../../util/ColorUtility.hpp"
+#include "../../util/math/PDF.hpp"
 #include "../HitRecord.hpp"
 #include "../HittableList.hpp"
 #include "../ScatterRecord.hpp"
-#include <ColorUtility.hpp>
-#include <Material.hpp>
-#include <PDF.hpp>
 
 Camera::Camera(const CameraConfig &config)
     : m_aspect_ratio(config.aspect_ratio), m_image_width(config.image_width),

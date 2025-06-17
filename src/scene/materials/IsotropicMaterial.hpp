@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Material.hpp>
-#include <TextureTypes.hpp>
+#include "../textures/TextureTypes.hpp"
+#include "Material.hpp"
 
 // Represents a scattering material where rays scatter equally in all
 // directions—used for things like volumetric fog, smoke, or constant-density

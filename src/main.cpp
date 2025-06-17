@@ -1,3 +1,4 @@
+#include "core/Hittable.hpp"
 #include "core/camera/DynamicCamera.hpp"
 #include "core/camera/StaticCamera.hpp"
 #include "input/CLI.hpp"
@@ -12,8 +13,7 @@
 #include "scene/objects/Sphere.hpp"
 #include "scene/objects/Translate.hpp"
 #include "scene/textures/CheckerTexture.hpp"
-#include <Hittable.hpp>
-#include <Vec3Utility.hpp>
+#include "util/math/Vec3Utility.hpp"
 #include <memory>
 
 void populate_cornell_box_scene(HittableList &world, HittableList &lights,

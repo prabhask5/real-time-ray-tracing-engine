@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Texture.hpp>
-#include <TextureTypes.hpp>
+#include "Texture.hpp"
+#include "TextureTypes.hpp"
 
 class CheckerTexture : public Texture {
 public:

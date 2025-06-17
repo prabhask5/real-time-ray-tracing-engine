@@ -1,11 +1,11 @@
 #pragma once
 
+#include "../../core/Hittable.hpp"
 #include "../../core/Ray.hpp"
+#include "../../core/Vec3Types.hpp"
 #include "../../optimization/AABB.hpp"
-#include <Hittable.hpp>
-#include <MaterialTypes.hpp>
-#include <Vec3.hpp>
-#include <Vec3Types.hpp>
+#include "../../util/math/Vec3.hpp"
+#include "../materials/MaterialTypes.hpp"
 
 // Represents a sphere hittable object.
 class Sphere : public Hittable {

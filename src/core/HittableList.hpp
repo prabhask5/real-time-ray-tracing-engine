@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../optimization/AABB.hpp"
-#include <Hittable.hpp>
-#include <HittableTypes.hpp>
+#include "Hittable.hpp"
+#include "HittableTypes.hpp"
 #include <vector>
 
 // Defines a list of hittable objects.

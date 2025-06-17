@@ -1,8 +1,8 @@
 #include "IsotropicMaterial.hpp"
 #include "../../core/HitRecord.hpp"
 #include "../../core/ScatterRecord.hpp"
+#include "../../util/math/PDF.hpp"
 #include "../textures/SolidColorTexture.hpp"
-#include <PDF.hpp>
 
 IsotropicMaterial::IsotropicMaterial(const Color &albedo)
     : m_texture(std::make_shared<SolidColorTexture>(albedo)) {}

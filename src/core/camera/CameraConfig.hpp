@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Vec3.hpp>
-#include <Vec3Types.hpp>
+#include "../../util/math/Vec3.hpp"
+#include "../Vec3Types.hpp"
 
 struct CameraConfig {
   double aspect_ratio = 1.0;

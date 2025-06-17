@@ -2,7 +2,7 @@
 #include "../../core/HitRecord.hpp"
 #include "../../core/Ray.hpp"
 #include "../../optimization/AABBUtility.hpp"
-#include <Vec3Utility.hpp>
+#include "../../util/math/Vec3Utility.hpp"
 
 Translate::Translate(HittablePtr object, const Vec3 &offset)
     : m_object(object), m_offset(offset) {

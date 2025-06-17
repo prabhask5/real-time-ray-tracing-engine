@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Hittable.hpp>
-#include <HittableTypes.hpp>
-#include <IntervalUtility.hpp>
+#include "../core/Hittable.hpp"
+#include "../core/HittableTypes.hpp"
+#include "../util/math/IntervalUtility.hpp"
 
 inline AABB operator+(const AABB &bbox, const Vec3 &offset) {
   return AABB(bbox.x() + offset.x(), bbox.y() + offset.y(),

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vec3Types.hpp"
+#include "../../core/Vec3Types.hpp"
 
 // Interface for all surface textures, defining the Color of the material at a
 // specific point.

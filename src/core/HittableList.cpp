@@ -1,6 +1,6 @@
 #include "HittableList.hpp"
+#include "../util/math/Interval.hpp"
 #include "HitRecord.hpp"
-#include <Interval.hpp>
 
 HittableList::HittableList() {}
 

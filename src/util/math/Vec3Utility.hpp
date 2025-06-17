@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Vec3.hpp"
-#include "Vec3Types.hpp"
+#include "../../core/Vec3Types.hpp"
 
 inline Vec3 operator+(const Vec3 &u, const Vec3 &v) {
   return Vec3(u.x() + v.x(), u.y() + v.y(), u.z() + v.z());

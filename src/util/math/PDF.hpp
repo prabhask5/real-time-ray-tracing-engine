@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Hittable.hpp"
+#include "../../core/Hittable.hpp"
 #include "ONB.hpp"
 #include "PDFTypes.hpp"
 #include "Utility.hpp"

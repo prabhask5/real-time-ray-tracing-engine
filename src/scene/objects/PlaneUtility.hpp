@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../../core/HittableList.hpp"
+#include "../materials/MaterialTypes.hpp"
 #include "Plane.hpp"
-#include <MaterialTypes.hpp>
 
 std::shared_ptr<HittableList> make_box(const Point3 &a, const Point3 &b,
                                        MaterialPtr mat);

@@ -1,10 +1,10 @@
 #pragma once
 
+#include "../scene/materials/MaterialTypes.hpp"
+#include "../util/math/Vec3.hpp"
+#include "../util/math/Vec3Utility.hpp"
 #include "Ray.hpp"
-#include <MaterialTypes.hpp>
-#include <Vec3.hpp>
-#include <Vec3Types.hpp>
-#include <Vec3Utility.hpp>
+#include "Vec3Types.hpp"
 
 class Material;
 

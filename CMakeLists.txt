@@ -65,7 +65,6 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     )
 endif()
 
-include_directories(library)
 include_directories(${CMAKE_INSTALL_PREFIX}/include)
 
 set(CMAKE_XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS "-o linker-signed")

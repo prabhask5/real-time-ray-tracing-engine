@@ -1,10 +1,10 @@
 #include "StaticCamera.hpp"
 #include "../../optimization/BVHNode.hpp"
+#include "../../util/ColorUtility.hpp"
+#include "../../util/ThreadPool.hpp"
+#include "../../util/math/Vec3Utility.hpp"
 #include "../HittableList.hpp"
 #include "../Ray.hpp"
-#include <ColorUtility.hpp>
-#include <ThreadPool.hpp>
-#include <Vec3Utility.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>

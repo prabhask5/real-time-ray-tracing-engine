@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Texture.hpp>
-#include <Vec3.hpp>
+#include "../../util/math/Vec3.hpp"
+#include "Texture.hpp"
 
 class SolidColorTexture : public Texture {
 public:

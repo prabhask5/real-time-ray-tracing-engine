@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vec3.hpp"
+#include "../util/math/Vec3.hpp"
 #include "Vec3Types.hpp"
 
 class Ray;       // From Ray.hpp.

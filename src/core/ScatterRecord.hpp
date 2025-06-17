@@ -1,9 +1,9 @@
 #pragma once
 
+#include "../util/math/PDFTypes.hpp"
+#include "../util/math/Vec3.hpp"
 #include "Ray.hpp"
-#include <PDFTypes.hpp>
-#include <Vec3.hpp>
-#include <Vec3Types.hpp>
+#include "Vec3Types.hpp"
 
 // Used in a ray tracer to describe the result of a material's scatter()
 // function — that is, how a ray interacts with a surface (reflection,

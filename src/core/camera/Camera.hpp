@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../../util/math/Vec3.hpp"
+#include "../Vec3Types.hpp"
 #include "CameraConfig.hpp"
-#include <Vec3.hpp>
-#include <Vec3Types.hpp>
 
 class Hittable;     // From Hittable.hpp.
 class HittableList; // From HittableList.hpp.

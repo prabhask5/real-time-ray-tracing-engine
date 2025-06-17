@@ -1,9 +1,9 @@
 #pragma once
 
+#include "../../core/Hittable.hpp"
+#include "../../core/HittableTypes.hpp"
 #include "../../optimization/AABB.hpp"
-#include <Hittable.hpp>
-#include <HittableTypes.hpp>
-#include <Vec3.hpp>
+#include "../../util/math/Vec3.hpp"
 
 // Wrapper class. Moves (translates) a hittable object by an offset vector in
 // world space.

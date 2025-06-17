@@ -1,6 +1,6 @@
 #include "AABB.hpp"
 #include "../core/Ray.hpp"
-#include <Vec3.hpp>
+#include "../util/math/Vec3.hpp"
 
 AABB::AABB() {}
 

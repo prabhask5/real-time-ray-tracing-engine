@@ -1,9 +1,9 @@
 #pragma once
 
+#include "../../core/Hittable.hpp"
+#include "../../core/HittableTypes.hpp"
 #include "../../optimization/AABB.hpp"
-#include <Hittable.hpp>
-#include <HittableTypes.hpp>
-#include <Vec3.hpp>
+#include "../../util/math/Vec3.hpp"
 
 // Wrapper class. Rotates a hittable object around the Y-axis by a given angle.
 class RotateY : public Hittable {

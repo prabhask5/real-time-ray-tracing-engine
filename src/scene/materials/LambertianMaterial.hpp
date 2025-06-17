@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Material.hpp>
-#include <TextureTypes.hpp>
-#include <Vec3.hpp>
-#include <Vec3Types.hpp>
+#include "../../core/Vec3Types.hpp"
+#include "../../util/math/Vec3.hpp"
+#include "../textures/TextureTypes.hpp"
+#include "Material.hpp"
 
 // Defines a Lambertian (diffuse) material — a surface that scatters light
 // uniformly in all directions from the point of intersection.

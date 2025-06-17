@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Material.hpp>
-#include <TextureTypes.hpp>
+#include "../textures/TextureTypes.hpp"
+#include "Material.hpp"
 
 // Represents a pure emissive surface—a material that emits light rather than
 // reflecting or scattering it. Think of glowing surfaces like light bulbs,

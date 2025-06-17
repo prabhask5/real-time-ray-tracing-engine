@@ -1,6 +1,6 @@
 #include "CheckerTexture.hpp"
+#include "../../util/math/Vec3.hpp"
 #include "SolidColorTexture.hpp"
-#include <Vec3.hpp>
 
 CheckerTexture::CheckerTexture(double scale, TexturePtr even_texture,
                                TexturePtr odd_texture)
