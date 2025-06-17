@@ -16,7 +16,7 @@ public:
   __device__ virtual ~PDF() = default;
 
   __device__ virtual double value(const Vec3 &direction) const = 0;
-  __device__ virtual Vec3 generate(curandState* state) const = 0;
+  __device__ virtual Vec3 generate(curandState *state) const = 0;
 };
 
 // Uniform sampling over the unit sphere.
@@ -28,7 +28,7 @@ public:
     return 1.0 / (4.0 * PI);
   }
 
-  __device__ Vec3 generate(curandState* state) const override {
+  __device__ Vec3 generate(curandState *state) const override {
     return random_unit_vector(state);
   }
 };
@@ -43,7 +43,7 @@ public:
     return fmax(0.0, cosine_theta / PI);
   }
 
-  __device__ Vec3 generate(curandState* state) const override {
+  __device__ Vec3 generate(curandState *state) const override {
     return m_uvw.transform(random_cosine_direction(state));
   }
 
@@ -61,7 +61,7 @@ public:
     return m_objects.pdf_value(m_origin, direction);
   }
 
-  __device__ Vec3 generate(curandState* state) const override {
+  __device__ Vec3 generate(curandState *state) const override {
     return m_objects.random(m_origin, state);
   }
 
@@ -73,7 +73,7 @@ private:
 // Mixture of two PDFs.
 class MixturePDF : public PDF {
 public:
-  __device__ MixturePDF(const PDF* p0, const PDF* p1) {
+  __device__ MixturePDF(const PDF *p0, const PDF *p1) {
     m_p[0] = p0;
     m_p[1] = p1;
   }
@@ -82,14 +82,14 @@ public:
     return 0.5 * m_p[0]->value(direction) + 0.5 * m_p[1]->value(direction);
   }
 
-  __device__ Vec3 generate(curandState* state) const override {
+  __device__ Vec3 generate(curandState *state) const override {
     if (random_double(state) < 0.5)
       return m_p[0]->generate(state);
     return m_p[1]->generate(state);
   }
 
 private:
-  const PDF* m_p[2];
+  const PDF *m_p[2];
 };
 
 #endif // USE_CUDA
