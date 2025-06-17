@@ -19,7 +19,7 @@ public:
     perlin_generate_perm(m_perm_z);
   }
 
-  // Generatesa a noise value at point p.
+  // Generates a noise value at point p.
   double noise(const Point3 &p) const {
     double x_frac = p.x() - std::floor(p.x());
     double y_frac = p.y() - std::floor(p.y());
