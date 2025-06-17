@@ -134,6 +134,13 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  constexpr bool is_cuda_enabled =
+#ifdef USE_CUDA
+      true;
+#else
+      false;
+#endif
+
   HittableList world;
   HittableList lights;
   CameraConfig cam_config = {
@@ -142,7 +149,7 @@ int main(int argc, char **argv) {
       .max_depth = options.depth,
       .use_parallelism = options.use_parallelism,
       .use_bvh = options.use_bvh,
-      .use_gpu = options.use_gpu,
+      .use_gpu = is_cuda_enabled && options.use_gpu,
   };
 
   populate_cornell_box_scene(world, lights, cam_config);

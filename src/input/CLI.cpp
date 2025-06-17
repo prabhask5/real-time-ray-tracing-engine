@@ -103,7 +103,8 @@ void print_help() {
   std::cout << "  -p, --parallel             Enable multithreaded rendering\n";
   std::cout << "  -b, --bvh                  Use bounding volume hierarchy for "
                "scene acceleration\n";
-  std::cout << "  -g, --gpu                  Render using CUDA GPU kernels\n";
+  std::cout << "  -g, --gpu                  Render using CUDA GPU kernels "
+               "(default: false, cannot be true for no GPU)\n";
   std::cout << "  --width <int>              Image width for scene render "
                "(default: 600)\n";
   std::cout << "  --samples <int>            Number of samples per pixel for "
