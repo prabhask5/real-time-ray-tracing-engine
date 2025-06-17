@@ -20,27 +20,19 @@ This engine comes with a CLI to select different rendering options. This include
 bin/raytracer --help
 ```
 
-### On Service Instance with Docker (Complex)
+### On GPU Instance with Docker (Complex)
 
-My local development environment does not come with access to a Nvidia GPU to play around with CUDA on. So I needed to provision a AWS cloud instance with a GPU, and needed to use Docker to setup the environment. Here are the following commands I ran on a fresh cloud instance to be able to set up the project for GPU compilation and execution:
+My local development environment (Mac) does not come with access to a Nvidia GPU to play around with CUDA on. So I needed to use WSL2 on a Windows computer to be able to use CUDA. Here are the following commands I ran on a WSL2 instance to be able to set up the project via a Docker container for GPU compilation and execution:
 
 ```bash
-# Update system and install Docker.
+# Update system and install Docker
 sudo apt update && sudo apt install -y docker.io
 sudo apt upgrade -y
 
-# Add the graphics driver PPA
-sudo add-apt-repository ppa:graphics-drivers/ppa
-sudo apt update
+# Install Docker Compose plugin
+sudo apt install -y docker-compose-plugin
 
-# Install gcc (NVIDIA driver dependency).
-sudo apt install -y gcc
-
-# Install the latest NVIDIA driver.
-sudo apt install -y nvidia-driver-570
-sudo reboot
-
-# Set up NVIDIA Container Toolkit.
+# Install NVIDIA Container Toolkit
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list \
@@ -48,54 +40,35 @@ curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.li
 
 sudo apt update && sudo apt install -y nvidia-container-toolkit
 
-# Add NVIDIA runtime config to Docker.
-sudo tee /etc/docker/daemon.json > /dev/null <<EOF
-{
-  "runtimes": {
-    "nvidia": {
-      "path": "nvidia-container-runtime",
-      "runtimeArgs": []
-    }
-  }
-}
-EOF
-
+# Configure NVIDIA runtime for Docker
+sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 
-# Add yourself to docker group to avoid sudo.
+# Add yourself to Docker group (if not already)
 sudo usermod -aG docker $USER
 newgrp docker
 
-# Clone the Github repo (requires setting up and figuring out Git beforehand).
+# Set $DISPLAY inside WSL2 to point to Windows host.
+export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0.0
+export LIBGL_ALWAYS_INDIRECT=1
+
+# Clone repo and build
 git clone https://github.com/prabhask5/real-time-ray-tracing-engine.git
 cd real-time-ray-tracing-engine
 
-# Install docker-compose
-sudo apt install docker-compose
+# Build image
+docker compose build
 
-# Build the Docker image with CUDA and your dependencies.
-docker-compose build
+# Run container with GPU
+docker compose run --gpus all raytracer bash
 
-# Clean up docker.
-docker container prune -f
-docker image prune -f
-docker volume prune -f
-docker network prune -f
-
-# Start an interactive container terminal to compile and execute the project through.
-docker-compose run raytracer bash
-
-
-# Inside the resulting container shell:
+# Inside container:
+xeyes  # To test X11 forwarding.
 ./build.sh
 bin/raytracer [args]
 ```
 
-To be able to view the SDL3 window from your ssh terminal session on MacOS (you need to have XQuartz installed, running, and disable access control first) run the following command from the XQuartz terminal:
-
-```bash
-ssh -Y -i <.PEM FILE> ubuntu@<EC2_PUBLIC_IP>
-```
+To be able to view the SDL3 window on the Windows computer, install [VcXsrv](https://sourceforge.net/projects/vcxsrv/), and start it with "Disable access control" and "OpenGL or native acceleration" ON. 
 
 ## Development
 

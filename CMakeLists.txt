@@ -2,6 +2,8 @@ option(ENABLE_CUDA "Enable CUDA support" ON)
 
 cmake_minimum_required(VERSION 3.20)
 project(RealTimeRayTracingEngine LANGUAGES CXX)
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
+
 if (ENABLE_CUDA)
     enable_language(CUDA)
 endif()
