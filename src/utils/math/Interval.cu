@@ -2,7 +2,7 @@
 
 #ifdef USE_CUDA
 
-// Batch interval operations for better GPU utilization
+// Batch interval operations for better GPU utilization.
 
 __global__ void cuda_clamp_values_kernel(double *values,
                                          const Interval *intervals, int count) {
@@ -21,7 +21,7 @@ void cuda_batch_clamp_values(double *d_values, const Interval *d_intervals,
   cudaDeviceSynchronize();
 }
 
-// Optimized interval intersection
+// Optimized interval intersection.
 __global__ void cuda_intersect_intervals_kernel(const Interval *intervals1,
                                                 const Interval *intervals2,
                                                 Interval *result, int count) {

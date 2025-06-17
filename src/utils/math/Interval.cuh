@@ -58,7 +58,7 @@ private:
 __device__ static const Interval EMPTY_INTERVAL = Interval(+INF, -INF);
 __device__ static const Interval UNIVERSE_INTERVAL = Interval(-INF, +INF);
 
-// GPU batch processing functions (implemented in .cu file)
+// GPU batch processing functions (implemented in .cu file).
 void cuda_batch_clamp_values(double *d_values, const Interval *d_intervals,
                              int count);
 void cuda_batch_intersect_intervals(const Interval *d_intervals1,
