@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/Vec3Types.hpp"
-#include "../util/math/Interval.hpp"
+#include "../utils/math/Interval.hpp"
 
 class Ray; // From Ray.hpp.
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../util/math/Vec3.hpp"
+#include "../../utils/math/Vec3.hpp"
 #include "Material.hpp"
 
 // Models metallic (specular) surfaces like brushed aluminum or mirrors, where

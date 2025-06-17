@@ -1,5 +1,5 @@
 #include "Ray.hpp"
-#include "../util/math/Vec3Utility.hpp"
+#include "../utils/math/Vec3Utility.hpp"
 
 Ray::Ray() {}
 

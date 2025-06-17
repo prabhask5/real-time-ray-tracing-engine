@@ -2,7 +2,7 @@
 #include "../../core/HitRecord.hpp"
 #include "../../core/Ray.hpp"
 #include "../../core/ScatterRecord.hpp"
-#include "../../util/math/Vec3Utility.hpp"
+#include "../../utils/math/Vec3Utility.hpp"
 
 MetalMaterial::MetalMaterial(const Color &albedo, double fuzz)
     : m_albedo(albedo), m_fuzz(fuzz) {}

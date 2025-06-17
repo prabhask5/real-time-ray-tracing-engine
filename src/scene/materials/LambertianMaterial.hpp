@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../core/Vec3Types.hpp"
-#include "../../util/math/Vec3.hpp"
+#include "../../utils/math/Vec3.hpp"
 #include "../textures/TextureTypes.hpp"
 #include "Material.hpp"
 

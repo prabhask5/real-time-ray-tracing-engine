@@ -1,7 +1,7 @@
 #include "Plane.hpp"
 #include "../../core/HitRecord.hpp"
 #include "../../core/Ray.hpp"
-#include "../../util/math/Vec3Utility.hpp"
+#include "../../utils/math/Vec3Utility.hpp"
 
 Plane::Plane(const Point3 &corner, const Vec3 &u_side, const Vec3 &v_side,
              MaterialPtr material)

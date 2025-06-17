@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../util/math/Vec3.hpp"
+#include "../../utils/math/Vec3.hpp"
 #include "../Vec3Types.hpp"
 
 struct CameraConfig {

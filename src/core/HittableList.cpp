@@ -1,5 +1,5 @@
 #include "HittableList.hpp"
-#include "../util/math/Interval.hpp"
+#include "../utils/math/Interval.hpp"
 #include "HitRecord.hpp"
 
 HittableList::HittableList() {}

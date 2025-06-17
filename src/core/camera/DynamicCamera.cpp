@@ -1,8 +1,8 @@
 #include "DynamicCamera.hpp"
 #include "../../optimization/BVHNode.hpp"
-#include "../../util/ColorUtility.hpp"
-#include "../../util/ThreadPool.hpp"
-#include "../../util/math/Vec3Utility.hpp"
+#include "../../utils/ColorUtility.hpp"
+#include "../../utils/ThreadPool.hpp"
+#include "../../utils/math/Vec3Utility.hpp"
 #include "../HittableList.hpp"
 #include "../Ray.hpp"
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../util/math/PerlinNoise.hpp"
+#include "../../utils/math/PerlinNoise.hpp"
 #include "Texture.hpp"
 
 class NoiseTexture : public Texture {

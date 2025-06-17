@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../util/math/PDFTypes.hpp"
-#include "../util/math/Vec3.hpp"
+#include "../utils/math/PDFTypes.hpp"
+#include "../utils/math/Vec3.hpp"
 #include "Ray.hpp"
 #include "Vec3Types.hpp"
 

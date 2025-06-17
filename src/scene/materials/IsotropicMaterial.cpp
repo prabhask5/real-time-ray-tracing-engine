@@ -1,7 +1,7 @@
 #include "IsotropicMaterial.hpp"
 #include "../../core/HitRecord.hpp"
 #include "../../core/ScatterRecord.hpp"
-#include "../../util/math/PDF.hpp"
+#include "../../utils/math/PDF.hpp"
 #include "../textures/SolidColorTexture.hpp"
 
 IsotropicMaterial::IsotropicMaterial(const Color &albedo)

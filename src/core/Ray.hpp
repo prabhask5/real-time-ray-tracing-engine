@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../util/math/Vec3.hpp"
+#include "../utils/math/Vec3.hpp"
 #include "Vec3Types.hpp"
 
 // Represents a light ray, represented through the parametric equation Vec3

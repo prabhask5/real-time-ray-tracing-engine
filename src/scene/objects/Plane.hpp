@@ -2,7 +2,7 @@
 
 #include "../../core/Hittable.hpp"
 #include "../../optimization/AABB.hpp"
-#include "../../util/math/Vec3.hpp"
+#include "../../utils/math/Vec3.hpp"
 #include "../materials/Material.hpp"
 #include "../materials/MaterialTypes.hpp"
 

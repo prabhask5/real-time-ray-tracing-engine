@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../util/math/Vec3.hpp"
 #include "../../core/Vec3Types.hpp"
+#include "../../utils/math/Vec3.hpp"
 
 class Ray;           // From Ray.hpp.
 class HitRecord;     // From HitRecord.hpp.

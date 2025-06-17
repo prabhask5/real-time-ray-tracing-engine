@@ -3,7 +3,7 @@
 #include "../../core/Hittable.hpp"
 #include "../../core/HittableTypes.hpp"
 #include "../../optimization/AABB.hpp"
-#include "../../util/math/Vec3.hpp"
+#include "../../utils/math/Vec3.hpp"
 
 // Wrapper class. Moves (translates) a hittable object by an offset vector in
 // world space.

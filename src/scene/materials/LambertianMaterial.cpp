@@ -2,8 +2,8 @@
 #include "../../core/HitRecord.hpp"
 #include "../../core/Ray.hpp"
 #include "../../core/ScatterRecord.hpp"
-#include "../../util/math/PDF.hpp"
-#include "../../util/math/Vec3Utility.hpp"
+#include "../../utils/math/PDF.hpp"
+#include "../../utils/math/Vec3Utility.hpp"
 #include "../textures/SolidColorTexture.hpp"
 
 LambertianMaterial::LambertianMaterial(const Color &albedo)

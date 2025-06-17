@@ -4,7 +4,7 @@
 #include "../../core/Ray.hpp"
 #include "../../core/Vec3Types.hpp"
 #include "../../optimization/AABB.hpp"
-#include "../../util/math/Vec3.hpp"
+#include "../../utils/math/Vec3.hpp"
 #include "../materials/MaterialTypes.hpp"
 
 // Represents a sphere hittable object.

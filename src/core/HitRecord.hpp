@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../scene/materials/MaterialTypes.hpp"
-#include "../util/math/Vec3.hpp"
-#include "../util/math/Vec3Utility.hpp"
+#include "../utils/math/Vec3.hpp"
+#include "../utils/math/Vec3Utility.hpp"
 #include "Ray.hpp"
 #include "Vec3Types.hpp"
 

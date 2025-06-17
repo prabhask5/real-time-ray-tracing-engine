@@ -1,9 +1,9 @@
 #include "Sphere.hpp"
 #include "../../core/HitRecord.hpp"
 #include "../../core/Ray.hpp"
-#include "../../util/math/Interval.hpp"
-#include "../../util/math/ONB.hpp"
-#include "../../util/math/Vec3Utility.hpp"
+#include "../../utils/math/Interval.hpp"
+#include "../../utils/math/ONB.hpp"
+#include "../../utils/math/Vec3Utility.hpp"
 
 Sphere::Sphere(const Point3 &center, double radius, MaterialPtr material)
     : m_center(center, Vec3(0, 0, 0)), m_radius(std::fmax(0, radius)),
