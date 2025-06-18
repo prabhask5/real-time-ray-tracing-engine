@@ -13,7 +13,7 @@
 #include "../../utils/math/Vec3Utility.cuh"
 #include "../textures/Texture.cuh"
 
-enum MaterialType {
+enum CudaMaterialType {
   MATERIAL_LAMBERTIAN,
   MATERIAL_METAL,
   MATERIAL_DIELECTRIC,
@@ -21,53 +21,54 @@ enum MaterialType {
   MATERIAL_ISOTROPIC
 };
 
-struct MetalMaterial {
-  Color albedo;
+struct CudaMetalMaterial {
+  CudaColor albedo;
   double fuzz;
 
-  __device__ bool scatter(const Ray &ray, const HitRecord &rec,
-                          ScatterRecord &srec) const {
-    Vec3 reflected = reflect(unit_vector(ray.direction()), rec.normal);
-    Vec3 direction = reflected + fuzz * random_unit_vector();
+  __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
+                          CudaScatterRecord &srec) const {
+    CudaVec3 reflected =
+        cuda_reflect(cuda_unit_vector(ray.direction), rec.normal);
+    CudaVec3 direction = reflected + fuzz * cuda_random_unit_vector();
     srec.attenuation = albedo;
-    srec.skip_pdf_ray = Ray(rec.point, direction, ray.time());
+    srec.skip_pdf_ray = CudaRay(rec.point, direction, ray.time());
     srec.pdf_ptr = nullptr;
     srec.skip_pdf = true;
     return true;
   }
 };
 
-struct LambertianMaterial {
-  Texture texture;
+struct CudaLambertianMaterial {
+  CudaTexture texture;
 
-  __device__ bool scatter(const Ray &ray, const HitRecord &rec,
-                          ScatterRecord &srec) const {
+  __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
+                          CudaScatterRecord &srec) const {
     srec.attenuation = texture.value(rec.u, rec.v, rec.point);
-    srec.pdf_ptr = new CosinePDF(rec.normal);
+    srec.pdf_ptr = new CudaCosinePDF(rec.normal);
     srec.skip_pdf = false;
     return true;
   }
 
-  __device__ double scattering_pdf(const Ray &ray, const HitRecord &rec,
-                                   const Ray &scattered) const {
+  __device__ double scattering_pdf(const CudaRay &ray, const CudaHitRecord &rec,
+                                   const CudaRay &scattered) const {
     double cos_theta =
-        dot_product(rec.normal, unit_vector(scattered.direction()));
-    return cos_theta < 0 ? 0 : cos_theta / PI;
+        cuda_dot_product(rec.normal, cuda_unit_vector(scattered.direction));
+    return cos_theta < 0 ? 0 : cos_theta / CUDA_PI;
   }
 };
 
-struct DielectricMaterial {
+struct CudaDielectricMaterial {
   double refraction_index;
 
-  __device__ bool scatter(const Ray &ray, const HitRecord &rec,
-                          ScatterRecord &srec) const {
-    srec.attenuation = Color(1.0, 1.0, 1.0);
+  __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
+                          CudaScatterRecord &srec) const {
+    srec.attenuation = CudaColor(1.0, 1.0, 1.0);
     srec.pdf_ptr = nullptr;
     srec.skip_pdf = true;
 
     double ri = rec.frontFace ? (1.0 / refraction_index) : refraction_index;
-    Vec3 unit_dir = unit_vector(ray.direction());
-    double cos_theta = fmin(dot_product(-unit_dir, rec.normal), 1.0);
+    Vec3 unit_dir = cuda_unit_vector(ray.direction);
+    double cos_theta = fmin(cuda_dot_product(-unit_dir, rec.normal), 1.0);
     double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
 
     bool cannot_refract = ri * sin_theta > 1.0;
@@ -75,65 +76,65 @@ struct DielectricMaterial {
     r0 = r0 * r0;
     double reflect_prob = r0 + (1 - r0) * pow((1 - cos_theta), 5);
 
-    Vec3 direction;
-    if (cannot_refract || reflect_prob > random_double())
-      direction = reflect(unit_dir, rec.normal);
+    CudaVec3 direction;
+    if (cannot_refract || reflect_prob > cuda_random_double())
+      direction = cuda_reflect(unit_dir, rec.normal);
     else
-      direction = refract(unit_dir, rec.normal, ri);
+      direction = cuda_refract(unit_dir, rec.normal, ri);
 
-    srec.skip_pdf_ray = Ray(rec.point, direction);
+    srec.skip_pdf_ray = CudaRay(rec.point, direction);
     return true;
   }
 };
 
-struct DiffuseLightMaterial {
-  Texture texture;
+struct CudaDiffuseLightMaterial {
+  CudaTexture texture;
 
-  __device__ Color emitted(const Ray &ray, const HitRecord &rec, double u,
-                           double v, const Point3 &p) const {
+  __device__ Color emitted(const CudaRay &ray, const CudaHitRecord &rec,
+                           double u, double v, const CudaPoint3 &p) const {
     if (!rec.frontFace)
-      return Color(0, 0, 0);
+      return CudaColor(0, 0, 0);
     return texture.value(u, v, p);
   }
 };
 
-struct IsotropicMaterial {
-  Texture texture;
+struct CudaIsotropicMaterial {
+  CudaTexture texture;
 
-  __device__ bool scatter(const Ray &ray, const HitRecord &rec,
-                          ScatterRecord &srec) const {
+  __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
+                          CudaScatterRecord &srec) const {
     srec.attenuation = texture.value(rec.u, rec.v, rec.point);
-    srec.pdf_ptr = new SpherePDF();
+    srec.pdf_ptr = new CudaSpherePDF();
     srec.skip_pdf = false;
     return true;
   }
 
-  __device__ double scattering_pdf(const Ray &ray, const HitRecord &rec,
-                                   const Ray &scattered) const {
-    return 1 / (4 * PI);
+  __device__ double scattering_pdf(const CudaRay &ray, const CudaHitRecord &rec,
+                                   const CudaRay &scattered) const {
+    return 1 / (4 * CUDA_PI);
   }
 };
 
-struct Material {
-  MaterialType type;
+struct CudaMaterial {
+  CudaMaterialType type;
 
   union {
-    MetalMaterial metal;
-    LambertianMaterial lambertian;
-    DielectricMaterial dielectric;
-    DiffuseLightMaterial diffuse;
-    IsotropicMaterial isotropic;
+    CudaMetalMaterial metal;
+    CudaLambertianMaterial lambertian;
+    CudaDielectricMaterial dielectric;
+    CudaDiffuseLightMaterial diffuse;
+    CudaIsotropicMaterial isotropic;
   };
 
-  __device__ Color emitted(const Ray &ray, const HitRecord &rec, double u,
-                           double v, const Point3 &p) const {
+  __device__ Color emitted(const CudaRay &ray, const CudaHitRecord &rec,
+                           double u, double v, const CudaPoint3 &p) const {
     if (type == MATERIAL_DIFFUSE_LIGHT)
       return diffuse.emitted(ray, rec, u, v, p);
-    return Color(0, 0, 0);
+    return CudaColor(0, 0, 0);
   }
 
-  __device__ bool scatter(const Ray &ray, const HitRecord &rec,
-                          ScatterRecord &srec) const {
+  __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
+                          CudaScatterRecord &srec) const {
     switch (type) {
     case MATERIAL_METAL:
       return metal.scatter(ray, rec, srec);
@@ -148,8 +149,8 @@ struct Material {
     }
   }
 
-  __device__ double scattering_pdf(const Ray &ray, const HitRecord &rec,
-                                   const Ray &scattered) const {
+  __device__ double scattering_pdf(const CudaRay &ray, const CudaHitRecord &rec,
+                                   const CudaRay &scattered) const {
     switch (type) {
     case MATERIAL_LAMBERTIAN:
       return lambertian.scattering_pdf(ray, rec, scattered);
