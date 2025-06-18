@@ -28,20 +28,20 @@ struct CudaBVHNode {
 
   // Hit test for BVH node.
   __device__ inline bool hit(const CudaRay &ray, CudaInterval t_values,
-                             CudaHitRecord &record) {
+                             CudaHitRecord &record, curandState *rand_state) {
     // Early exit if ray doesn't hit bounding box.
     if (!bbox.hit(ray, t_values))
       return false;
 
     CudaHitRecord temp_record;
-    bool hit_left = left.hit(ray, t_values, temp_record);
+    bool hit_left = left.hit(ray, t_values, temp_record, rand_state);
 
     if (hit_left) {
       t_values.max = temp_record.t;
       record = temp_record;
     }
 
-    bool hit_right = right.hit(ray, t_values, temp_record);
+    bool hit_right = right.hit(ray, t_values, temp_record, rand_state);
     if (hit_right)
       record = temp_record;
 

@@ -46,25 +46,22 @@ struct CudaHittable {
 
   // Main interface methods using manual dispatch.
   __device__ bool hit(const CudaRay &ray, CudaInterval t_range,
-                      CudaHitRecord &rec) const {
+                      CudaHitRecord &rec, curandState *rand_state) const {
     switch (type) {
     case CudaHittableType::HITTABLE_SPHERE:
-      return sphere.hit(ray, t_range, rec);
+      return sphere.hit(ray, t_range, rec, rand_state);
     case CudaHittableType::HITTABLE_PLANE:
-      return plane.hit(ray, t_range, rec);
+      return plane.hit(ray, t_range, rec, rand_state);
     case CudaHittableType::HITTABLE_BVH_NODE:
-      return bvh_node.hit(ray, t_range, rec);
+      return bvh_node.hit(ray, t_range, rec, rand_state);
     case CudaHittableType::HITTABLE_CONSTANT_MEDIUM:
-      // Note: constant medium needs random state - we'll need to provide it
-      // through context. For now, this will need special handling in the
-      // caller.
-      return false; // TODO Placeholder - needs curandState.
+      constant_medium.hit(ray, t_range, rec, rand_state);
     case CudaHittableType::HITTABLE_ROTATE_Y:
-      return rotate_y.hit(ray, t_range, rec);
+      return rotate_y.hit(ray, t_range, rec, rand_state);
     case CudaHittableType::HITTABLE_TRANSLATE:
-      return translate.hit(ray, t_range, rec);
+      return translate.hit(ray, t_range, rec, rand_state);
     case CudaHittableType::HITTABLE_LIST:
-      return hittable_list.hit(ray, t_range, rec);
+      return hittable_list.hit(ray, t_range, rec, rand_state);
     default:
       return false;
     }

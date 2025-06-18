@@ -35,14 +35,14 @@ struct CudaHittableList {
 
   // Hit function: checks ray intersection against all hittables in the list.
   __device__ inline bool hit(const CudaRay &ray, CudaInterval t_range,
-                             CudaHitRecord &out_rec) {
+                             CudaHitRecord &out_rec, curandState *rand_state) {
     CudaHitRecord temp_rec;
     bool hit_anything = false;
     double closest_so_far = t_range.max;
 
     for (int i = 0; i < count; i++) {
       if (hittables[i].hit(ray, CudaInterval(t_range.min, closest_so_far),
-                           temp_rec)) {
+                           temp_rec, rand_state)) {
         hit_anything = true;
         closest_so_far = temp_rec.t;
         out_rec = temp_rec;
