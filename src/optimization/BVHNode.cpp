@@ -43,7 +43,7 @@ bool BVHNode::hit(const Ray &ray, Interval t_values, HitRecord &record) const {
   if (!m_bbox.hit(ray, t_values))
     return false;
 
-  // Recursively check if the left and right child bbox's are hit.
+  // Recursively check if the left and right child bboxes are hit.
   bool left_hit = m_left->hit(ray, t_values, record);
   bool right_hit = m_right->hit(
       ray, Interval(t_values.min(), left_hit ? record.t : t_values.max()),
@@ -57,8 +57,8 @@ bool BVHNode::hit(const Ray &ray, Interval t_values, HitRecord &record) const {
 
 double BVHNode::pdf_value(const Point3 &origin, const Vec3 &direction) const {
   // For a BVH node, the pdf value biasing should be just the average of all the
-  // pdf value biasing of the inner hittable objects. To do this, we can
-  // recursively get the children BVH node pdf values and take the average of
+  // PDF value biasing of the inner hittable objects. To do this, we can
+  // recursively get the children BVH node PDF values and take the average of
   // both of those.
 
   return 0.5 * m_left->pdf_value(origin, direction) +

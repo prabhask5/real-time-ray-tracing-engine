@@ -2,60 +2,69 @@
 
 #ifdef USE_CUDA
 
-#include "CudaAABB.cuh"
-#include "CudaHitRecord.cuh"
-#include "CudaInterval.cuh"
-#include "CudaRay.cuh"
-#include "CudaVec3Utility.cuh"
+#include "../core/HitRecord.cuh"
+#include "../core/Hittable.cuh"
+#include "../core/Ray.cuh"
+#include "../utils/math/Interval.cuh"
+#include "../utils/math/Vec3Utility.cuh"
+#include "AABB.cuh"
 #include <curand_kernel.h>
 
 struct CudaBVHNode {
-  void *left;
-  void *right;
+  CudaHittable left;  // Left child hittable.
+  CudaHittable right; // Right child hittable.
   CudaAABB bbox;
-};
+  bool is_leaf; // True if this node contains actual objects, false if it has
+                // child nodes.
 
-// Manually-dispatched hit test
-__device__ __forceinline__ bool cuda_bvhnode_hit(
-    const CudaBVHNode *node, const CudaRay &ray, CudaInterval t_values,
-    CudaHitRecord &record,
-    bool (*hit_fn)(void *, const CudaRay &, CudaInterval, CudaHitRecord &)) {
-
-  if (!cuda_aabb_hit(node->bbox, ray, t_values))
-    return false;
-
-  CudaHitRecord temp_record;
-  bool hit_left = hit_fn(node->left, ray, t_values, temp_record);
-
-  if (hit_left) {
-    t_values.max_val = temp_record.t;
-    record = temp_record;
+  __device__ CudaBVHNode(const CudaHittable &_left, const CudaHittable &_right,
+                         bool _is_leaf = false)
+      : left(_left), right(_right), is_leaf(_is_leaf) {
+    // Compute bounding box from children.
+    CudaAABB left_box = left.get_bounding_box();
+    CudaAABB right_box = right.get_bounding_box();
+    bbox = CudaAABB(left_box, right_box);
   }
 
-  bool hit_right = hit_fn(node->right, ray, t_values, temp_record);
-  if (hit_right)
-    record = temp_record;
+  // Hit test for BVH node.
+  __device__ inline bool hit(const CudaRay &ray, CudaInterval t_values,
+                             CudaHitRecord &record) {
+    // Early exit if ray doesn't hit bounding box.
+    if (!bbox.hit(ray, t_values))
+      return false;
 
-  return hit_left || hit_right;
-}
+    CudaHitRecord temp_record;
+    bool hit_left = left.hit(ray, t_values, temp_record);
 
-// Returns the PDF value from a BVH node
-__device__ __forceinline__ double cuda_bvhnode_pdf_value(
-    const CudaBVHNode *node, const CudaVec3 &origin, const CudaVec3 &direction,
-    double (*pdf_fn)(void *, const CudaVec3 &, const CudaVec3 &)) {
+    if (hit_left) {
+      t_values.max = temp_record.t;
+      record = temp_record;
+    }
 
-  return 0.5 * pdf_fn(node->left, origin, direction) +
-         0.5 * pdf_fn(node->right, origin, direction);
-}
+    bool hit_right = right.hit(ray, t_values, temp_record);
+    if (hit_right)
+      record = temp_record;
 
-// Generates a random direction toward a BVH subtree
-__device__ __forceinline__ CudaVec3 cuda_bvhnode_random(
-    const CudaBVHNode *node, const CudaVec3 &origin, curandState *rand_state,
-    CudaVec3 (*rand_fn)(void *, const CudaVec3 &, curandState *)) {
+    return hit_left || hit_right;
+  }
 
-  if (curand(rand_state) & 1)
-    return rand_fn(node->left, origin, rand_state);
-  return rand_fn(node->right, origin, rand_state);
-}
+  // PDF value for BVH node (average of children).
+  __device__ inline double pdf_value(const CudaPoint3 &origin,
+                                     const CudaVec3 &direction) {
+    return 0.5 * left.pdf_value(origin, direction) +
+           0.5 * right.pdf_value(origin, direction);
+  }
+
+  // Random direction toward BVH node (random choice of children).
+  __device__ inline CudaVec3 random(const CudaPoint3 &origin,
+                                    curandState *state) {
+    if (curand_uniform_double(state) < 0.5)
+      return left.random(origin, state);
+    return right.random(origin, state);
+  }
+
+  // Get bounding box for BVH node.
+  __device__ inline CudaAABB get_bounding_box() { return bbox; }
+};
 
 #endif // USE_CUDA
