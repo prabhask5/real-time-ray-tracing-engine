@@ -6,8 +6,6 @@
 #include "Ray.hpp"
 #include "Vec3Types.hpp"
 
-class Material;
-
 // Represents captured info from a ray hitting a hittable object.
 struct HitRecord {
   // The point it hit at.
