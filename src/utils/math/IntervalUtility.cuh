@@ -5,14 +5,14 @@
 #include "Interval.cuh"
 
 // Adds a displacement to an interval (shifting the entire interval).
-__device__ inline Interval operator+(const Interval &ival,
-                                     double displacement) {
-  return Interval(ival.min() + displacement, ival.max() + displacement);
+__device__ inline CudaInterval operator+(const CudaInterval &ival,
+                                         double displacement) {
+  return CudaInterval(ival.min + displacement, ival.max + displacement);
 }
 
 // Allows addition in both operand orders.
-__device__ inline Interval operator+(double displacement,
-                                     const Interval &ival) {
+__device__ inline CudaInterval operator+(double displacement,
+                                         const CudaInterval &ival) {
   return ival + displacement;
 }
 
