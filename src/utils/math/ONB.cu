@@ -2,13 +2,13 @@
 
 #ifdef USE_CUDA
 
-// Batch ONB operations for better GPU utilization.
+// Batch ONB operations for better GPU utilization
 
 __global__ void cuda_create_onb_from_normals_kernel(const CudaVec3 *normals,
                                                     CudaONB *onbs, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < count) {
-    onbs[idx] = cuda_onb_from_normal(normals[idx]);
+    onbs[idx] = CudaONB(normals[idx]);
   }
 }
 
@@ -21,14 +21,14 @@ void cuda_batch_create_onb_from_normals(const CudaVec3 *d_normals,
   cudaDeviceSynchronize();
 }
 
-// Batch vector transformation.
+// Batch vector transformation
 __global__ void cuda_transform_vectors_kernel(const CudaONB *onbs,
                                               const CudaVec3 *local_vectors,
                                               CudaVec3 *world_vectors,
                                               int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < count) {
-    world_vectors[idx] = cuda_onb_transform(onbs[idx], local_vectors[idx]);
+    world_vectors[idx] = onbs[idx].transform(local_vectors[idx]);
   }
 }
 
