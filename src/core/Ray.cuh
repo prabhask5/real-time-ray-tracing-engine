@@ -31,18 +31,6 @@ struct CudaRay {
   __device__ __forceinline__ CudaPoint3 at(double t) const {
     return origin + t * direction;
   }
-
-  // Accessors.
-
-  __device__ __forceinline__ const CudaPoint3 &origin() const {
-    return ray.origin;
-  }
-
-  __device__ __forceinline__ const CudaVec3 &direction() const {
-    return ray.direction;
-  }
-
-  __device__ __forceinline__ double time() const { return ray.time; }
 };
 
 #endif // USE_CUDA
