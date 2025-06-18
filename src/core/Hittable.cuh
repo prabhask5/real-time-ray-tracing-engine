@@ -2,72 +2,126 @@
 
 #ifdef USE_CUDA
 
-#include "AABB.cuh"
+#include "../optimization/AABB.cuh"
+#include "../utils/math/Interval.cuh"
 #include "HitRecord.cuh"
-#include "Interval.cuh"
 #include "Ray.cuh"
 #include "Vec3Types.cuh"
+#include <curand_kernel.h>
+
+// Forward declarations for hittable structs.
+struct CudaSphere;
+struct CudaPlane;
+struct CudaBVHNode;
+struct CudaConstantMedium;
+struct CudaRotateY;
+struct CudaTranslate;
+struct CudaHittableList;
 
 // Enumeration for CUDA Hittable object types (used for manual dispatch).
-enum class CudaHittableType {
-  NONE = 0,
-  SPHERE = 1,
-  PLANE = 2,
-  BVH_NODE = 3,
-  CONSTANT_MEDIUM = 4,
-  ROTATE_Y = 5,
-  TRANSLATE = 6,
-  LIST = 7,
+enum CudaHittableType {
+  HITTABLE = 0,
+  HITTABLE_SPHERE = 1,
+  HITTABLE_PLANE = 2,
+  HITTABLE_BVH_NODE = 3,
+  HITTABLE_CONSTANT_MEDIUM = 4,
+  HITTABLE_ROTATE_Y = 5,
+  HITTABLE_TRANSLATE = 6,
+  HITTABLE_LIST = 7,
 };
 
-// A CUDA-compatible Hittable interface implemented using manual dispatch.
-// Each hittable object must implement these function signatures.
-using CudaHitFn = bool (*)(const void *hittable_data, const CudaRay &,
-                           CudaInterval, CudaHitRecord &);
-using CudaPDFValueFn = double (*)(const void *hittable_data, const CudaPoint3 &,
-                                  const CudaVec3 &);
-using CudaRandomFn = CudaVec3 (*)(const void *hittable_data,
-                                  const CudaPoint3 &);
-using CudaBBoxFn = CudaAABB (*)(const void *hittable_data);
-
-// Dispatcher for Hittable interfaces — must be filled per object.
-struct CudaHittableVTable {
-  CudaHitFn hit;
-  CudaPDFValueFn pdf_value;
-  CudaRandomFn random;
-  CudaBBoxFn bounding_box;
-};
-
-// Unified CUDA Hittable wrapper.
-// This allows all types of hittables to be passed around uniformly.
+// Unified CUDA Hittable using manual dispatch pattern.
 struct CudaHittable {
-  void *data;
-  CudaHittableVTable *vtable;
+  CudaHittableType type;
+
+  union {
+    CudaSphere sphere;
+    CudaPlane plane;
+    CudaBVHNode bvh_node;
+    CudaConstantMedium constant_medium;
+    CudaRotateY rotate_y;
+    CudaTranslate translate;
+    CudaHittableList hittable_list;
+  };
+
+  // Main interface methods using manual dispatch.
+  __device__ bool hit(const CudaRay &ray, CudaInterval t_range,
+                      CudaHitRecord &rec) const {
+    switch (type) {
+    case CudaHittableType::HITTABLE_SPHERE:
+      return sphere.hit(ray, t_range, rec);
+    case CudaHittableType::HITTABLE_PLANE:
+      return plane.hit(ray, t_range, rec);
+    case CudaHittableType::HITTABLE_BVH_NODE:
+      return bvh_node.hit(ray, t_range, rec);
+    case CudaHittableType::HITTABLE_CONSTANT_MEDIUM:
+      // Note: constant medium needs random state - we'll need to provide it
+      // through context. For now, this will need special handling in the
+      // caller.
+      return false; // TODO Placeholder - needs curandState.
+    case CudaHittableType::HITTABLE_ROTATE_Y:
+      return rotate_y.hit(ray, t_range, rec);
+    case CudaHittableType::HITTABLE_TRANSLATE:
+      return translate.hit(ray, t_range, rec);
+    case CudaHittableType::HITTABLE_LIST:
+      return hittable_list.hit(ray, t_range, rec);
+    default:
+      return false;
+    }
+  }
+
+  __device__ double pdf_value(const CudaPoint3 &origin,
+                              const CudaVec3 &direction) const {
+    switch (type) {
+    case CudaHittableType::HITTABLE_SPHERE:
+      return sphere.pdf_value(origin, direction);
+    case CudaHittableType::HITTABLE_PLANE:
+      return plane.pdf_value(origin, direction);
+    case CudaHittableType::HITTABLE_BVH_NODE:
+      return bvh_node.pdf_value(origin, direction);
+    case CudaHittableType::HITTABLE_LIST:
+      return hittable_list.pdf_value(origin, direction);
+    default:
+      return 0.0;
+    }
+  }
+
+  __device__ CudaVec3 random(const CudaPoint3 &origin,
+                             curandState *state) const {
+    switch (type) {
+    case CudaHittableType::HITTABLE_SPHERE:
+      return sphere.random(origin, state);
+    case CudaHittableType::HITTABLE_PLANE:
+      return plane.random(origin, state);
+    case CudaHittableType::HITTABLE_BVH_NODE:
+      return bvh_node.random(origin, state);
+    case CudaHittableType::HITTABLE_LIST:
+      return hittable_list.random(origin, state);
+    default:
+      return CudaVec3(1, 0, 0);
+    }
+  }
+
+  __device__ CudaAABB get_bounding_box() const {
+    switch (type) {
+    case CudaHittableType::HITTABLE_SPHERE:
+      return sphere.get_bounding_box();
+    case CudaHittableType::HITTABLE_PLANE:
+      return plane.get_bounding_box();
+    case CudaHittableType::HITTABLE_BVH_NODE:
+      return bvh_node.get_bounding_box();
+    case CudaHittableType::HITTABLE_CONSTANT_MEDIUM:
+      return constant_medium.get_bounding_box();
+    case CudaHittableType::HITTABLE_ROTATE_Y:
+      return rotate_y.get_bounding_box();
+    case CudaHittableType::HITTABLE_TRANSLATE:
+      return translate.get_bounding_box();
+    case CudaHittableType::HITTABLE_LIST:
+      return hittable_list.get_bounding_box();
+    default:
+      return CudaAABB();
+    }
+  }
 };
-
-// Invokes hit(...) on a generic CUDA hittable.
-__device__ inline bool cuda_hittable_hit(const CudaHittable &h,
-                                         const CudaRay &r, CudaInterval t_range,
-                                         CudaHitRecord &rec) {
-  return h.vtable->hit(h.data, r, t_range, rec);
-}
-
-// Invokes pdf_value(...) on a generic CUDA hittable.
-__device__ inline double cuda_hittable_pdf_value(const CudaHittable &h,
-                                                 const CudaPoint3 &origin,
-                                                 const CudaVec3 &direction) {
-  return h.vtable->pdf_value(h.data, origin, direction);
-}
-
-// Invokes random(...) on a generic CUDA hittable.
-__device__ inline CudaVec3 cuda_hittable_random(const CudaHittable &h,
-                                                const CudaPoint3 &origin) {
-  return h.vtable->random(h.data, origin);
-}
-
-// Invokes get_bounding_box(...) on a generic CUDA hittable.
-__device__ inline CudaAABB cuda_hittable_bounding_box(const CudaHittable &h) {
-  return h.vtable->bounding_box(h.data);
-}
 
 #endif // USE_CUDA
