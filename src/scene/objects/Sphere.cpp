@@ -87,7 +87,7 @@ double Sphere::pdf_value(const Point3 &origin, const Vec3 &direction) const {
   double cos_theta_max = std::sqrt(1 - m_radius * m_radius / dist_squared);
   double solid_angle = 2 * PI * (1 - cos_theta_max);
 
-  // PDF Formula for solid angle sampling.
+  // PDF formula for solid angle sampling.
   return 1 / solid_angle;
 }
 

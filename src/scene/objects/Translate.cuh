@@ -30,7 +30,7 @@ struct CudaTranslate {
     CudaRay moved_ray = CudaRay(ray.origin - offset, ray.direction, ray.time);
 
     // Dispatch the hit function of the wrapped object.
-    if (!object->hit(moved_ray, t_range, rec))
+    if (!object->hit(moved_ray, t_range, rec, rand_state))
       return false;
 
     // Offset the hit point back to world space.

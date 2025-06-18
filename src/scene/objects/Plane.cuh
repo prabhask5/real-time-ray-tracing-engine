@@ -82,7 +82,7 @@ struct CudaPlane {
 
     CudaRay ray = CudaRay(origin, direction);
     CudaHitRecord record;
-    if (!plane.hit(ray, CudaInterval(0.001, CUDA_INF), record))
+    if (!this->hit(ray, CudaInterval(0.001, CUDA_INF), record, nullptr))
       return 0.0;
 
     double distance_squared = record.t * record.t * direction.length_squared();
