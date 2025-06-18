@@ -2,10 +2,10 @@
 
 #ifdef USE_CUDA
 
-#include "MaterialTypes.cuh"
+#include "../scene/materials/Material.cuh"
+#include "../utils/math/Vec3Utility.cuh"
 #include "Ray.cuh"
-#include "Vec3Types.hpp"
-#include "Vec3Utility.cuh"
+#include "Vec3Types.cuh"
 
 // Represents captured info from a ray hitting a hittable object in CUDA.
 struct CudaHitRecord {
@@ -16,8 +16,8 @@ struct CudaHitRecord {
   CudaVec3 normal;
 
   // The material of the hittable object.
+  CudaMaterialType material_type;
   void *material_data;
-  const CudaMaterialVTable *material_vtable;
 
   // The parameter t (time) along the ray in which the ray hit the hittable
   // object.
