@@ -13,7 +13,7 @@ struct CudaVec3 {
 
   __device__ CudaVec3(double x_, double y_, double z_) : x(x_), y(y_), z(z_) {}
 
-  // Operator overloads for 3D Vector.
+  // Operator overloads for 3D vector.
 
   __device__ CudaVec3 operator-() const { return CudaVec3(-x, -y, -z); }
 
