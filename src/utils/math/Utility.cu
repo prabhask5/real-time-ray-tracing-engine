@@ -35,7 +35,7 @@ __global__ void cuda_degrees_to_radians_kernel(const double *degrees,
                                                double *radians, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < count) {
-    radians[idx] = degrees_to_radians(degrees[idx]);
+    radians[idx] = cuda_degrees_to_radians(degrees[idx]);
   }
 }
 

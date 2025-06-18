@@ -24,7 +24,7 @@ __device__ inline double cuda_random_double(curandState *state, double min,
   return min + (max - min) * cuda_random_double(state);
 }
 
-// Optimized random integer generation
+// Optimized random integer generation.
 __device__ inline int cuda_random_int(curandState *state, int min, int max) {
   // Use curand directly for integer generation when possible.
   return min + (curand(state) % (max - min + 1));
