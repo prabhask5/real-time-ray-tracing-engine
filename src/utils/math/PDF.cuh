@@ -2,94 +2,200 @@
 
 #ifdef USE_CUDA
 
-#include "../../core/Hittable.cuh"
+#include "../../core/Vec3Types.hpp"
 #include "ONB.cuh"
-#include "PDFTypes.cuh"
 #include "Utility.cuh"
-#include "Vec3.cuh"
 #include "Vec3Utility.cuh"
 #include <curand_kernel.h>
 
-// Abstract base class for probability density functions.
-class PDF {
-public:
-  __device__ virtual ~PDF() = default;
+// PDF types enumeration for manual dispatch.
+enum class CudaPDFType { SPHERE = 0, COSINE = 1, HITTABLE = 2, MIXTURE = 3 };
 
-  __device__ virtual double value(const Vec3 &direction) const = 0;
-  __device__ virtual Vec3 generate(curandState *state) const = 0;
+// POD structs for each type.
+
+struct CudaSpherePDF {};
+
+__device__ inline double cuda_sphere_pdf_value() { return 1.0 / (4.0 * PI); }
+
+__device__ inline CudaVec3 cuda_sphere_pdf_generate(curandState *state) {
+  return cuda_random_unit_vector(state);
+}
+
+struct CudaCosinePDF {
+  CudaONB onb;
 };
 
-// Uniform sampling over the unit sphere.
-class SpherePDF : public PDF {
-public:
-  __device__ SpherePDF() = default;
+__device__ inline double cuda_cosine_pdf_value(const CudaCosinePDF &pdf,
+                                               const CudaVec3 &direction) {
+  double cosine =
+      cuda_dot_product(cuda_unit_vector(direction), cuda_onb_w(pdf.onb));
+  return fmax(0.0, cosine / PI);
+}
 
-  __device__ double value(const Vec3 &direction) const override {
-    return 1.0 / (4.0 * PI);
-  }
+__device__ inline CudaVec3 cuda_cosine_pdf_generate(const CudaCosinePDF &pdf,
+                                                    curandState *state) {
+  return cuda_onb_transform(pdf.onb, cuda_random_cosine_direction(state));
+}
 
-  __device__ Vec3 generate(curandState *state) const override {
-    return random_unit_vector(state);
-  }
+struct CudaHittablePDF {
+  const void *hittable_data;
+  CudaPoint3 origin;
 };
 
-// Cosine-weighted hemisphere sampling PDF.
-class CosinePDF : public PDF {
-public:
-  __device__ CosinePDF(const Vec3 &w) : m_uvw(w) {}
+using CudaHittablePDFValueFn = double (*)(const void *, const CudaPoint3 &,
+                                          const CudaVec3 &);
+using CudaHittableRandomFn = CudaVec3 (*)(const void *, const CudaPoint3 &,
+                                          curandState *);
 
-  __device__ double value(const Vec3 &direction) const override {
-    double cosine_theta = dot_product(unit_vector(direction), m_uvw.w());
-    return fmax(0.0, cosine_theta / PI);
-  }
+__device__ inline double cuda_hittable_pdf_value(const CudaHittablePDF &pdf,
+                                                 const CudaVec3 &direction) {
+  const CudaHittablePDFValueFn *vtable =
+      reinterpret_cast<const CudaHittablePDFValueFn *>(pdf.hittable_data);
+  return (*vtable)(pdf.hittable_data, pdf.origin, direction);
+}
 
-  __device__ Vec3 generate(curandState *state) const override {
-    return m_uvw.transform(random_cosine_direction(state));
-  }
+__device__ inline CudaVec3
+cuda_hittable_pdf_generate(const CudaHittablePDF &pdf, curandState *state) {
+  const CudaHittableRandomFn *vtable =
+      reinterpret_cast<const CudaHittableRandomFn *>(pdf.hittable_data);
+  return (*vtable)(pdf.hittable_data, pdf.origin, state);
+}
 
-private:
-  ONB m_uvw;
+struct CudaMixturePDF {
+  CudaPDFType type0;
+  CudaPDFType type1;
+  void *data0;
+  void *data1;
 };
 
-// PDF for sampling based on a hittable object.
-class HittablePDF : public PDF {
-public:
-  __device__ HittablePDF(const Hittable &objects, const Point3 &origin)
-      : m_objects(objects), m_origin(origin) {}
+__device__ __forceinline__ double
+cuda_mixture_pdf_value(const CudaMixturePDF &m, const CudaVec3 &direction) {
+  double v0 = cuda_dispatch_pdf_value(m.type0, m.data0, direction);
+  double v1 = cuda_dispatch_pdf_value(m.type1, m.data1, direction);
+  return 0.5 * v0 + 0.5 * v1;
+}
 
-  __device__ double value(const Vec3 &direction) const override {
-    return m_objects.pdf_value(m_origin, direction);
-  }
+__device__ __forceinline__ CudaVec3
+cuda_mixture_pdf_generate(const CudaMixturePDF &m, curandState *state) {
+  if (cuda_random_double(state) < 0.5)
+    return cuda_dispatch_pdf_generate(m.type0, m.data0, state);
+  return cuda_dispatch_pdf_generate(m.type1, m.data1, state);
+}
 
-  __device__ Vec3 generate(curandState *state) const override {
-    return m_objects.random(m_origin, state);
-  }
-
-private:
-  const Hittable &m_objects;
-  Point3 m_origin;
+// Unified PDF object.
+struct CudaPDF {
+  CudaPDFType type;
+  union {
+    CudaSpherePDF sphere;
+    CudaCosinePDF cosine;
+    CudaHittablePDF hittable;
+    CudaMixturePDF mixture;
+  } data;
 };
 
-// Mixture of two PDFs.
-class MixturePDF : public PDF {
-public:
-  __device__ MixturePDF(const PDF *p0, const PDF *p1) {
-    m_p[0] = p0;
-    m_p[1] = p1;
+__device__ __forceinline__ double
+cuda_dispatch_pdf_value(CudaPDFType type, void *data,
+                        const CudaVec3 &direction) {
+  switch (type) {
+  case CudaPDFType::SPHERE:
+    return cuda_sphere_pdf_value();
+  case CudaPDFType::COSINE:
+    return cuda_cosine_pdf_value(*reinterpret_cast<CudaCosinePDF *>(data),
+                                 direction);
+  case CudaPDFType::HITTABLE:
+    return cuda_hittable_pdf_value(*reinterpret_cast<CudaHittablePDF *>(data),
+                                   direction);
+  case CudaPDFType::MIXTURE:
+    return cuda_mixture_pdf_value(*reinterpret_cast<CudaMixturePDF *>(data),
+                                  direction);
   }
+  return 0.0;
+}
 
-  __device__ double value(const Vec3 &direction) const override {
-    return 0.5 * m_p[0]->value(direction) + 0.5 * m_p[1]->value(direction);
+__device__ __forceinline__ CudaVec3
+cuda_dispatch_pdf_generate(CudaPDFType type, void *data, curandState *state) {
+  switch (type) {
+  case CudaPDFType::SPHERE:
+    return cuda_sphere_pdf_generate(state);
+  case CudaPDFType::COSINE:
+    return cuda_cosine_pdf_generate(*reinterpret_cast<CudaCosinePDF *>(data),
+                                    state);
+  case CudaPDFType::HITTABLE:
+    return cuda_hittable_pdf_generate(
+        *reinterpret_cast<CudaHittablePDF *>(data), state);
+  case CudaPDFType::MIXTURE:
+    return cuda_mixture_pdf_generate(*reinterpret_cast<CudaMixturePDF *>(data),
+                                     state);
   }
+  return CudaVec3(0, 0, 1);
+}
 
-  __device__ Vec3 generate(curandState *state) const override {
-    if (random_double(state) < 0.5)
-      return m_p[0]->generate(state);
-    return m_p[1]->generate(state);
+// Main entry points.
+
+__device__ __forceinline__ double cuda_pdf_value(const CudaPDF &pdf,
+                                                 const CudaVec3 &direction) {
+  switch (pdf.type) {
+  case CudaPDFType::SPHERE:
+    return cuda_sphere_pdf_value();
+  case CudaPDFType::COSINE:
+    return cuda_cosine_pdf_value(pdf.data.cosine, direction);
+  case CudaPDFType::HITTABLE:
+    return cuda_hittable_pdf_value(pdf.data.hittable, direction);
+  case CudaPDFType::MIXTURE:
+    return cuda_mixture_pdf_value(pdf.data.mixture, direction);
   }
+  return 0.0;
+}
 
-private:
-  const PDF *m_p[2];
-};
+__device__ __forceinline__ CudaVec3 cuda_pdf_generate(const CudaPDF &pdf,
+                                                      curandState *state) {
+  switch (pdf.type) {
+  case CudaPDFType::SPHERE:
+    return cuda_sphere_pdf_generate(state);
+  case CudaPDFType::COSINE:
+    return cuda_cosine_pdf_generate(pdf.data.cosine, state);
+  case CudaPDFType::HITTABLE:
+    return cuda_hittable_pdf_generate(pdf.data.hittable, state);
+  case CudaPDFType::MIXTURE:
+    return cuda_mixture_pdf_generate(pdf.data.mixture, state);
+  }
+  return CudaVec3(0, 0, 1);
+}
+
+// Constructors.
+
+__device__ inline CudaPDF cuda_make_sphere_pdf() {
+  CudaPDF pdf;
+  pdf.type = CudaPDFType::SPHERE;
+  return pdf;
+}
+
+__device__ inline CudaPDF cuda_make_cosine_pdf(const CudaVec3 &normal) {
+  CudaPDF pdf;
+  pdf.type = CudaPDFType::COSINE;
+  pdf.data.cosine.onb = cuda_onb_from_normal(normal);
+  return pdf;
+}
+
+__device__ inline CudaPDF cuda_make_hittable_pdf(const void *hittable_data,
+                                                 const CudaPoint3 &origin) {
+  CudaPDF pdf;
+  pdf.type = CudaPDFType::HITTABLE;
+  pdf.data.hittable.hittable_data = hittable_data;
+  pdf.data.hittable.origin = origin;
+  return pdf;
+}
+
+__device__ inline CudaPDF cuda_make_mixture_pdf(CudaPDFType type0, void *data0,
+                                                CudaPDFType type1,
+                                                void *data1) {
+  CudaPDF pdf;
+  pdf.type = CudaPDFType::MIXTURE;
+  pdf.data.mixture.type0 = type0;
+  pdf.data.mixture.data0 = data0;
+  pdf.data.mixture.type1 = type1;
+  pdf.data.mixture.data1 = data1;
+  return pdf;
+}
 
 #endif // USE_CUDA
