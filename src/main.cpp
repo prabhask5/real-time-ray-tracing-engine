@@ -13,7 +13,7 @@
 #include "scene/objects/Sphere.hpp"
 #include "scene/objects/Translate.hpp"
 #include "scene/textures/CheckerTexture.hpp"
-#include "util/math/Vec3Utility.hpp"
+#include "utils/math/Vec3Utility.hpp"
 #include <memory>
 
 void populate_cornell_box_scene(HittableList &world, HittableList &lights,
@@ -23,7 +23,7 @@ void populate_cornell_box_scene(HittableList &world, HittableList &lights,
   auto green = std::make_shared<LambertianMaterial>(Color(.12, .45, .15));
   auto light = std::make_shared<DiffuseLightMaterial>(Color(15, 15, 15));
 
-  // Cornell box sides
+  // Cornell box sides.
   world.add(std::make_shared<Plane>(Point3(555, 0, 0), Vec3(0, 0, 555),
                                     Vec3(0, 555, 0), green));
   world.add(std::make_shared<Plane>(Point3(0, 0, 555), Vec3(0, 0, -555),
@@ -35,22 +35,22 @@ void populate_cornell_box_scene(HittableList &world, HittableList &lights,
   world.add(std::make_shared<Plane>(Point3(555, 0, 555), Vec3(-555, 0, 0),
                                     Vec3(0, 555, 0), white));
 
-  // Light
+  // Light.
   world.add(std::make_shared<Plane>(Point3(213, 554, 227), Vec3(130, 0, 0),
                                     Vec3(0, 0, 105), light));
 
-  // Box
+  // Box.
   std::shared_ptr<Hittable> box1 =
       make_box(Point3(0, 0, 0), Point3(165, 330, 165), white);
   box1 = std::make_shared<RotateY>(box1, 15);
   box1 = std::make_shared<Translate>(box1, Vec3(265, 0, 295));
   world.add(box1);
 
-  // Glass Sphere
+  // Glass Sphere.
   auto glass = std::make_shared<DielectricMaterial>(1.5);
   world.add(std::make_shared<Sphere>(Point3(190, 90, 190), 90, glass));
 
-  // Light Sources
+  // Light Sources.
   auto empty_material = std::shared_ptr<Material>();
   lights.add(std::make_shared<Plane>(Point3(343, 554, 332), Vec3(-130, 0, 0),
                                      Vec3(0, 0, -105), empty_material));
@@ -84,20 +84,20 @@ void populate_bouncing_spheres_scene(HittableList &world, HittableList &lights,
         std::shared_ptr<Material> sphere_material;
 
         if (choose_mat < 0.8) {
-          // diffuse
+          // Diffuse.
           auto albedo = Color::random() * Color::random();
           sphere_material = std::make_shared<LambertianMaterial>(albedo);
           auto center2 = center + Vec3(0, random_double(0, .5), 0);
           world.add(
               std::make_shared<Sphere>(center, center2, 0.2, sphere_material));
         } else if (choose_mat < 0.95) {
-          // metal
+          // Metal.
           auto albedo = Color::random(0.5, 1);
           auto fuzz = random_double(0, 0.5);
           sphere_material = std::make_shared<MetalMaterial>(albedo, fuzz);
           world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
         } else {
-          // glass
+          // Glass.
           sphere_material = std::make_shared<DielectricMaterial>(1.5);
           world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
         }
