@@ -15,15 +15,53 @@ struct CudaPerlinNoise {
   int perm_x[PERLIN_POINT_COUNT];
   int perm_y[PERLIN_POINT_COUNT];
   int perm_z[PERLIN_POINT_COUNT];
+
+  // Generates a noise value at point p.
+  __device__ __forceinline__ double noise(const CudaPoint3 &p) {
+    double x_frac = p.x - floor(p.x);
+    double y_frac = p.y - floor(p.y);
+    double z_frac = p.z - floor(p.z);
+
+    int x_int = static_cast<int>(floor(p.x));
+    int y_int = static_cast<int>(floor(p.y));
+    int z_int = static_cast<int>(floor(p.z));
+
+    CudaVec3 c[2][2][2];
+
+    for (int di = 0; di < 2; di++)
+      for (int dj = 0; dj < 2; dj++)
+        for (int dk = 0; dk < 2; dk++) {
+          int idx = perm_x[(x_int + di) & 255] ^ perm_y[(y_int + dj) & 255] ^
+                    perm_z[(z_int + dk) & 255];
+          c[di][dj][dk] = rand_vec[idx];
+        }
+
+    return cuda_perlin_interp(c, x_frac, y_frac, z_frac);
+  }
+
+  // Generates turbulant noise, used for visual complexity like smoke or clouds.
+  __device__ __forceinline__ double turb(CudaPoint3 p, int depth) {
+    double accum = 0.0;
+    double weight = 1.0;
+
+    for (int i = 0; i < depth; i++) {
+      accum += weight * noise(p);
+      weight *= 0.5;
+      p *= 2.0;
+    }
+
+    return fabs(accum);
+  }
 };
 
 // Generates a permutation array used to shuffle access to gradients, ensuring
 // pseudo-random yet deterministic behavior.
-__device__ __forceinline__ void cuda_perlin_generate_perm(int *p) {
+__device__ __forceinline__ void cuda_perlin_generate_perm(int *p,
+                                                          curandState *state) {
   for (int i = 0; i < PERLIN_POINT_COUNT; i++)
     p[i] = i;
   for (int i = PERLIN_POINT_COUNT - 1; i > 0; i--) {
-    int target = curand(&p[0]) % (i + 1); // Pseudo-shuffle with curand.
+    int target = curand(state) % (i + 1); // Pseudo-shuffle with curand.
     int tmp = p[i];
     p[i] = p[target];
     p[target] = tmp;
@@ -40,9 +78,9 @@ __device__ __forceinline__ void cuda_init_perlin(CudaPerlinNoise *pn,
                                   curand_uniform_double(state) * 2.0 - 1.0,
                                   curand_uniform_double(state) * 2.0 - 1.0));
   }
-  cuda_perlin_generate_perm(pn->perm_x);
-  cuda_perlin_generate_perm(pn->perm_y);
-  cuda_perlin_generate_perm(pn->perm_z);
+  cuda_perlin_generate_perm(pn->perm_x, state);
+  cuda_perlin_generate_perm(pn->perm_y, state);
+  cuda_perlin_generate_perm(pn->perm_z, state);
 }
 
 // Interpolates dot products between the 8 corners of the unit cube:
@@ -68,46 +106,6 @@ cuda_perlin_interp(const CudaVec3 c[2][2][2], double u, double v, double w) {
       }
 
   return accum;
-}
-
-// Generates a noise value at point p.
-__device__ __forceinline__ double cuda_perlin_noise(const CudaPerlinNoise *pn,
-                                                    const CudaPoint3 &p) {
-  double x_frac = p.x() - floor(p.x());
-  double y_frac = p.y() - floor(p.y());
-  double z_frac = p.z() - floor(p.z());
-
-  int x_int = static_cast<int>(floor(p.x()));
-  int y_int = static_cast<int>(floor(p.y()));
-  int z_int = static_cast<int>(floor(p.z()));
-
-  CudaVec3 c[2][2][2];
-
-  for (int di = 0; di < 2; di++)
-    for (int dj = 0; dj < 2; dj++)
-      for (int dk = 0; dk < 2; dk++) {
-        int idx = pn->perm_x[(x_int + di) & 255] ^
-                  pn->perm_y[(y_int + dj) & 255] ^
-                  pn->perm_z[(z_int + dk) & 255];
-        c[di][dj][dk] = pn->rand_vec[idx];
-      }
-
-  return cuda_perlin_interp(c, x_frac, y_frac, z_frac);
-}
-
-// Generates turbulant noise, used for visual complexity like smoke or clouds.
-__device__ __forceinline__ double cuda_perlin_turb(const CudaPerlinNoise *pn,
-                                                   CudaPoint3 p, int depth) {
-  double accum = 0.0;
-  double weight = 1.0;
-
-  for (int i = 0; i < depth; i++) {
-    accum += weight * cuda_perlin_noise(pn, p);
-    weight *= 0.5;
-    p *= 2.0;
-  }
-
-  return fabs(accum);
 }
 
 #endif // USE_CUDA

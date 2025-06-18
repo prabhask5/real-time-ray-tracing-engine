@@ -6,7 +6,7 @@ static const int PERLIN_POINT_COUNT = 256;
 
 // This class implements Perlin noise. Perlin noise is a type of gradient noise.
 // Instead of assigning random values to each point, it assigns random gradient
-// vectors to grid points and uses interpolation between them. This creates
+// Vectors to grid points and uses interpolation between them. This creates
 // smooth, continuous noise (no harsh jumps like white noise).
 class PerlinNoise {
 public:
@@ -65,7 +65,7 @@ private:
   int m_perm_z[PERLIN_POINT_COUNT];
 
   // Generates a permutation array used to shuffle access to gradients, ensuring
-  // pseudo-random yet deterministic behavior.
+  // Pseudo-random yet deterministic behavior.
   void perlin_generate_perm(int *p) {
     for (int i = 0; i < PERLIN_POINT_COUNT; i++)
       p[i] = i;
@@ -85,7 +85,7 @@ private:
 
   // Interpolates dot products between the 8 corners of the unit cube:
   // - Uses Hermite cubic smoothing: u * u * (3 - 2 * u) to get a smooth noise
-  // gradient.
+  // Gradient.
   // - For each corner:
   // - - Compute weight_v = vector from corner to p
   // - - Dot with gradient vector c[i][j][k]
