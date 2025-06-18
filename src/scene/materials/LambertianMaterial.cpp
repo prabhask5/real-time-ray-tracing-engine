@@ -18,8 +18,7 @@ bool LambertianMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
   // surfaces by adding a random unit vector to the surface normal, generating a
   // new direction roughly biased around the surface normal.
 
-  // Set the attenuation to the albedo of the
-  // material.
+  // Set the attenuation to the albedo of the material.
   scatter_record.attenuation =
       m_texture->value(record.u, record.v, record.point);
 
@@ -38,6 +37,6 @@ double LambertianMaterial::scattering_pdf(const Ray &hit_ray,
   double cos_theta =
       dot_product(record.normal, unit_vector(scattered.direction()));
 
-  // PDF Formula for Lambertian materials.
+  // PDF formula for Lambertian materials.
   return cos_theta < 0 ? 0 : cos_theta / PI;
 }

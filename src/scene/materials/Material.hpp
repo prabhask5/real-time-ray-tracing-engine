@@ -24,8 +24,8 @@ public:
   }
 
   // This method defines how a ray scatters (bounces, refracts, reflects) when
-  // it hits a surface made of this material. NOTE: attenuation is the uutput
-  // color multiplier (e.g., surface absorbs some light). and scattered is the
+  // it hits a surface made of this material. NOTE: attenuation is the output
+  // color multiplier (e.g., surface absorbs some light). And scattered is the
   // output ray (reflected or refracted). Returns false if the ray is absorbed
   // (no output ray), true if it's scattered and we can continue calculation.
   virtual bool scatter(const Ray &hit_ray, const HitRecord &record,
