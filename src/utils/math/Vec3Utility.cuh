@@ -8,7 +8,7 @@
 #include <cmath>
 #include <curand_kernel.h>
 
-// Operator overloads for 3D Vector.
+// Operator overloads for 3D vector.
 
 __device__ inline CudaVec3 operator+(const CudaVec3 &u, const CudaVec3 &v) {
   return CudaVec3(u.x + v.x, u.y + v.y, u.z + v.z);
