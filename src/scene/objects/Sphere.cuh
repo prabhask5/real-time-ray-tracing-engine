@@ -4,7 +4,7 @@
 
 #include "../../core/HitRecord.cuh"
 #include "../../core/Ray.cuh"
-#include "../../core/Vec3Typecuh"
+#include "../../core/Vec3Types.cuh"
 #include "../../optimization/AABB.cuh"
 #include "../../utils/math/Interval.cuh"
 #include "../../utils/math/ONB.cuh"
@@ -22,10 +22,10 @@ struct CudaSphere {
   // Initialize sphere with static center.
   __device__ CudaSphere(const CudaPoint3 &_center, double _radius,
                         const CudaMaterial &_material)
-      : center(_center, Vec3(0, 0, 0)), radius(fmax(0.0, _radius)),
+      : center(_center, CudaVec3(0, 0, 0)), radius(fmax(0.0, _radius)),
         material(_material) {
     CudaVec3 r(radius, radius, radius);
-    bbox = CudaAABB(center - r, center + r);
+    bbox = CudaAABB(_center - r, _center + r);
   }
 
   // Initialize sphere with moving center (motion blur).
@@ -34,9 +34,9 @@ struct CudaSphere {
       : center(before_center, after_center - before_center),
         radius(fmax(0.0, _radius)), material(_material) {
     CudaVec3 r(radius, radius, radius);
-    AABB box1(center.at(0) - r, center.at(0) + r);
-    AABB box2(m_center.at(1) - r, center.at(1) + r);
-    bbox = AABB(box1, box2);
+    CudaAABB box1(before_center - r, before_center + r);
+    CudaAABB box2(after_center - r, after_center + r);
+    bbox = CudaAABB(box1, box2);
   }
 
   // Hit test for sphere.
@@ -62,7 +62,7 @@ struct CudaSphere {
 
     rec.t = root;
     rec.point = ray.at(rec.t);
-    CudaVec3 outward = (rec.point - center) / radius;
+    CudaVec3 outward = (rec.point - current_center) / radius;
     cuda_set_face_normal(rec, ray, outward);
     rec.material_type = material.type;
     rec.material_data = (void *)&material;

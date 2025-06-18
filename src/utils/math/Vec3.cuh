@@ -66,9 +66,9 @@ __device__ inline CudaVec3 cuda_vec_random(curandState *state) {
 
 __device__ inline CudaVec3 cuda_vec_random(double min, double max,
                                            curandState *state) {
-  return CudaVec3(cuda_random_double(min, max, state),
-                  cuda_random_double(min, max, state),
-                  cuda_random_double(min, max, state));
+  return CudaVec3(cuda_random_double(state, min, max),
+                  cuda_random_double(state, min, max),
+                  cuda_random_double(state, min, max));
 }
 
 #endif // USE_CUDA

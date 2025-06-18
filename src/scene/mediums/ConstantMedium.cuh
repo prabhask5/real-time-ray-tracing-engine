@@ -25,10 +25,11 @@ struct CudaConstantMedium {
 
     CudaHitRecord rec1, rec2;
 
-    if (!boundary->hit(ray, CUDA_UNIVERSE_INTERVAL, rec1))
+    if (!boundary->hit(ray, CUDA_UNIVERSE_INTERVAL, rec1, rand_state))
       return false;
 
-    if (!boundary->hit(ray, CudaInterval(rec1.t + 0.0001, CUDA_INF), rec2))
+    if (!boundary->hit(ray, CudaInterval(rec1.t + 0.0001, CUDA_INF), rec2,
+                       rand_state))
       return false;
 
     if (rec1.t < t_values.min)
@@ -43,8 +44,7 @@ struct CudaConstantMedium {
     double ray_length = ray.direction.length();
     double distance_inside = (rec2.t - rec1.t) * ray_length;
 
-    double hit_distance =
-        medium.neg_inv_density * log(cuda_random_double(rand_state));
+    double hit_distance = neg_inv_density * log(cuda_random_double(rand_state));
 
     if (hit_distance > distance_inside)
       return false;
@@ -53,8 +53,8 @@ struct CudaConstantMedium {
     record.point = ray.at(record.t);
     record.normal = CudaVec3(1, 0, 0); // arbitrary
     record.front_face = true;
-    record.material_type = medium.phase_function.type;
-    record.material_data = (void *)&medium.phase_function;
+    record.material_type = phase_function.type;
+    record.material_data = (void *)&phase_function;
 
     return true;
   }

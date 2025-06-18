@@ -12,12 +12,12 @@
 
 // CUDA-compatible translation wrapper for a hittable objec
 struct CudaTranslate {
-  CudaHittable object; // Can be any hittable (e.g. CudaSphere, CudaBox)
+  const CudaHittable *object; // Can be any hittable (e.g. CudaSphere, CudaBox)
   CudaVec3 offset;
   CudaAABB bbox;
 
   // Initializes the translated object wrapper.
-  __device__ CudaTranslate(const CudaHittable &_object, const CudaVec3 &_offset)
+  __device__ CudaTranslate(const CudaHittable *_object, const CudaVec3 &_offset)
       : object(_object), offset(_offset) {
     bbox = object->get_bounding_box() + offset;
   }

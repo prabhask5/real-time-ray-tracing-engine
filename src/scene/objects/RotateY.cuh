@@ -20,11 +20,11 @@ struct CudaRotateY {
   CudaAABB bbox;
 
   // Initializes a CudaRotateY wrapper given an object and angle in degrees.
-  __device__ CudaRotateY(const CudaHittable *object, double angle_degrees,
-                         const CudaAABB &original_bbox) {
+  __device__ CudaRotateY(const CudaHittable *_object, double angle_degrees,
+                         const CudaAABB &original_bbox)
+      : object(_object) {
 
     double radians = cuda_degrees_to_radians(angle_degrees);
-    object = object;
     sin_theta = sin(radians);
     cos_theta = cos(radians);
 
@@ -69,7 +69,7 @@ struct CudaRotateY {
 
     CudaRay rotated_ray = CudaRay(origin, direction, ray.time);
 
-    if (!object->hit(rotated_ray, t_values, record))
+    if (!object->hit(rotated_ray, t_values, record, rand_state))
       return false;
 
     // Transform point and normal back to world space.

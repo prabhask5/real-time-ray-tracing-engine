@@ -55,7 +55,7 @@ struct CudaHittable {
     case CudaHittableType::HITTABLE_BVH_NODE:
       return bvh_node.hit(ray, t_range, rec, rand_state);
     case CudaHittableType::HITTABLE_CONSTANT_MEDIUM:
-      constant_medium.hit(ray, t_range, rec, rand_state);
+      return constant_medium.hit(ray, t_range, rec, rand_state);
     case CudaHittableType::HITTABLE_ROTATE_Y:
       return rotate_y.hit(ray, t_range, rec, rand_state);
     case CudaHittableType::HITTABLE_TRANSLATE:
