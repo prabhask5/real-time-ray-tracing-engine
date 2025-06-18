@@ -15,10 +15,10 @@ __device__ inline double cuda_linear_to_gamma(double linear_component) {
   return 0.0;
 }
 
-// Optimized color value to byte conversion with gamma correction
+// Optimized color value to byte conversion with gamma correction.
 __device__ inline unsigned char cuda_to_byte(double color_value) {
   double x = cuda_linear_to_gamma(color_value);
-  // Manual clamp is faster than creating Interval object
+  // Manual clamp is faster than creating Interval object.
   x = fmax(0.000, fmin(0.999, x));
   return static_cast<unsigned char>(256 * x);
 }
@@ -32,7 +32,7 @@ __device__ inline void cuda_color_to_bytes(const CudaColor &pixel_color,
   b = cuda_to_byte(pixel_color.z);
 }
 
-// GPU batch processing functions (implemented in .cu file)
+// GPU batch processing functions (implemented in .cu file).
 void cuda_convert_colors_to_rgb(const CudaColor *d_colors,
                                 unsigned char *d_rgb_data, int width,
                                 int height, int samples_per_pixel);
