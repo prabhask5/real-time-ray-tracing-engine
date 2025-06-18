@@ -26,3 +26,11 @@ bool Translate::hit(const Ray &ray, Interval t_values,
 
   return true;
 }
+
+double Translate::pdf_value(const Point3 &origin, const Vec3 &direction) const {
+  return m_object->pdf_value(origin - m_offset, direction);
+}
+
+Vec3 Translate::random(const Point3 &origin) const {
+  return m_object->random(origin - m_offset);
+}
