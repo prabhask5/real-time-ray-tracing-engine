@@ -42,7 +42,7 @@ bool HittableList::hit(const Ray &ray, Interval t_values,
 double HittableList::pdf_value(const Point3 &origin,
                                const Vec3 &direction) const {
   // For a list of hittable objects, the pdf value biasing should be just the
-  // average of all the pdf value biasing of the inner hittable objects.
+  // average of all the PDF value biasing of the inner hittable objects.
 
   double weight = 1.0 / m_objects.size();
   double sum = 0.0;
