@@ -69,7 +69,7 @@ double Plane::pdf_value(const Point3 &origin, const Vec3 &direction) const {
   double cosine =
       std::fabs(dot_product(direction, record.normal) / direction.length());
 
-  // PDF Formula for solid angle sampling.
+  // PDF formula for solid angle sampling.
   return distance_squared / (cosine * m_surface_area);
 }
 
