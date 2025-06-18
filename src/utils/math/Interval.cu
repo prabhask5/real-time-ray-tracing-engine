@@ -9,7 +9,7 @@ __global__ void cuda_clamp_values_kernel(double *values,
                                          int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < count) {
-    values[idx] = cuda_interval_clamp(intervals[idx], values[idx]);
+    values[idx] = intervals[idx].clamp(values[idx]);
   }
 }
 
