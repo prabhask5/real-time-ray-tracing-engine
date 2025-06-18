@@ -18,6 +18,10 @@ public:
 
   bool hit(const Ray &ray, Interval t_values, HitRecord &record) const override;
 
+  double pdf_value(const Point3 &origin, const Vec3 &direction) const override;
+
+  Vec3 random(const Point3 &origin) const override;
+
 private:
   // Underlying object.
   HittablePtr m_object;

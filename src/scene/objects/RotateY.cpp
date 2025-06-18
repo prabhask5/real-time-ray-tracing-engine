@@ -74,3 +74,31 @@ bool RotateY::hit(const Ray &ray, Interval t_values, HitRecord &record) const {
 
   return true;
 }
+
+double RotateY::pdf_value(const Point3 &origin, const Vec3 &direction) const {
+  // Transform origin and direction to object space.
+  Point3 rotated_origin(m_cos_theta * origin.x() - m_sin_theta * origin.z(),
+                        origin.y(),
+                        m_sin_theta * origin.x() + m_cos_theta * origin.z());
+
+  Vec3 rotated_direction(
+      m_cos_theta * direction.x() - m_sin_theta * direction.z(), direction.y(),
+      m_sin_theta * direction.x() + m_cos_theta * direction.z());
+
+  return m_object->pdf_value(rotated_origin, rotated_direction);
+}
+
+Vec3 RotateY::random(const Point3 &origin) const {
+  // Transform origin to object space.
+  Point3 rotated_origin(m_cos_theta * origin.x() - m_sin_theta * origin.z(),
+                        origin.y(),
+                        m_sin_theta * origin.x() + m_cos_theta * origin.z());
+
+  // Get random direction in object space.
+  Vec3 obj_dir = m_object->random(rotated_origin);
+
+  // Transform back to world space.
+  return Vec3(m_cos_theta * obj_dir.x() + m_sin_theta * obj_dir.z(),
+              obj_dir.y(),
+              -m_sin_theta * obj_dir.x() + m_cos_theta * obj_dir.z());
+}
