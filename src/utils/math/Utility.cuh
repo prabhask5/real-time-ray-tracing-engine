@@ -6,8 +6,8 @@
 #include <curand_kernel.h>
 
 // Use compile-time constants for better optimization.
-static constexpr double CUDA_INF = CUDART_INF;
-static constexpr double CUDA_PI = 3.1415926535897932385;
+__device__ __constant__ double CUDA_INF = CUDART_INF;
+__device__ __constant__ double CUDA_PI = 3.1415926535897932385;
 
 __device__ inline double cuda_degrees_to_radians(double degrees) {
   return degrees * CUDA_PI / 180.0;
