@@ -16,6 +16,20 @@ struct CudaPerlinNoise {
   int perm_y[PERLIN_POINT_COUNT];
   int perm_z[PERLIN_POINT_COUNT];
 
+  // Initializes the Perlin noise object by generating gradient vectors and
+  // permutations.
+  __device__ CudaPerlinNoise(curandState *state) {
+    for (int i = 0; i < PERLIN_POINT_COUNT; i++) {
+      rand_vec[i] =
+          cuda_unit_vector(CudaVec3(curand_uniform_double(state) * 2.0 - 1.0,
+                                    curand_uniform_double(state) * 2.0 - 1.0,
+                                    curand_uniform_double(state) * 2.0 - 1.0));
+    }
+    cuda_perlin_generate_perm(perm_x, state);
+    cuda_perlin_generate_perm(perm_y, state);
+    cuda_perlin_generate_perm(perm_z, state);
+  }
+
   // Generates a noise value at point p.
   __device__ __forceinline__ double noise(const CudaPoint3 &p) {
     double x_frac = p.x - floor(p.x);
@@ -66,21 +80,6 @@ __device__ __forceinline__ void cuda_perlin_generate_perm(int *p,
     p[i] = p[target];
     p[target] = tmp;
   }
-}
-
-// Initializes the Perlin noise object by generating gradient vectors and
-// permutations.
-__device__ __forceinline__ void cuda_init_perlin(CudaPerlinNoise *pn,
-                                                 curandState *state) {
-  for (int i = 0; i < PERLIN_POINT_COUNT; i++) {
-    pn->rand_vec[i] =
-        cuda_unit_vector(CudaVec3(curand_uniform_double(state) * 2.0 - 1.0,
-                                  curand_uniform_double(state) * 2.0 - 1.0,
-                                  curand_uniform_double(state) * 2.0 - 1.0));
-  }
-  cuda_perlin_generate_perm(pn->perm_x, state);
-  cuda_perlin_generate_perm(pn->perm_y, state);
-  cuda_perlin_generate_perm(pn->perm_z, state);
 }
 
 // Interpolates dot products between the 8 corners of the unit cube:
