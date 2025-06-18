@@ -32,37 +32,34 @@ struct CudaTexture {
     CudaCheckerTexture checker;
     CudaNoiseTexture noise;
   };
+
+  __device__ inline CudaColor value(double u, double v, const CudaPoint3 &p) {
+    switch (type) {
+    case CudaTextureType::Solid:
+      return solid.albedo;
+
+    case CudaTextureType::Noise: {
+      double t = noise.scale * p.z + 10.0 * noise.perlin.turb(p, 7);
+      return CudaColor(0.5, 0.5, 0.5) * (1.0 + sin(t));
+    }
+
+    case CudaTextureType::Checker: {
+      double inv_scale = 1.0 / checker.scale;
+      int x = static_cast<int>(floor(inv_scale * p.x));
+      int y = static_cast<int>(floor(inv_scale * p.y));
+      int z = static_cast<int>(floor(inv_scale * p.z));
+      bool is_even = (x + y + z) % 2 == 0;
+
+      const void *tex_ptr =
+          is_even ? checker.even_texture : checker.odd_texture;
+      CudaTextureType tex_type = is_even ? checker.even_type : checker.odd_type;
+
+      return cuda_texture_value(*reinterpret_cast<const CudaTexture *>(tex_ptr),
+                                u, v, p);
+    }
+    }
+    return CudaColor(0, 0, 0); // Should never reach here.
+  }
 };
-
-__device__ inline Color texture_value(const CudaTexture &texture, double u,
-                                      double v, const Point3 &p) {
-  switch (texture.type) {
-  case CudaTextureType::Solid:
-    return texture.solid.albedo;
-
-  case CudaTextureType::Noise: {
-    double t = texture.noise.scale * p.z() +
-               10.0 * perlin_turbulence(texture.noise.perlin, p, 7);
-    return Color(0.5, 0.5, 0.5) * (1.0 + sin(t));
-  }
-
-  case CudaTextureType::Checker: {
-    double inv_scale = 1.0 / texture.checker.scale;
-    int x = static_cast<int>(floor(inv_scale * p.x()));
-    int y = static_cast<int>(floor(inv_scale * p.y()));
-    int z = static_cast<int>(floor(inv_scale * p.z()));
-    bool is_even = (x + y + z) % 2 == 0;
-
-    const void *tex_ptr =
-        is_even ? texture.checker.even_texture : texture.checker.odd_texture;
-    CudaTextureType tex_type =
-        is_even ? texture.checker.even_type : texture.checker.odd_type;
-
-    return texture_value(*reinterpret_cast<const CudaTexture *>(tex_ptr), u, v,
-                         p);
-  }
-  }
-  return Color(0, 0, 0); // Should never reach here
-}
 
 #endif // USE_CUDA
