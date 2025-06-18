@@ -6,7 +6,7 @@
 #include "../../utils/math/PerlinNoise.cuh"
 #include "../../utils/math/Vec3.cuh"
 
-enum class CudaTextureType { Solid, Checker, Noise };
+enum class CudaTextureType { SOLID, CHECKER, NOISE };
 
 struct CudaSolidColorTexture {
   CudaColor albedo;
@@ -35,15 +35,15 @@ struct CudaTexture {
 
   __device__ inline CudaColor value(double u, double v, const CudaPoint3 &p) {
     switch (type) {
-    case CudaTextureType::Solid:
+    case CudaTextureType::SOLID:
       return solid.albedo;
 
-    case CudaTextureType::Noise: {
+    case CudaTextureType::NOISE: {
       double t = noise.scale * p.z + 10.0 * noise.perlin.turb(p, 7);
       return CudaColor(0.5, 0.5, 0.5) * (1.0 + sin(t));
     }
 
-    case CudaTextureType::Checker: {
+    case CudaTextureType::CHECKER: {
       double inv_scale = 1.0 / checker.scale;
       int x = static_cast<int>(floor(inv_scale * p.x));
       int y = static_cast<int>(floor(inv_scale * p.y));

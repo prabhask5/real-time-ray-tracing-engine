@@ -43,7 +43,7 @@ struct CudaLambertianMaterial {
   __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
                           CudaScatterRecord &srec, curandState *state) const {
     srec.attenuation = texture.value(rec.u, rec.v, rec.point);
-    srec.pdf_type = CUDA_PDF_COSINE;
+    srec.pdf_type = CudaMaterialType::CUDA_PDF_COSINE;
     srec.pdf_data = nullptr; // Cosine PDF is handled by type
     srec.skip_pdf = false;
     return true;
@@ -104,7 +104,7 @@ struct CudaIsotropicMaterial {
   __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
                           CudaScatterRecord &srec, curandState *state) const {
     srec.attenuation = texture.value(rec.u, rec.v, rec.point);
-    srec.pdf_type = CUDA_PDF_SPHERE;
+    srec.pdf_type = CudaMaterialType::CUDA_PDF_SPHERE;
     srec.pdf_data = nullptr; // Sphere PDF is handled by type
     srec.skip_pdf = false;
     return true;
@@ -129,7 +129,7 @@ struct CudaMaterial {
 
   __device__ CudaColor emitted(const CudaRay &ray, const CudaHitRecord &rec,
                                double u, double v, const CudaPoint3 &p) const {
-    if (type == MATERIAL_DIFFUSE_LIGHT)
+    if (type == CudaMaterialType::MATERIAL_DIFFUSE_LIGHT)
       return diffuse.emitted(ray, rec, u, v, p);
     return CudaColor(0, 0, 0);
   }
@@ -137,13 +137,13 @@ struct CudaMaterial {
   __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
                           CudaScatterRecord &srec, curandState *state) const {
     switch (type) {
-    case MATERIAL_METAL:
+    case CudaMaterialType::MATERIAL_METAL:
       return metal.scatter(ray, rec, srec, state);
-    case MATERIAL_LAMBERTIAN:
+    case CudaMaterialType::MATERIAL_LAMBERTIAN:
       return lambertian.scatter(ray, rec, srec, state);
-    case MATERIAL_DIELECTRIC:
+    case CudaMaterialType::MATERIAL_DIELECTRIC:
       return dielectric.scatter(ray, rec, srec, state);
-    case MATERIAL_ISOTROPIC:
+    case CudaMaterialType::MATERIAL_ISOTROPIC:
       return isotropic.scatter(ray, rec, srec, state);
     default:
       return false;
@@ -153,9 +153,9 @@ struct CudaMaterial {
   __device__ double scattering_pdf(const CudaRay &ray, const CudaHitRecord &rec,
                                    const CudaRay &scattered) const {
     switch (type) {
-    case MATERIAL_LAMBERTIAN:
+    case CudaMaterialType::MATERIAL_LAMBERTIAN:
       return lambertian.scattering_pdf(ray, rec, scattered);
-    case MATERIAL_ISOTROPIC:
+    case CudaMaterialType::MATERIAL_ISOTROPIC:
       return isotropic.scattering_pdf(ray, rec, scattered);
     default:
       return 0.0;

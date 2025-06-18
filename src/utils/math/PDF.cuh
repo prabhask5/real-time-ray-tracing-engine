@@ -98,13 +98,13 @@ struct CudaPDF {
 
   __device__ inline double value(const CudaVec3 &direction) {
     switch (type) {
-    case CUDA_PDF_SPHERE:
+    case CudaPDFType::CUDA_PDF_SPHERE:
       return data.sphere.value(direction);
-    case CUDA_PDF_COSINE:
+    case CudaPDFType::CUDA_PDF_COSINE:
       return data.cosine.value(direction);
-    case CUDA_PDF_HITTABLE:
+    case CudaPDFType::CUDA_PDF_HITTABLE:
       return data.hittable.value(direction);
-    case CUDA_PDF_MIXTURE:
+    case CudaPDFType::CUDA_PDF_MIXTURE:
       return data.mixture.value(direction);
     }
     return 0.0;
@@ -112,13 +112,13 @@ struct CudaPDF {
 
   __device__ inline CudaVec3 generate(curandState *state) {
     switch (type) {
-    case CUDA_PDF_SPHERE:
+    case CudaPDFType::CUDA_PDF_SPHERE:
       return data.sphere.generate(state);
-    case CUDA_PDF_COSINE:
+    case CudaPDFType::CUDA_PDF_COSINE:
       return data.cosine.generate(state);
-    case CUDA_PDF_HITTABLE:
+    case CudaPDFType::CUDA_PDF_HITTABLE:
       return data.hittable.generate(state);
-    case CUDA_PDF_MIXTURE:
+    case CudaPDFType::CUDA_PDF_MIXTURE:
       return data.mixture.generate(state);
     }
     return CudaVec3(0, 0, 1);
@@ -129,13 +129,13 @@ struct CudaPDF {
 __device__ inline double cuda_dispatch_pdf_value(CudaPDFType type, void *data,
                                                  const CudaVec3 &direction) {
   switch (type) {
-  case CUDA_PDF_SPHERE:
+  case CudaPDFType::CUDA_PDF_SPHERE:
     return reinterpret_cast<CudaSpherePDF *>(data)->value(direction);
-  case CUDA_PDF_COSINE:
+  case CudaPDFType::CUDA_PDF_COSINE:
     return reinterpret_cast<CudaCosinePDF *>(data)->value(direction);
-  case CUDA_PDF_HITTABLE:
+  case CudaPDFType::CUDA_PDF_HITTABLE:
     return reinterpret_cast<CudaHittablePDF *>(data)->value(direction);
-  case CUDA_PDF_MIXTURE:
+  case CudaPDFType::CUDA_PDF_MIXTURE:
     return reinterpret_cast<CudaMixturePDF *>(data)->value(direction);
   }
   return 0.0;
@@ -144,13 +144,13 @@ __device__ inline double cuda_dispatch_pdf_value(CudaPDFType type, void *data,
 __device__ inline CudaVec3
 cuda_dispatch_pdf_generate(CudaPDFType type, void *data, curandState *state) {
   switch (type) {
-  case CUDA_PDF_SPHERE:
+  case CudaPDFType::CUDA_PDF_SPHERE:
     return reinterpret_cast<CudaSpherePDF *>(data)->generate(state);
-  case CUDA_PDF_COSINE:
+  case CudaPDFType::CUDA_PDF_COSINE:
     return reinterpret_cast<CudaCosinePDF *>(data)->generate(state);
-  case CUDA_PDF_HITTABLE:
+  case CudaPDFType::CUDA_PDF_HITTABLE:
     return reinterpret_cast<CudaHittablePDF *>(data)->generate(state);
-  case CUDA_PDF_MIXTURE:
+  case CudaPDFType::CUDA_PDF_MIXTURE:
     return reinterpret_cast<CudaMixturePDF *>(data)->generate(state);
   }
   return CudaVec3(0, 0, 1);
@@ -159,14 +159,14 @@ cuda_dispatch_pdf_generate(CudaPDFType type, void *data, curandState *state) {
 // Helper constructor functions
 __device__ inline CudaPDF cuda_make_sphere_pdf() {
   CudaPDF pdf;
-  pdf.type = CUDA_PDF_SPHERE;
+  pdf.type = CudaPDFType::CUDA_PDF_SPHERE;
   pdf.data.sphere = CudaSpherePDF();
   return pdf;
 }
 
 __device__ inline CudaPDF cuda_make_cosine_pdf(const CudaVec3 &normal) {
   CudaPDF pdf;
-  pdf.type = CUDA_PDF_COSINE;
+  pdf.type = CudaPDFType::CUDA_PDF_COSINE;
   pdf.data.cosine = CudaCosinePDF(normal);
   return pdf;
 }
@@ -174,7 +174,7 @@ __device__ inline CudaPDF cuda_make_cosine_pdf(const CudaVec3 &normal) {
 __device__ inline CudaPDF cuda_make_hittable_pdf(const void *objects_data,
                                                  const CudaPoint3 &origin) {
   CudaPDF pdf;
-  pdf.type = CUDA_PDF_HITTABLE;
+  pdf.type = CudaPDFType::CUDA_PDF_HITTABLE;
   pdf.data.hittable = CudaHittablePDF(objects_data, origin);
   return pdf;
 }
@@ -183,7 +183,7 @@ __device__ inline CudaPDF cuda_make_mixture_pdf(CudaPDFType type0, void *data0,
                                                 CudaPDFType type1,
                                                 void *data1) {
   CudaPDF pdf;
-  pdf.type = CUDA_PDF_MIXTURE;
+  pdf.type = CudaPDFType::CUDA_PDF_MIXTURE;
   pdf.data.mixture = CudaMixturePDF(type0, data0, type1, data1);
   return pdf;
 }
