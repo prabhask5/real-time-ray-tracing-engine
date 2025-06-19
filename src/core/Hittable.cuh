@@ -7,6 +7,7 @@
 #include "HitRecord.cuh"
 #include "Ray.cuh"
 #include "Vec3Types.cuh"
+#include <assert.h>
 #include <curand_kernel.h>
 
 // Forward declarations for hittable structs.

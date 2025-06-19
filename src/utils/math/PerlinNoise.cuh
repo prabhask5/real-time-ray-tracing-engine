@@ -54,7 +54,7 @@ struct CudaPerlinNoise {
   }
 
   // Generates turbulant noise, used for visual complexity like smoke or clouds.
-  __device__ __forceinline__ double turb(CudaPoint3 p, int depth) {
+  __device__ __forceinline__ double turb(CudaPoint3 p, int depth) const {
     double accum = 0.0;
     double weight = 1.0;
 

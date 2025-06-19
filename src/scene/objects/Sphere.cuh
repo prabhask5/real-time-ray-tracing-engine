@@ -31,7 +31,7 @@ struct CudaSphere {
   // Initialize sphere with moving center (motion blur).
   __device__ CudaSphere(const CudaPoint3 &before_center,
                         const CudaPoint3 &after_center, double _radius,
-                        MaterialPtr _material)
+                        const CudaMaterial &_material)
       : center(before_center, after_center - before_center),
         radius(fmax(0.0, _radius)), material(_material) {
     CudaVec3 r(radius, radius, radius);

@@ -24,6 +24,9 @@ struct CudaMetalMaterial {
   CudaColor albedo;
   double fuzz;
 
+  __device__ CudaMetalMaterial(CudaColor _albedo, double _fuzz)
+      : albedo(_albedo), fuzz(_fuzz) {}
+
   __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
                           CudaScatterRecord &srec, curandState *state) const {
     CudaVec3 reflected =
@@ -39,6 +42,8 @@ struct CudaMetalMaterial {
 
 struct CudaLambertianMaterial {
   CudaTexture texture;
+
+  __device__ CudaLambertianMaterial(CudaTexture _texture) : texture(_texture) {}
 
   __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
                           CudaScatterRecord &srec, curandState *state) const {
@@ -59,6 +64,9 @@ struct CudaLambertianMaterial {
 
 struct CudaDielectricMaterial {
   double refraction_index;
+
+  __device__ CudaDielectricMaterial(double _refraction_index)
+      : refraction_index(_refraction_index) {}
 
   __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
                           CudaScatterRecord &srec, curandState *state) const {
@@ -90,6 +98,9 @@ struct CudaDielectricMaterial {
 struct CudaDiffuseLightMaterial {
   CudaTexture texture;
 
+  __device__ CudaDiffuseLightMaterial(CudaTexture _texture)
+      : texture(_texture) {}
+
   __device__ CudaColor emitted(const CudaRay &ray, const CudaHitRecord &rec,
                                double u, double v, const CudaPoint3 &p) const {
     if (!rec.front_face)
@@ -100,6 +111,8 @@ struct CudaDiffuseLightMaterial {
 
 struct CudaIsotropicMaterial {
   CudaTexture texture;
+
+  __device__ CudaIsotropicMaterial(CudaTexture _texture) : texture(_texture) {}
 
   __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
                           CudaScatterRecord &srec, curandState *state) const {
@@ -125,12 +138,12 @@ struct CudaMaterial {
     CudaDielectricMaterial dielectric;
     CudaDiffuseLightMaterial diffuse;
     CudaIsotropicMaterial isotropic;
-  };
+  } data;
 
   __device__ CudaColor emitted(const CudaRay &ray, const CudaHitRecord &rec,
                                double u, double v, const CudaPoint3 &p) const {
     if (type == CudaMaterialType::MATERIAL_DIFFUSE_LIGHT)
-      return diffuse.emitted(ray, rec, u, v, p);
+      return data.diffuse.emitted(ray, rec, u, v, p);
     return CudaColor(0, 0, 0);
   }
 
@@ -138,13 +151,13 @@ struct CudaMaterial {
                           CudaScatterRecord &srec, curandState *state) const {
     switch (type) {
     case CudaMaterialType::MATERIAL_METAL:
-      return metal.scatter(ray, rec, srec, state);
+      return data.metal.scatter(ray, rec, srec, state);
     case CudaMaterialType::MATERIAL_LAMBERTIAN:
-      return lambertian.scatter(ray, rec, srec, state);
+      return data.lambertian.scatter(ray, rec, srec, state);
     case CudaMaterialType::MATERIAL_DIELECTRIC:
-      return dielectric.scatter(ray, rec, srec, state);
+      return data.dielectric.scatter(ray, rec, srec, state);
     case CudaMaterialType::MATERIAL_ISOTROPIC:
-      return isotropic.scatter(ray, rec, srec, state);
+      return data.isotropic.scatter(ray, rec, srec, state);
     default:
       return false;
     }
@@ -154,13 +167,55 @@ struct CudaMaterial {
                                    const CudaRay &scattered) const {
     switch (type) {
     case CudaMaterialType::MATERIAL_LAMBERTIAN:
-      return lambertian.scattering_pdf(ray, rec, scattered);
+      return data.lambertian.scattering_pdf(ray, rec, scattered);
     case CudaMaterialType::MATERIAL_ISOTROPIC:
-      return isotropic.scattering_pdf(ray, rec, scattered);
+      return data.isotropic.scattering_pdf(ray, rec, scattered);
     default:
       return 0.0;
     }
   }
 };
+
+// Helper constructor functions.
+
+__device__ inline CudaMaterial
+cuda_make_lambertian_material(CudaTexture texture) {
+  CudaMaterial material;
+  material.type = CudaTextureType::MATERIAL_LAMBERTIAN;
+  texture.data.lambertian = CudaLambertianMaterial(texture);
+  return material;
+}
+
+__device__ inline CudaMaterial cuda_make_metal_material(CudaColor albedo,
+                                                        double fuzz) {
+  CudaMaterial material;
+  material.type = CudaTextureType::MATERIAL_METAL;
+  texture.data.metal = CudaMetalMaterial(albedo, fuzz);
+  return material;
+}
+
+__device__ inline CudaMaterial
+cuda_make_dielectric_material(double refraction_index) {
+  CudaMaterial material;
+  material.type = CudaTextureType::MATERIAL_DIELECTRIC;
+  texture.data.dielectric = CudaDielectricMaterial(refraction_index);
+  return material;
+}
+
+__device__ inline CudaMaterial
+cuda_make_diffuse_light_material(CudaTexture texture) {
+  CudaMaterial material;
+  material.type = CudaTextureType::MATERIAL_DIFFUSE_LIGHT;
+  texture.data.diffuse = CudaDiffuseLightMaterial(texture);
+  return material;
+}
+
+__device__ inline CudaMaterial
+cuda_make_isotropic_material(CudaTexture texture) {
+  CudaMaterial material;
+  material.type = CudaTextureType::MATERIAL_ISOTROPIC;
+  texture.data.isotropic = CudaIsotropicMaterial(texture);
+  return material;
+}
 
 #endif // USE_CUDA
