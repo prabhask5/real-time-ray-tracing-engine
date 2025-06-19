@@ -8,3 +8,5 @@ SolidColorTexture::SolidColorTexture(double r, double g, double b)
 Color SolidColorTexture::value(double u, double v, const Point3 &p) const {
   return m_albedo;
 }
+
+const Color &SolidColorTexture::get_albedo() const { return m_albedo; }

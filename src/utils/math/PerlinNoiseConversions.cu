@@ -21,9 +21,8 @@ batch_cuda_to_cpu_perlin_noise_kernel(const CudaPerlinNoise *cuda_perlins,
   }
 }
 
-__host__ void batch_cpu_to_cuda_perlin_noise(const PerlinNoise *cpu_perlins,
-                                             CudaPerlinNoise *cuda_perlins,
-                                             int count) {
+void batch_cpu_to_cuda_perlin_noise(const PerlinNoise *cpu_perlins,
+                                    CudaPerlinNoise *cuda_perlins, int count) {
   dim3 block_size(256);
   dim3 grid_size((count + block_size.x - 1) / block_size.x);
   batch_cpu_to_cuda_perlin_noise_kernel<<<grid_size, block_size>>>(
@@ -31,9 +30,8 @@ __host__ void batch_cpu_to_cuda_perlin_noise(const PerlinNoise *cpu_perlins,
   cudaDeviceSynchronize();
 }
 
-__host__ void
-batch_cuda_to_cpu_perlin_noise(const CudaPerlinNoise *cuda_perlins,
-                               PerlinNoise *cpu_perlins, int count) {
+void batch_cuda_to_cpu_perlin_noise(const CudaPerlinNoise *cuda_perlins,
+                                    PerlinNoise *cpu_perlins, int count) {
   dim3 block_size(256);
   dim3 grid_size((count + block_size.x - 1) / block_size.x);
   batch_cuda_to_cpu_perlin_noise_kernel<<<grid_size, block_size>>>(

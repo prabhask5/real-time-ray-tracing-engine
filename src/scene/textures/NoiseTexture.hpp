@@ -7,7 +7,15 @@ class NoiseTexture : public Texture {
 public:
   NoiseTexture(double scale);
 
+  NoiseTexture(double scale, PerlinNoise &perlin);
+
   Color value(double u, double v, const Point3 &p) const override;
+
+  // Getter const methods.
+
+  double get_scale() const;
+
+  const PerlinNoise &get_perlin() const;
 
 private:
   PerlinNoise m_perlin;

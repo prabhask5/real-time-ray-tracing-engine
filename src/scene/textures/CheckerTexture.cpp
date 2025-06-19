@@ -25,3 +25,9 @@ Color CheckerTexture::value(double u, double v, const Point3 &p) const {
   return is_even ? m_even_texture->value(u, v, p)
                  : m_odd_texture->value(u, v, p);
 }
+
+double CheckerTexture::get_scale() const { return m_scale; }
+
+TexturePtr CheckerTexture::get_even_texture() const { return m_even_texture; }
+
+TexturePtr CheckerTexture::get_odd_texture() const { return m_odd_texture; }

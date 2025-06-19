@@ -7,8 +7,7 @@
 #include "Vec3Conversions.cuh"
 
 // Convert CPU PerlinNoise to CUDA PerlinNoise.
-__host__ __device__ inline CudaPerlinNoise
-cpu_to_cuda_perlin_noise(const PerlinNoise &cpu_perlin) {
+inline CudaPerlinNoise cpu_to_cuda_perlin_noise(const PerlinNoise &cpu_perlin) {
   const Vec3 cpu_rand_vec[PERLIN_POINT_COUNT] = cpu_perlin.rand_vec();
   const CudaVec3 rand_vec[PERLIN_POINT_COUNT];
   for (int i = 0; i < PERLIN_POINT_COUNT; ++i)
@@ -19,7 +18,7 @@ cpu_to_cuda_perlin_noise(const PerlinNoise &cpu_perlin) {
 }
 
 // Convert CUDA PerlinNoise to CPU PerlinNoise.
-__host__ __device__ inline PerlinNoise
+inline PerlinNoise
 cuda_to_cpu_perlin_noise(const CudaPerlinNoise &cuda_perlin) {
   const CudaVec3 cuda_rand_vec[PERLIN_POINT_COUNT] = cuda_perlin.rand_vec;
   const Vec3 rand_vec[PERLIN_POINT_COUNT];
@@ -31,11 +30,9 @@ cuda_to_cpu_perlin_noise(const CudaPerlinNoise &cuda_perlin) {
 }
 
 // Batch conversion functions for performance.
-__host__ void batch_cpu_to_cuda_perlin_noise(const PerlinNoise *cpu_perlins,
-                                             CudaPerlinNoise *cuda_perlins,
-                                             int count);
-__host__ void
-batch_cuda_to_cpu_perlin_noise(const CudaPerlinNoise *cuda_perlins,
-                               PerlinNoise *cpu_perlins, int count);
+void batch_cpu_to_cuda_perlin_noise(const PerlinNoise *cpu_perlins,
+                                    CudaPerlinNoise *cuda_perlins, int count);
+void batch_cuda_to_cpu_perlin_noise(const CudaPerlinNoise *cuda_perlins,
+                                    PerlinNoise *cpu_perlins, int count);
 
 #endif // USE_CUDA

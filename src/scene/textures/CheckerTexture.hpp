@@ -11,6 +11,14 @@ public:
 
   Color value(double u, double v, const Point3 &p) const override;
 
+  // Getter const methods.
+
+  double get_scale() const;
+
+  TexturePtr get_even_texture() const;
+
+  TexturePtr get_odd_texture() const;
+
 private:
   double m_scale;
   TexturePtr m_even_texture;

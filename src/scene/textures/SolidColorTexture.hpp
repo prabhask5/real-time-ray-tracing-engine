@@ -11,6 +11,10 @@ public:
 
   Color value(double u, double v, const Point3 &p) const override;
 
+  // Getter const methods.
+
+  const Color &get_albedo() const;
+
 private:
   // Defines the base color for the material.
   Color m_albedo;

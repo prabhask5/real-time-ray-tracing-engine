@@ -22,9 +22,8 @@ batch_cuda_to_cpu_interval_kernel(const CudaInterval *cuda_intervals,
   }
 }
 
-__host__ void batch_cpu_to_cuda_interval(const Interval *cpu_intervals,
-                                         CudaInterval *cuda_intervals,
-                                         int count) {
+void batch_cpu_to_cuda_interval(const Interval *cpu_intervals,
+                                CudaInterval *cuda_intervals, int count) {
   dim3 block_size(256);
   dim3 grid_size((count + block_size.x - 1) / block_size.x);
   batch_cpu_to_cuda_interval_kernel<<<grid_size, block_size>>>(
@@ -32,8 +31,8 @@ __host__ void batch_cpu_to_cuda_interval(const Interval *cpu_intervals,
   cudaDeviceSynchronize();
 }
 
-__host__ void batch_cuda_to_cpu_interval(const CudaInterval *cuda_intervals,
-                                         Interval *cpu_intervals, int count) {
+void batch_cuda_to_cpu_interval(const CudaInterval *cuda_intervals,
+                                Interval *cpu_intervals, int count) {
   dim3 block_size(256);
   dim3 grid_size((count + block_size.x - 1) / block_size.x);
   batch_cuda_to_cpu_interval_kernel<<<grid_size, block_size>>>(

@@ -20,8 +20,8 @@ __global__ void batch_cuda_to_cpu_vec3_kernel(const CudaVec3 *cuda_vecs,
   }
 }
 
-__host__ void batch_cpu_to_cuda_vec3(const Vec3 *cpu_vecs, CudaVec3 *cuda_vecs,
-                                     int count) {
+void batch_cpu_to_cuda_vec3(const Vec3 *cpu_vecs, CudaVec3 *cuda_vecs,
+                            int count) {
   dim3 block_size(256);
   dim3 grid_size((count + block_size.x - 1) / block_size.x);
   batch_cpu_to_cuda_vec3_kernel<<<grid_size, block_size>>>(cpu_vecs, cuda_vecs,
@@ -29,8 +29,8 @@ __host__ void batch_cpu_to_cuda_vec3(const Vec3 *cpu_vecs, CudaVec3 *cuda_vecs,
   cudaDeviceSynchronize();
 }
 
-__host__ void batch_cuda_to_cpu_vec3(const CudaVec3 *cuda_vecs, Vec3 *cpu_vecs,
-                                     int count) {
+void batch_cuda_to_cpu_vec3(const CudaVec3 *cuda_vecs, Vec3 *cpu_vecs,
+                            int count) {
   dim3 block_size(256);
   dim3 grid_size((count + block_size.x - 1) / block_size.x);
   batch_cuda_to_cpu_vec3_kernel<<<grid_size, block_size>>>(cuda_vecs, cpu_vecs,
