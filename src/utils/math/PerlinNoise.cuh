@@ -6,20 +6,20 @@
 #include <curand_kernel.h>
 
 // Number of random gradient vectors and permutations.
-static const int PERLIN_POINT_COUNT = 256;
+static const int CUDA_PERLIN_POINT_COUNT = 256;
 
 // This struct implements Perlin noise for CUDA. It holds gradient vectors and
 // permutation tables.
 struct CudaPerlinNoise {
-  CudaVec3 rand_vec[PERLIN_POINT_COUNT];
-  int perm_x[PERLIN_POINT_COUNT];
-  int perm_y[PERLIN_POINT_COUNT];
-  int perm_z[PERLIN_POINT_COUNT];
+  CudaVec3 rand_vec[CUDA_PERLIN_POINT_COUNT];
+  int perm_x[CUDA_PERLIN_POINT_COUNT];
+  int perm_y[CUDA_PERLIN_POINT_COUNT];
+  int perm_z[CUDA_PERLIN_POINT_COUNT];
 
   // Initializes the Perlin noise object by generating gradient vectors and
   // permutations.
   __device__ CudaPerlinNoise(curandState *state) {
-    for (int i = 0; i < PERLIN_POINT_COUNT; i++) {
+    for (int i = 0; i < CUDA_PERLIN_POINT_COUNT; i++) {
       rand_vec[i] =
           cuda_unit_vector(CudaVec3(curand_uniform_double(state) * 2.0 - 1.0,
                                     curand_uniform_double(state) * 2.0 - 1.0,
@@ -28,6 +28,18 @@ struct CudaPerlinNoise {
     cuda_perlin_generate_perm(perm_x, state);
     cuda_perlin_generate_perm(perm_y, state);
     cuda_perlin_generate_perm(perm_z, state);
+  }
+
+  __device__ CudaPerlinNoise(CudaVec3 _rand_vec[CUDA_PERLIN_POINT_COUNT],
+                             int _perm_x[CUDA_PERLIN_POINT_COUNT],
+                             int _perm_y[CUDA_PERLIN_POINT_COUNT],
+                             int _perm_z[CUDA_PERLIN_POINT_COUNT]) {
+    for (int i = 0; i < CUDA_PERLIN_POINT_COUNT; i++) {
+      rand_vec[i] = _rand_vec[i];
+      perm_x[i] = _perm_x[i];
+      perm_y[i] = _perm_y[i];
+      perm_z[i] = _perm_z[i];
+    }
   }
 
   // Generates a noise value at point p.
@@ -72,9 +84,9 @@ struct CudaPerlinNoise {
 // pseudo-random yet deterministic behavior.
 __device__ __forceinline__ void cuda_perlin_generate_perm(int *p,
                                                           curandState *state) {
-  for (int i = 0; i < PERLIN_POINT_COUNT; i++)
+  for (int i = 0; i < CUDA_PERLIN_POINT_COUNT; i++)
     p[i] = i;
-  for (int i = PERLIN_POINT_COUNT - 1; i > 0; i--) {
+  for (int i = CUDA_PERLIN_POINT_COUNT - 1; i > 0; i--) {
     int target = curand(state) % (i + 1); // Pseudo-shuffle with curand.
     int tmp = p[i];
     p[i] = p[target];

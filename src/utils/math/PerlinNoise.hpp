@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vec3Utility.hpp"
+#include <algorithm>
 
 static const int PERLIN_POINT_COUNT = 256;
 
@@ -17,6 +18,14 @@ public:
     perlin_generate_perm(m_perm_x);
     perlin_generate_perm(m_perm_y);
     perlin_generate_perm(m_perm_z);
+  }
+
+  PerlinNoise(Vec3 rand_vec[PERLIN_POINT_COUNT], int perm_x[PERLIN_POINT_COUNT],
+              int perm_y[PERLIN_POINT_COUNT], int perm_z[PERLIN_POINT_COUNT]) {
+    std::copy(rand_vec, rand_vec + PERLIN_POINT_COUNT, m_rand_vec);
+    std::copy(perm_x, perm_x + PERLIN_POINT_COUNT, m_perm_x);
+    std::copy(perm_y, perm_y + PERLIN_POINT_COUNT, m_perm_y);
+    std::copy(perm_z, perm_z + PERLIN_POINT_COUNT, m_perm_z);
   }
 
   // Generates a noise value at point p.
@@ -57,6 +66,16 @@ public:
 
     return std::fabs(accum);
   }
+
+  // Getter const methods.
+
+  const Vec3 *rand_vec() const { return m_rand_vec; }
+
+  const int *perm_x() const { return m_perm_x; }
+
+  const int *perm_y() const { return m_perm_y; }
+
+  const int *perm_z() const { return m_perm_z; }
 
 private:
   Vec3 m_rand_vec[PERLIN_POINT_COUNT];
