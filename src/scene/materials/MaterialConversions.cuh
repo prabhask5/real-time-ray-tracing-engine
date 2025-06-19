@@ -14,7 +14,7 @@
 #include "MetalMaterial.hpp"
 
 // Convert CPU LambertianMaterial to CUDA Material.
-__host__ inline CudaMaterial
+inline CudaMaterial
 cpu_to_cuda_lambertian_material(const LambertianMaterial &lambertian) {
   CudaMaterial cuda_material;
   cuda_material.type = CudaMaterialType::MATERIAL_LAMBERTIAN;
@@ -28,8 +28,7 @@ cpu_to_cuda_lambertian_material(const LambertianMaterial &lambertian) {
 }
 
 // Convert CPU MetalMaterial to CUDA Material.
-__host__ inline CudaMaterial
-cpu_to_cuda_metal_material(const MetalMaterial &metal) {
+inline CudaMaterial cpu_to_cuda_metal_material(const MetalMaterial &metal) {
   CudaMaterial cuda_material;
   cuda_material.type = CudaMaterialType::MATERIAL_METAL;
 
@@ -43,7 +42,7 @@ cpu_to_cuda_metal_material(const MetalMaterial &metal) {
 }
 
 // Convert CPU DielectricMaterial to CUDA Material.
-__host__ __device__ inline CudaMaterial
+inline CudaMaterial
 cpu_to_cuda_dielectric_material(const DielectricMaterial &dielectric) {
   CudaMaterial cuda_material;
   cuda_material.type = CudaMaterialType::MATERIAL_DIELECTRIC;
@@ -55,7 +54,7 @@ cpu_to_cuda_dielectric_material(const DielectricMaterial &dielectric) {
 }
 
 // Convert CPU DiffuseLightMaterial to CUDA Material.
-__host__ inline CudaMaterial
+inline CudaMaterial
 cpu_to_cuda_diffuse_light_material(const DiffuseLightMaterial &light) {
   CudaMaterial cuda_material;
   cuda_material.type = CudaMaterialType::MATERIAL_DIFFUSE_LIGHT;
@@ -69,7 +68,7 @@ cpu_to_cuda_diffuse_light_material(const DiffuseLightMaterial &light) {
 }
 
 // Convert CPU IsotropicMaterial to CUDA Material.
-__host__ inline CudaMaterial
+inline CudaMaterial
 cpu_to_cuda_isotropic_material(const IsotropicMaterial &isotropic) {
   CudaMaterial cuda_material;
   cuda_material.type = CudaMaterialType::MATERIAL_ISOTROPIC;
@@ -83,8 +82,7 @@ cpu_to_cuda_isotropic_material(const IsotropicMaterial &isotropic) {
 }
 
 // Generic material conversion with runtime type detection.
-__host__ inline CudaMaterial
-cpu_to_cuda_material(const Material &cpu_material) {
+inline CudaMaterial cpu_to_cuda_material(const Material &cpu_material) {
   // Try to cast to different material types.
   if (auto lambertian =
           dynamic_cast<const LambertianMaterial *>(&cpu_material)) {
@@ -104,16 +102,14 @@ cpu_to_cuda_material(const Material &cpu_material) {
     // Default to Lambertian.
     CudaMaterial cuda_material;
     cuda_material.type = CudaMaterialType::MATERIAL_LAMBERTIAN;
-    CudaTexture default_texture =
-        create_cuda_solid_texture(Color(0.7, 0.7, 0.7));
+    CudaTexture default_texture = cuda_make_solid_texture(Color(0.7, 0.7, 0.7));
     cuda_material.data.lambertian = CudaLambertianMaterial(default_texture);
     return cuda_material;
   }
 }
 
 // Convert CUDA Material to CPU Material.
-__host__ inline MaterialPtr
-cuda_to_cpu_material(const CudaMaterial &cuda_material) {
+inline MaterialPtr cuda_to_cpu_material(const CudaMaterial &cuda_material) {
   switch (cuda_material.type) {
   case CudaMaterialType::MATERIAL_LAMBERTIAN: {
     // Extract texture and create Lambertian material.
@@ -145,11 +141,10 @@ cuda_to_cpu_material(const CudaMaterial &cuda_material) {
 }
 
 // Batch conversion functions.
-__host__ void batch_cpu_to_cuda_material(const Material **cpu_materials,
-                                         CudaMaterial *cuda_materials,
-                                         int count);
-__host__ void
-batch_cuda_to_cpu_material(const CudaMaterial *cuda_materials,
-                           std::shared_ptr<Material> *cpu_materials, int count);
+void batch_cpu_to_cuda_material(const Material **cpu_materials,
+                                CudaMaterial *cuda_materials, int count);
+void batch_cuda_to_cpu_material(const CudaMaterial *cuda_materials,
+                                std::shared_ptr<Material> *cpu_materials,
+                                int count);
 
 #endif // USE_CUDA

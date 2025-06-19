@@ -20,8 +20,7 @@ __global__ void batch_cuda_to_cpu_ray_kernel(const CudaRay *cuda_rays,
   }
 }
 
-__host__ void batch_cpu_to_cuda_ray(const Ray *cpu_rays, CudaRay *cuda_rays,
-                                    int count) {
+void batch_cpu_to_cuda_ray(const Ray *cpu_rays, CudaRay *cuda_rays, int count) {
   dim3 block_size(256);
   dim3 grid_size((count + block_size.x - 1) / block_size.x);
   batch_cpu_to_cuda_ray_kernel<<<grid_size, block_size>>>(cpu_rays, cuda_rays,
@@ -29,8 +28,7 @@ __host__ void batch_cpu_to_cuda_ray(const Ray *cpu_rays, CudaRay *cuda_rays,
   cudaDeviceSynchronize();
 }
 
-__host__ void batch_cuda_to_cpu_ray(const CudaRay *cuda_rays, Ray *cpu_rays,
-                                    int count) {
+void batch_cuda_to_cpu_ray(const CudaRay *cuda_rays, Ray *cpu_rays, int count) {
   dim3 block_size(256);
   dim3 grid_size((count + block_size.x - 1) / block_size.x);
   batch_cuda_to_cpu_ray_kernel<<<grid_size, block_size>>>(cuda_rays, cpu_rays,

@@ -20,8 +20,8 @@ __global__ void batch_cuda_to_cpu_aabb_kernel(const CudaAABB *cuda_aabbs,
   }
 }
 
-__host__ void batch_cpu_to_cuda_aabb(const AABB *cpu_aabbs,
-                                     CudaAABB *cuda_aabbs, int count) {
+void batch_cpu_to_cuda_aabb(const AABB *cpu_aabbs, CudaAABB *cuda_aabbs,
+                            int count) {
   dim3 block_size(256);
   dim3 grid_size((count + block_size.x - 1) / block_size.x);
   batch_cpu_to_cuda_aabb_kernel<<<grid_size, block_size>>>(cpu_aabbs,
@@ -29,8 +29,8 @@ __host__ void batch_cpu_to_cuda_aabb(const AABB *cpu_aabbs,
   cudaDeviceSynchronize();
 }
 
-__host__ void batch_cuda_to_cpu_aabb(const CudaAABB *cuda_aabbs,
-                                     AABB *cpu_aabbs, int count) {
+void batch_cuda_to_cpu_aabb(const CudaAABB *cuda_aabbs, AABB *cpu_aabbs,
+                            int count) {
   dim3 block_size(256);
   dim3 grid_size((count + block_size.x - 1) / block_size.x);
   batch_cuda_to_cpu_aabb_kernel<<<grid_size, block_size>>>(cuda_aabbs,
