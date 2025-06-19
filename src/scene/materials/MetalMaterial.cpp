@@ -27,3 +27,7 @@ bool MetalMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
 
   return true;
 }
+
+Color MetalMaterial::get_albedo() const { return m_albedo; }
+
+double MetalMaterial::get_fuzz() const { return m_fuzz; }

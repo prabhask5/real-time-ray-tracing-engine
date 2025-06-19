@@ -49,3 +49,7 @@ bool DielectricMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
 
   return true;
 }
+
+double DielectricMaterial::get_refraction_index() const {
+  return m_refraction_index;
+}

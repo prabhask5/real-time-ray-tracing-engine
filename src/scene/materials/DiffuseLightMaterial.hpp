@@ -15,6 +15,9 @@ public:
   Color emitted(const Ray &hit_ray, const HitRecord &record, double u, double v,
                 const Point3 &point) const override;
 
+  // Getter method for conversion.
+  TexturePtr get_texture() const;
+
 private:
   TexturePtr m_texture;
 };

@@ -29,3 +29,5 @@ double IsotropicMaterial::scattering_pdf(const Ray &hit_ray,
   // directions, regardless of normal or incident direction.
   return 1 / (4 * PI);
 }
+
+TexturePtr IsotropicMaterial::get_texture() const { return m_texture; }

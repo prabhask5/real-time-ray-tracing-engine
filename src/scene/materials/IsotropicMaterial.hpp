@@ -18,6 +18,9 @@ public:
   double scattering_pdf(const Ray &hit_ray, const HitRecord &record,
                         const Ray &scattered) const override;
 
+  // Getter method for conversion.
+  TexturePtr get_texture() const;
+
 private:
   TexturePtr m_texture;
 };

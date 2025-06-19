@@ -178,43 +178,43 @@ struct CudaMaterial {
 
 // Helper constructor functions.
 
-__device__ inline CudaMaterial
+__host__ __device__ inline CudaMaterial
 cuda_make_lambertian_material(CudaTexture texture) {
   CudaMaterial material;
-  material.type = CudaTextureType::MATERIAL_LAMBERTIAN;
-  texture.data.lambertian = CudaLambertianMaterial(texture);
+  material.type = CudaMaterialType::MATERIAL_LAMBERTIAN;
+  material.data.lambertian = CudaLambertianMaterial(texture);
   return material;
 }
 
-__device__ inline CudaMaterial cuda_make_metal_material(CudaColor albedo,
-                                                        double fuzz) {
+__host__ __device__ inline CudaMaterial
+cuda_make_metal_material(CudaColor albedo, double fuzz) {
   CudaMaterial material;
-  material.type = CudaTextureType::MATERIAL_METAL;
-  texture.data.metal = CudaMetalMaterial(albedo, fuzz);
+  material.type = CudaMaterialType::MATERIAL_METAL;
+  material.data.metal = CudaMetalMaterial(albedo, fuzz);
   return material;
 }
 
-__device__ inline CudaMaterial
+__host__ __device__ inline CudaMaterial
 cuda_make_dielectric_material(double refraction_index) {
   CudaMaterial material;
-  material.type = CudaTextureType::MATERIAL_DIELECTRIC;
-  texture.data.dielectric = CudaDielectricMaterial(refraction_index);
+  material.type = CudaMaterialType::MATERIAL_DIELECTRIC;
+  material.data.dielectric = CudaDielectricMaterial(refraction_index);
   return material;
 }
 
-__device__ inline CudaMaterial
+__host__ __device__ inline CudaMaterial
 cuda_make_diffuse_light_material(CudaTexture texture) {
   CudaMaterial material;
-  material.type = CudaTextureType::MATERIAL_DIFFUSE_LIGHT;
-  texture.data.diffuse = CudaDiffuseLightMaterial(texture);
+  material.type = CudaMaterialType::MATERIAL_DIFFUSE_LIGHT;
+  material.data.diffuse = CudaDiffuseLightMaterial(texture);
   return material;
 }
 
-__device__ inline CudaMaterial
+__host__ __device__ inline CudaMaterial
 cuda_make_isotropic_material(CudaTexture texture) {
   CudaMaterial material;
-  material.type = CudaTextureType::MATERIAL_ISOTROPIC;
-  texture.data.isotropic = CudaIsotropicMaterial(texture);
+  material.type = CudaMaterialType::MATERIAL_ISOTROPIC;
+  material.data.isotropic = CudaIsotropicMaterial(texture);
   return material;
 }
 

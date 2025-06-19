@@ -40,3 +40,5 @@ double LambertianMaterial::scattering_pdf(const Ray &hit_ray,
   // PDF formula for Lambertian materials.
   return cos_theta < 0 ? 0 : cos_theta / PI;
 }
+
+TexturePtr LambertianMaterial::get_texture() const { return m_texture; }

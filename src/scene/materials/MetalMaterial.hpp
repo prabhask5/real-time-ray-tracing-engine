@@ -12,6 +12,11 @@ public:
   bool scatter(const Ray &hit_ray, const HitRecord &record,
                ScatterRecord &scatter_record) const override;
 
+  // Getter methods for conversion.
+  Color get_albedo() const;
+
+  double get_fuzz() const;
+
 private:
   // Defines the base color for the material.
   Color m_albedo;

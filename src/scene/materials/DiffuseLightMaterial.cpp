@@ -20,3 +20,5 @@ Color DiffuseLightMaterial::emitted(const Ray &hit_ray, const HitRecord &record,
   // Determines the color of the light emitted from the texture of the material.
   return m_texture->value(u, v, point);
 }
+
+TexturePtr DiffuseLightMaterial::get_texture() const { return m_texture; }
