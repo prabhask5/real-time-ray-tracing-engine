@@ -96,8 +96,8 @@ struct CudaPlane {
   __device__ CudaVec3 random(const CudaPoint3 &origin,
                              curandState *rand_state) {
 
-    double u = curand_uniform_double(rand_state);
-    double v = curand_uniform_double(rand_state);
+    double u = cuda_random_double(rand_state);
+    double v = cuda_random_double(rand_state);
 
     CudaPoint3 point_on_plane = corner + u * u_side + v * v_side;
     return point_on_plane - origin;

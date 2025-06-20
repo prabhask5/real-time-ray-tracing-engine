@@ -23,18 +23,22 @@ struct CudaInterval {
 
   // Getter const methods.
 
-  __device__ inline double size() { return max - min; }
+  __device__ inline double size() const { return max - min; }
 
-  __device__ inline bool contains(double x) { return min <= x && x <= max; }
+  __device__ inline bool contains(double x) const {
+    return min <= x && x <= max;
+  }
 
-  __device__ inline bool surrounds(double x) { return min < x && x < max; }
+  __device__ inline bool surrounds(double x) const {
+    return min < x && x < max;
+  }
 
-  __device__ inline double clamp(double x) {
+  __device__ inline double clamp(double x) const {
     return fmin(fmax(x, min), max); // Single branchless call.
   }
 
   // Make a new interval that is expanded by the delta value.
-  __device__ inline CudaInterval expand(double delta) {
+  __device__ inline CudaInterval expand(double delta) const {
     double padding = delta * 0.5;
     return CudaInterval(min - padding, max + padding);
   }

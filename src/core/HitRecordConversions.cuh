@@ -2,10 +2,10 @@
 
 #ifdef USE_CUDA
 
-#include "../core/HitRecord.cuh"
-#include "../core/HitRecord.hpp"
 #include "../scene/materials/MaterialConversions.cuh"
 #include "../utils/math/Vec3Conversions.cuh"
+#include "HitRecord.cuh"
+#include "HitRecord.hpp"
 
 // Convert CPU HitRecord to CUDA HitRecord.
 __host__ __device__ inline CudaHitRecord
@@ -15,7 +15,7 @@ cpu_to_cuda_hit_record(const HitRecord &cpu_record) {
   cuda_record.point = cpu_to_cuda_vec3(cpu_record.point);
   cuda_record.normal = cpu_to_cuda_vec3(cpu_record.normal);
   cuda_record.t = cpu_record.t;
-  cuda_record.front_face = cpu_record.front_face;
+  cuda_record.front_face = cpu_record.frontFace;
   cuda_record.u = cpu_record.u;
   cuda_record.v = cpu_record.v;
 
@@ -43,7 +43,7 @@ inline HitRecord cuda_to_cpu_hit_record(const CudaHitRecord &cuda_record) {
   cpu_record.point = cuda_to_cpu_vec3(cuda_record.point);
   cpu_record.normal = cuda_to_cpu_vec3(cuda_record.normal);
   cpu_record.t = cuda_record.t;
-  cpu_record.front_face = cuda_record.front_face;
+  cpu_record.frontFace = cuda_record.front_face;
   cpu_record.u = cuda_record.u;
   cpu_record.v = cuda_record.v;
 

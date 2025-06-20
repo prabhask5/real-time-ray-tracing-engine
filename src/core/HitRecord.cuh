@@ -2,10 +2,13 @@
 
 #ifdef USE_CUDA
 
-#include "../scene/materials/Material.cuh"
 #include "../utils/math/Vec3Utility.cuh"
 #include "Ray.cuh"
 #include "Vec3Types.cuh"
+
+// Forward declarations to avoid circular dependency
+enum CudaMaterialType;
+struct CudaMaterial;
 
 // Represents captured info from a ray hitting a hittable object in CUDA.
 struct CudaHitRecord {

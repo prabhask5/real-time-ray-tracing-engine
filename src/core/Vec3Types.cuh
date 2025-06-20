@@ -2,7 +2,7 @@
 
 #ifdef USE_CUDA
 
-class CudaVec3; // From Vec3.cuh
+struct CudaVec3; // From Vec3.cuh
 
 using CudaColor = CudaVec3;
 using CudaPoint3 = CudaVec3;

@@ -99,8 +99,8 @@ struct CudaSphere {
     double dist2 = dir.length_squared();
     CudaONB uvw(dir);
 
-    double r1 = curand_uniform_double(rand_state);
-    double r2 = curand_uniform_double(rand_state);
+    double r1 = cuda_random_double(rand_state);
+    double r2 = cuda_random_double(rand_state);
 
     double z = 1 + r2 * (sqrt(1 - radius * radius / dist2) - 1);
     double phi = 2 * CUDA_PI * r1;

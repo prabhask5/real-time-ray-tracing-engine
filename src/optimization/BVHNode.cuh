@@ -58,7 +58,7 @@ struct CudaBVHNode {
   // Random direction toward BVH node (random choice of children).
   __device__ inline CudaVec3 random(const CudaPoint3 &origin,
                                     curandState *state) {
-    if (curand_uniform_double(state) < 0.5)
+    if (cuda_random_double(state) < 0.5)
       return left.random(origin, state);
     return right.random(origin, state);
   }

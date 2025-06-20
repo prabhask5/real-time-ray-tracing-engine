@@ -8,6 +8,7 @@
 #include "HitRecord.cuh"
 #include "Hittable.cuh"
 #include "Ray.cuh"
+#include <assert.h>
 
 // Maximum objects per list for now (can be dynamic with memory allocator).
 static const int MAX_HITTABLES_PER_LIST = 32;
@@ -72,7 +73,7 @@ struct CudaHittableList {
   __device__ inline CudaVec3 random(const CudaPoint3 &origin,
                                     curandState *state) {
     // Pick random object from the list.
-    int i = (int)(curand_uniform_double(state) * count);
+    int i = (int)(cuda_random_double(state) * count);
     i = (i < 0) ? 0 : ((i >= count) ? count - 1 : i);
     return hittables[i].random(origin, state);
   }

@@ -48,7 +48,7 @@ struct CudaLambertianMaterial {
   __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
                           CudaScatterRecord &srec, curandState *state) const {
     srec.attenuation = texture.value(rec.u, rec.v, rec.point);
-    srec.pdf_type = CudaMaterialType::CUDA_PDF_COSINE;
+    srec.pdf_type = CudaPDFType::CUDA_PDF_COSINE;
     srec.pdf_data = nullptr; // Cosine PDF is handled by type
     srec.skip_pdf = false;
     return true;
@@ -117,7 +117,7 @@ struct CudaIsotropicMaterial {
   __device__ bool scatter(const CudaRay &ray, const CudaHitRecord &rec,
                           CudaScatterRecord &srec, curandState *state) const {
     srec.attenuation = texture.value(rec.u, rec.v, rec.point);
-    srec.pdf_type = CudaMaterialType::CUDA_PDF_SPHERE;
+    srec.pdf_type = CudaPDFType::CUDA_PDF_SPHERE;
     srec.pdf_data = nullptr; // Sphere PDF is handled by type
     srec.skip_pdf = false;
     return true;

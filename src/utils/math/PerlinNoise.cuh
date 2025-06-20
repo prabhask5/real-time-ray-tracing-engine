@@ -21,9 +21,9 @@ struct CudaPerlinNoise {
   __device__ CudaPerlinNoise(curandState *state) {
     for (int i = 0; i < CUDA_PERLIN_POINT_COUNT; i++) {
       rand_vec[i] =
-          cuda_unit_vector(CudaVec3(curand_uniform_double(state) * 2.0 - 1.0,
-                                    curand_uniform_double(state) * 2.0 - 1.0,
-                                    curand_uniform_double(state) * 2.0 - 1.0));
+          cuda_unit_vector(CudaVec3(cuda_random_double(state) * 2.0 - 1.0,
+                                    cuda_random_double(state) * 2.0 - 1.0,
+                                    cuda_random_double(state) * 2.0 - 1.0));
     }
     cuda_perlin_generate_perm(perm_x, state);
     cuda_perlin_generate_perm(perm_y, state);
@@ -43,7 +43,7 @@ struct CudaPerlinNoise {
   }
 
   // Generates a noise value at point p.
-  __device__ __forceinline__ double noise(const CudaPoint3 &p) {
+  __device__ __forceinline__ double noise(const CudaPoint3 &p) const {
     double x_frac = p.x - floor(p.x);
     double y_frac = p.y - floor(p.y);
     double z_frac = p.z - floor(p.z);

@@ -18,6 +18,11 @@ struct CudaConstantMedium {
   double neg_inv_density;       // -1 / density (precomputed)
   CudaMaterial phase_function;  // Isotropic scattering material
 
+  __device__ CudaConstantMedium(const CudaHittable *_boundary, double density,
+                                const CudaMaterial &_phase_function)
+      : boundary(_boundary), neg_inv_density(-1.0 / density),
+        phase_function(_phase_function) {}
+
   // Handles ray-medium interaction: scattering inside a constant density
   // medium.
   __device__ bool hit(const CudaRay &ray, CudaInterval t_values,
@@ -25,7 +30,8 @@ struct CudaConstantMedium {
 
     CudaHitRecord rec1, rec2;
 
-    if (!boundary->hit(ray, CUDA_UNIVERSE_INTERVAL, rec1, rand_state))
+    if (!boundary->hit(ray, CudaInterval(-CUDA_INF, CUDA_INF), rec1,
+                       rand_state))
       return false;
 
     if (!boundary->hit(ray, CudaInterval(rec1.t + 0.0001, CUDA_INF), rec2,
