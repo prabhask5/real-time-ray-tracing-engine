@@ -48,12 +48,9 @@ public:
     m_bottom.store(b, std::memory_order_relaxed);
     std::atomic_thread_fence(std::memory_order_seq_cst);
 
-    int64_t t =
-        m_top.load(std::memory_order_relaxed); // Enforces ordering of memory
-                                               // operations across threads.
+    int64_t t = m_top.load(std::memory_order_relaxed);
 
     if (t <= b) {
-      item = std::move(m_buffer[b & m_mask]);
       if (t == b) {
         // Single element - compete with thieves.
         if (!m_top.compare_exchange_strong(t, t + 1, std::memory_order_seq_cst,
@@ -63,6 +60,7 @@ public:
         }
         m_bottom.store(b + 1, std::memory_order_relaxed);
       }
+      item = std::move(m_buffer[b & m_mask]);
       return true;
     } else {
       m_bottom.store(b + 1, std::memory_order_relaxed);
@@ -77,9 +75,11 @@ public:
     int64_t b = m_bottom.load(std::memory_order_acquire);
 
     if (t < b) {
-      item = std::move(m_buffer[t & m_mask]);
-      return m_top.compare_exchange_strong(t, t + 1, std::memory_order_seq_cst,
-                                           std::memory_order_relaxed);
+      if (m_top.compare_exchange_strong(t, t + 1, std::memory_order_seq_cst,
+                                        std::memory_order_relaxed)) {
+        item = std::move(m_buffer[t & m_mask]);
+        return true;
+      }
     }
     return false;
   }
