@@ -63,3 +63,11 @@ bool ConstantMedium::hit(const Ray &ray, Interval t_values,
 
   return true;
 }
+
+HittablePtr ConstantMedium::get_boundary() const { return m_boundary; }
+
+double ConstantMedium::get_density() const { return m_density; }
+
+MaterialPtr ConstantMedium::get_phase_function() const {
+  return m_phase_function;
+}

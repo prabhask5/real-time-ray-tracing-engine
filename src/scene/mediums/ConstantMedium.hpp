@@ -28,6 +28,12 @@ public:
   // media.
   bool hit(const Ray &ray, Interval t_values, HitRecord &record) const override;
 
+  HittablePtr get_boundary() const;
+
+  double get_density() const;
+
+  MaterialPtr get_phase_function() const;
+
 private:
   // Defines the container that holds the constant medium (smoke or fog).
   HittablePtr m_boundary;
