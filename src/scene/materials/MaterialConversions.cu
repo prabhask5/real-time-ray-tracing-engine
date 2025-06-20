@@ -27,8 +27,7 @@ void batch_cpu_to_cuda_material(const Material **cpu_materials,
 }
 
 void batch_cuda_to_cpu_material(const CudaMaterial *cuda_materials,
-                                std::shared_ptr<Material> *cpu_materials,
-                                int count) {
+                                MaterialPtr *cpu_materials, int count) {
   // This needs to be done on CPU since we're creating shared_ptr objects.
   for (int i = 0; i < count; i++) {
     cpu_materials[i] = cuda_to_cpu_material(cuda_materials[i]);

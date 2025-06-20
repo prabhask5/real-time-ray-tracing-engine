@@ -144,7 +144,6 @@ inline MaterialPtr cuda_to_cpu_material(const CudaMaterial &cuda_material) {
 void batch_cpu_to_cuda_material(const Material **cpu_materials,
                                 CudaMaterial *cuda_materials, int count);
 void batch_cuda_to_cpu_material(const CudaMaterial *cuda_materials,
-                                std::shared_ptr<Material> *cpu_materials,
-                                int count);
+                                MaterialPtr *cpu_materials, int count);
 
 #endif // USE_CUDA

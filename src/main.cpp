@@ -40,8 +40,7 @@ void populate_cornell_box_scene(HittableList &world, HittableList &lights,
                                     Vec3(0, 0, 105), light));
 
   // Box.
-  std::shared_ptr<Hittable> box1 =
-      make_box(Point3(0, 0, 0), Point3(165, 330, 165), white);
+  HittablePtr box1 = make_box(Point3(0, 0, 0), Point3(165, 330, 165), white);
   box1 = std::make_shared<RotateY>(box1, 15);
   box1 = std::make_shared<Translate>(box1, Vec3(265, 0, 295));
   world.add(box1);
@@ -51,7 +50,7 @@ void populate_cornell_box_scene(HittableList &world, HittableList &lights,
   world.add(std::make_shared<Sphere>(Point3(190, 90, 190), 90, glass));
 
   // Light Sources.
-  auto empty_material = std::shared_ptr<Material>();
+  auto empty_material = MaterialPtr();
   lights.add(std::make_shared<Plane>(Point3(343, 554, 332), Vec3(-130, 0, 0),
                                      Vec3(0, 0, -105), empty_material));
   lights.add(
@@ -81,7 +80,7 @@ void populate_bouncing_spheres_scene(HittableList &world, HittableList &lights,
       Point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
 
       if ((center - Point3(4, 0.2, 0)).length() > 0.9) {
-        std::shared_ptr<Material> sphere_material;
+        MaterialPtr sphere_material;
 
         if (choose_mat < 0.8) {
           // Diffuse.

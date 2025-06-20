@@ -13,8 +13,7 @@ class Hittable;
 
 // Forward declaration of conversion functions
 inline CudaHittable cpu_to_cuda_hittable(const HittablePtr &cpu_hittable);
-inline std::shared_ptr<Hittable>
-cuda_to_cpu_hittable(const CudaHittable &cuda_hittable);
+inline HittablePtr cuda_to_cpu_hittable(const CudaHittable &cuda_hittable);
 
 // Convert CPU BVHNode to CUDA BVHNode.
 inline CudaBVHNode cpu_to_cuda_bvh_node(const BVHNode &cpu_bvh_node) {
