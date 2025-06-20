@@ -2,12 +2,15 @@
 
 #ifdef USE_CUDA
 
-#include "../../scene/materials/MaterialConversions.cuh"
-#include "../../scene/objects/PlaneConversions.cuh"
-#include "../../scene/objects/SphereConversions.cuh"
-#include "../../scene/textures/TextureConversions.cuh"
-#include "../../utils/math/Vec3Conversions.cuh"
-#include "../HittableListConversions.cuh"
+#include "../core/HittableList.hpp"
+#include "../core/HittableListConversions.cuh"
+#include "../utils/math/Vec3Conversions.cuh"
+#include "materials/MaterialConversions.cuh"
+#include "objects/Plane.hpp"
+#include "objects/PlaneConversions.cuh"
+#include "objects/Sphere.hpp"
+#include "objects/SphereConversions.cuh"
+#include "textures/TextureConversions.cuh"
 
 // Comprehensive scene conversion structure.
 struct CudaSceneData {
@@ -48,8 +51,10 @@ convert_complete_scene_to_cuda(const HittableList &cpu_world,
       scene_data.world_objects_buffer[i].plane = cpu_to_cuda_plane(*plane);
     } else {
       // Default object
+      CudaTexture default_texture =
+          cuda_make_solid_texture(Color(0.5, 0.5, 0.5));
       CudaMaterial default_material =
-          cuda_make_lambertian_material(Color(0.5, 0.5, 0.5));
+          cuda_make_lambertian_material(default_texture);
       scene_data.world_objects_buffer[i].type = HITTABLE_SPHERE;
       scene_data.world_objects_buffer[i].sphere =
           create_cuda_sphere_static(Point3(0, 0, 0), 1.0, default_material);
@@ -73,8 +78,10 @@ convert_complete_scene_to_cuda(const HittableList &cpu_world,
       scene_data.lights_objects_buffer[i].type = HITTABLE_PLANE;
       scene_data.lights_objects_buffer[i].plane = cpu_to_cuda_plane(*plane);
     } else {
+      CudaTexture default_texture =
+          cuda_make_solid_texture(Color(1.0, 1.0, 1.0));
       CudaMaterial default_material =
-          cuda_make_lambertian_material(Color(1.0, 1.0, 1.0));
+          cuda_make_lambertian_material(default_texture);
       scene_data.lights_objects_buffer[i].type = HITTABLE_SPHERE;
       scene_data.lights_objects_buffer[i].sphere =
           create_cuda_sphere_static(Point3(0, 0, 0), 1.0, default_material);
@@ -106,14 +113,14 @@ inline CudaSceneData create_cornell_box_cuda_scene() {
   scene_data.lights_objects_buffer = new CudaHittable[5];
 
   // Create materials
-  CudaMaterial red_material =
-      cuda_make_lambertian_material(Color(0.65, 0.05, 0.05));
-  CudaMaterial white_material =
-      cuda_make_lambertian_material(Color(0.73, 0.73, 0.73));
-  CudaMaterial green_material =
-      cuda_make_lambertian_material(Color(0.12, 0.45, 0.15));
-  CudaMaterial light_material =
-      cuda_make_diffuse_light_material(Color(15, 15, 15));
+  CudaTexture red_texture = cuda_make_solid_texture(Color(0.65, 0.05, 0.05));
+  CudaMaterial red_material = cuda_make_lambertian_material(red_texture);
+  CudaTexture white_texture = cuda_make_solid_texture(Color(0.73, 0.73, 0.73));
+  CudaMaterial white_material = cuda_make_lambertian_material(white_texture);
+  CudaTexture green_texture = cuda_make_solid_texture(Color(0.12, 0.45, 0.15));
+  CudaMaterial green_material = cuda_make_lambertian_material(green_texture);
+  CudaTexture light_texture = cuda_make_solid_texture(Color(15, 15, 15));
+  CudaMaterial light_material = cuda_make_diffuse_light_material(light_texture);
   CudaMaterial glass_material = cuda_make_dielectric_material(1.5);
 
   // Create Cornell Box walls

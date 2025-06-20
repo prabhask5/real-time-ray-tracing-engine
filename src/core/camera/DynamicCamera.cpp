@@ -7,8 +7,8 @@
 #include "../Ray.hpp"
 
 #ifdef USE_CUDA
+#include "../../scene/SceneConversions.cuh"
 #include "CameraKernels.cuh"
-#include "SceneConversions.cuh"
 #include <ctime>
 #endif
 
