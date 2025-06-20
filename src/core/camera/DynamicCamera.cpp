@@ -6,6 +6,12 @@
 #include "../HittableList.hpp"
 #include "../Ray.hpp"
 
+#ifdef USE_CUDA
+#include "CameraKernels.cuh"
+#include "SceneConversions.cuh"
+#include <ctime>
+#endif
+
 const int DynamicCamera::MIN_TILE_SIZE;
 const int DynamicCamera::DEFAULT_TILE_SIZE;
 const int DynamicCamera::MAX_TILE_SIZE;
@@ -335,8 +341,180 @@ void DynamicCamera::draw_fps(bool converged) {
 }
 
 void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
-  // TODO: Implement CUDA-based rendering path.
-  // This skeleton is provided for future GPU acceleration.
-  // For now, fall back to CPU rendering.
+#ifdef USE_CUDA
+  initialize();
+
+  if (m_use_bvh) {
+    if (!world.get_objects().empty())
+      world = HittableList(std::make_shared<BVHNode>(world));
+    if (!lights.get_objects().empty())
+      lights = HittableList(std::make_shared<BVHNode>(lights));
+  }
+
+  // Initialize SDL subsystems
+  SDL_Init(SDL_INIT_VIDEO);
+  TTF_Init();
+
+  // Create SDL window and rendering components
+  m_window =
+      SDL_CreateWindow("Dynamic Camera", m_image_width, m_image_height, 0);
+  m_renderer = SDL_CreateRenderer(m_window, nullptr);
+  m_texture = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGB24,
+                                SDL_TEXTUREACCESS_STREAMING, m_image_width,
+                                m_image_height);
+
+  // Load font for displaying FPS text
+  const char *try_paths[] = {
+      "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+      "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+      "/Library/Fonts/Arial.ttf",
+      "/System/Library/Fonts/Supplemental/Arial.ttf",
+      "/System/Library/Fonts/SFNS.ttf",
+  };
+  for (const char *path : try_paths) {
+    m_font = TTF_OpenFont(path, 14);
+    if (m_font)
+      break;
+  }
+
+  // Allocate memory for color accumulation and pixel buffer
+  m_accumulation.assign(m_image_width * m_image_height, Color(0, 0, 0));
+  m_pixels.assign(m_image_width * m_image_height * 3, 0);
+  m_last_fps_time = SDL_GetTicks();
+
+  // CUDA setup
+  CudaColor *d_accumulation;
+  curandState *d_rand_states;
+  size_t accumulation_size = m_image_width * m_image_height * sizeof(CudaColor);
+  size_t rand_states_size =
+      m_image_width * m_image_height * sizeof(curandState);
+
+  cudaMalloc(&d_accumulation, accumulation_size);
+  cudaMalloc(&d_rand_states, rand_states_size);
+
+  // Initialize CUDA accumulation buffer
+  cudaMemset(d_accumulation, 0, accumulation_size);
+
+  // Initialize random states
+  dim3 block_size(16, 16);
+  dim3 grid_size((m_image_width + block_size.x - 1) / block_size.x,
+                 (m_image_height + block_size.y - 1) / block_size.y);
+
+  init_rand_states<<<grid_size, block_size>>>(d_rand_states, m_image_width,
+                                              m_image_height,
+                                              (unsigned long)time(nullptr));
+  cudaDeviceSynchronize();
+
+  // Convert CPU objects to CUDA format using comprehensive conversion
+  CudaSceneData cuda_scene_data = convert_complete_scene_to_cuda(world, lights);
+  CudaHittableList cuda_world = cuda_scene_data.world;
+  CudaHittableList cuda_lights = cuda_scene_data.lights;
+
+  bool running = true;
+
+  while (running) {
+    handle_events(running);
+    if (!running)
+      break;
+
+    int sqrt_spp = int(std::sqrt(m_samples_per_pixel));
+    int total_strata = sqrt_spp * sqrt_spp;
+    int num_tiles_x = (m_image_width + m_tile_size - 1) / m_tile_size;
+    int num_tiles_y = (m_image_height + m_tile_size - 1) / m_tile_size;
+
+    bool converged = (m_samples_taken >= total_strata);
+
+    if (!converged) {
+      for (int tile = 0; tile < (num_tiles_x * num_tiles_y); ++tile) {
+        int tile_r = tile / num_tiles_x;
+        int tile_c = tile % num_tiles_x;
+        int start_r = tile_r * m_tile_size;
+        int start_c = tile_c * m_tile_size;
+        int end_r = std::min(start_r + m_tile_size, m_image_height);
+        int end_c = std::min(start_c + m_tile_size, m_image_width);
+
+        int s_i = m_samples_taken % sqrt_spp;
+        int s_j = m_samples_taken / sqrt_spp;
+
+        // Launch CUDA kernel for this tile
+        dim3 tile_block_size(16, 16);
+        dim3 tile_grid_size(
+            (end_c - start_c + tile_block_size.x - 1) / tile_block_size.x,
+            (end_r - start_r + tile_block_size.y - 1) / tile_block_size.y);
+
+        // Convert camera parameters to CUDA format
+        CudaPoint3 cuda_center(m_center.x(), m_center.y(), m_center.z());
+        CudaPoint3 cuda_pixel00_loc(m_pixel00_loc.x(), m_pixel00_loc.y(),
+                                    m_pixel00_loc.z());
+        CudaVec3 cuda_pixel_delta_u(m_pixel_delta_u.x(), m_pixel_delta_u.y(),
+                                    m_pixel_delta_u.z());
+        CudaVec3 cuda_pixel_delta_v(m_pixel_delta_v.x(), m_pixel_delta_v.y(),
+                                    m_pixel_delta_v.z());
+        CudaVec3 cuda_u(m_u.x(), m_u.y(), m_u.z());
+        CudaVec3 cuda_v(m_v.x(), m_v.y(), m_v.z());
+        CudaVec3 cuda_w(m_w.x(), m_w.y(), m_w.z());
+        CudaVec3 cuda_defocus_disk_u(m_defocus_disk_u.x(), m_defocus_disk_u.y(),
+                                     m_defocus_disk_u.z());
+        CudaVec3 cuda_defocus_disk_v(m_defocus_disk_v.x(), m_defocus_disk_v.y(),
+                                     m_defocus_disk_v.z());
+        CudaColor cuda_background(m_background.x(), m_background.y(),
+                                  m_background.z());
+
+        dynamic_render_tile_kernel<<<tile_grid_size, tile_block_size>>>(
+            d_accumulation, m_image_width, m_image_height, start_r, end_r,
+            start_c, end_c, s_i, s_j, sqrt_spp, m_max_depth, cuda_center,
+            cuda_pixel00_loc, cuda_pixel_delta_u, cuda_pixel_delta_v, cuda_u,
+            cuda_v, cuda_w, cuda_defocus_disk_u, cuda_defocus_disk_v,
+            m_defocus_angle, cuda_background, cuda_world, cuda_lights,
+            d_rand_states);
+
+        cudaDeviceSynchronize();
+      }
+    }
+
+    if (!converged)
+      m_samples_taken++;
+    m_frame++;
+
+    // Copy accumulation buffer back to CPU
+    std::vector<CudaColor> cuda_accumulation(m_image_width * m_image_height);
+    cudaMemcpy(cuda_accumulation.data(), d_accumulation, accumulation_size,
+               cudaMemcpyDeviceToHost);
+
+    // Convert CUDA accumulation to CPU format
+    for (int i = 0; i < m_image_width * m_image_height; ++i) {
+      m_accumulation[i] = Color(cuda_accumulation[i].x, cuda_accumulation[i].y,
+                                cuda_accumulation[i].z);
+    }
+
+    update_texture();
+
+    // Update FPS counter
+    Uint64 now = SDL_GetTicks();
+    Uint64 elapsed = now - m_last_fps_time;
+    if (elapsed >= 1000) {
+      m_fps = 1000.0 * m_frame / elapsed;
+      m_frame = 0;
+      m_last_fps_time = now;
+
+      if (!converged && m_fps > 30.0 && m_tile_size < MAX_TILE_SIZE)
+        m_tile_size = std::min(m_tile_size * 2, MAX_TILE_SIZE);
+      else if (!converged && m_fps < 15.0 && m_tile_size > MIN_TILE_SIZE)
+        m_tile_size = std::max(m_tile_size / 2, MIN_TILE_SIZE);
+    }
+
+    SDL_RenderClear(m_renderer);
+    SDL_RenderTexture(m_renderer, m_texture, nullptr, nullptr);
+    draw_fps(converged);
+    SDL_RenderPresent(m_renderer);
+  }
+
+  // Cleanup CUDA memory and scene data
+  cleanup_cuda_scene_data(cuda_scene_data);
+  cudaFree(d_accumulation);
+  cudaFree(d_rand_states);
+#else
+  // Fall back to CPU rendering if CUDA is not available
   render_cpu(world, lights);
+#endif
 }
