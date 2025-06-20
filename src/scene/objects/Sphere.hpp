@@ -18,6 +18,13 @@ public:
   // Getter const methods.
 
   AABB get_bounding_box() const override;
+  Point3 get_center() const {
+    return m_center.at(0.5);
+  } // Get center at time 0.5
+  Point3 get_center(double time) const { return m_center.at(time); }
+  double get_radius() const { return m_radius; }
+  MaterialPtr get_material() const { return m_material; }
+  Ray get_center_ray() const { return m_center; }
 
   // Action methods.
 
