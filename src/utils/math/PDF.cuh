@@ -62,7 +62,7 @@ struct CudaHittablePDF {
   __device__ CudaVec3 generate(curandState *state) const {
     const CudaHittable *objects =
         reinterpret_cast<const CudaHittable *>(objects_data);
-    return objects->random(m_origin, state);
+    return objects->random(origin, state);
   }
 };
 

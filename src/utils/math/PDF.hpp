@@ -44,6 +44,8 @@ public:
     return m_uvw.transform(random_cosine_direction());
   }
 
+  const ONB &get_onb() const { return m_uvw; }
+
 private:
   ONB m_uvw;
 };
@@ -59,6 +61,10 @@ public:
   }
 
   Vec3 generate() const override { return m_objects.random(m_origin); }
+
+  const Hittable &get_objects() const { return m_objects; }
+
+  Point3 get_origin() const { return m_origin; }
 
 private:
   const Hittable &m_objects;
@@ -82,6 +88,10 @@ public:
       return m_p[0]->generate();
     return m_p[1]->generate();
   }
+
+  PDFPtr get_p0() const { return m_p[0]; }
+
+  PDFPtr get_p1() const { return m_p[1]; }
 
 private:
   PDFPtr m_p[2];
