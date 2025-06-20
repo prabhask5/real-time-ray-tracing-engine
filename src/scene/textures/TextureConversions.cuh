@@ -22,7 +22,6 @@ cpu_to_cuda_solid_color_texture(const SolidColorTexture &solid_texture) {
   CudaTexture cuda_texture;
   cuda_texture.type = CudaTextureType::TEXTURE_SOLID;
 
-  CudaColor cuda_color = cpu_to_cuda_vec3(sampled_color);
   cuda_texture.data.solid =
       CudaSolidColorTexture(cpu_to_cuda_vec3(solid_texture.get_albedo()));
 

@@ -21,25 +21,25 @@ __global__ void init_rand_states(curandState *rand_states, int width,
 __device__ CudaVec3 sample_square_stratified_cuda(int s_i, int s_j,
                                                   int sqrt_spp,
                                                   curandState *state) {
-  double px = ((double)s_i + curand_uniform_double(state)) / sqrt_spp - 0.5;
-  double py = ((double)s_j + curand_uniform_double(state)) / sqrt_spp - 0.5;
+  double px = ((double)s_i + cuda_random_double(state)) / sqrt_spp - 0.5;
+  double py = ((double)s_j + cuda_random_double(state)) / sqrt_spp - 0.5;
   return CudaVec3(px, py, 0);
 }
 
 // Device function: Sample random square
 __device__ CudaVec3 sample_square_cuda(curandState *state) {
-  return CudaVec3(curand_uniform_double(state) - 0.5,
-                  curand_uniform_double(state) - 0.5, 0);
+  return CudaVec3(cuda_random_double(state) - 0.5,
+                  cuda_random_double(state) - 0.5, 0);
 }
 
 // Device function: Sample disk
 __device__ CudaVec3 sample_disk_cuda(double radius, curandState *state) {
   CudaVec3 p;
   do {
-    p = 2.0 * CudaVec3(curand_uniform_double(state),
-                       curand_uniform_double(state), 0) -
+    p = 2.0 *
+            CudaVec3(cuda_random_double(state), cuda_random_double(state), 0) -
         CudaVec3(1, 1, 0);
-  } while (dot(p, p) >= 1.0);
+  } while (cuda_dot_product(p, p) >= 1.0);
   return radius * p;
 }
 
@@ -48,7 +48,7 @@ __device__ CudaPoint3 defocus_disk_sample_cuda(CudaVec3 defocus_disk_u,
                                                CudaVec3 defocus_disk_v,
                                                curandState *state) {
   CudaVec3 p = sample_disk_cuda(1.0, state);
-  return p.x() * defocus_disk_u + p.y() * defocus_disk_v;
+  return p.x * defocus_disk_u + p.y * defocus_disk_v;
 }
 
 // Device function: Get ray
@@ -59,8 +59,8 @@ __device__ CudaRay get_ray_cuda(int i, int j, int s_i, int s_j, int sqrt_spp,
                                 CudaVec3 defocus_disk_v, double defocus_angle,
                                 curandState *state) {
   CudaVec3 offset = sample_square_stratified_cuda(s_i, s_j, sqrt_spp, state);
-  CudaPoint3 pixel_sample = pixel00_loc + (i + offset.x()) * pixel_delta_u +
-                            (j + offset.y()) * pixel_delta_v;
+  CudaPoint3 pixel_sample = pixel00_loc + (i + offset.x) * pixel_delta_u +
+                            (j + offset.y) * pixel_delta_v;
 
   CudaPoint3 ray_origin =
       (defocus_angle <= 0)
@@ -68,7 +68,7 @@ __device__ CudaRay get_ray_cuda(int i, int j, int s_i, int s_j, int sqrt_spp,
           : center +
                 defocus_disk_sample_cuda(defocus_disk_u, defocus_disk_v, state);
   CudaVec3 ray_direction = pixel_sample - ray_origin;
-  double ray_time = curand_uniform_double(state);
+  double ray_time = cuda_random_double(state);
 
   return CudaRay(ray_origin, ray_direction, ray_time);
 }

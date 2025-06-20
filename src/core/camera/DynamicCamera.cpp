@@ -389,8 +389,19 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
   size_t rand_states_size =
       m_image_width * m_image_height * sizeof(curandState);
 
-  cudaMalloc(&d_accumulation, accumulation_size);
-  cudaMalloc(&d_rand_states, rand_states_size);
+  if (cudaMalloc(&d_accumulation, accumulation_size) != cudaSuccess) {
+    std::cerr << "Failed to allocate CUDA memory for accumulation buffer"
+              << std::endl;
+    render_cpu(world, lights);
+    return;
+  }
+  if (cudaMalloc(&d_rand_states, rand_states_size) != cudaSuccess) {
+    std::cerr << "Failed to allocate CUDA memory for random states"
+              << std::endl;
+    cudaFree(d_accumulation);
+    render_cpu(world, lights);
+    return;
+  }
 
   // Initialize CUDA accumulation buffer
   cudaMemset(d_accumulation, 0, accumulation_size);
@@ -403,10 +414,24 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
   init_rand_states<<<grid_size, block_size>>>(d_rand_states, m_image_width,
                                               m_image_height,
                                               (unsigned long)time(nullptr));
-  cudaDeviceSynchronize();
+  if (cudaDeviceSynchronize() != cudaSuccess) {
+    std::cerr << "Failed to initialize CUDA random states" << std::endl;
+    cudaFree(d_accumulation);
+    cudaFree(d_rand_states);
+    render_cpu(world, lights);
+    return;
+  }
 
   // Convert CPU objects to CUDA format using comprehensive conversion
   CudaSceneData cuda_scene_data = convert_complete_scene_to_cuda(world, lights);
+  if (cuda_scene_data.world_objects_buffer == nullptr ||
+      cuda_scene_data.lights_objects_buffer == nullptr) {
+    std::cerr << "Failed to convert scene to CUDA format" << std::endl;
+    cudaFree(d_accumulation);
+    cudaFree(d_rand_states);
+    render_cpu(world, lights);
+    return;
+  }
   CudaHittableList cuda_world = cuda_scene_data.world;
   CudaHittableList cuda_lights = cuda_scene_data.lights;
 

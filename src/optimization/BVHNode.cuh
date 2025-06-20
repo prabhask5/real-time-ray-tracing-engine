@@ -42,7 +42,7 @@ struct CudaBVHNode {
     }
 
     bool hit_right = right.hit(ray, t_values, temp_record, rand_state);
-    if (hit_right)
+    if (hit_right && temp_record.t < record.t)
       record = temp_record;
 
     return hit_left || hit_right;

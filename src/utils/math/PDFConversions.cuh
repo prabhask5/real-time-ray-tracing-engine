@@ -40,7 +40,7 @@ inline CudaPDF cpu_to_cuda_pdf(const PDF &cpu_pdf) {
 
     cuda_pdf.data.hittable = CudaHittablePDF(cuda_objects, cuda_origin);
   } else if (auto mixture_pdf = dynamic_cast<const MixturePDF *>(&cpu_pdf)) {
-    cuda_pdf.type = CUDA_PDF_MIXTURE;
+    cuda_pdf.type = CudaPDFType::CUDA_PDF_MIXTURE;
 
     // Convert both PDFs in the mixture.
     auto cpu_pdf0 = mixture_pdf->get_p0();
@@ -48,14 +48,14 @@ inline CudaPDF cpu_to_cuda_pdf(const PDF &cpu_pdf) {
 
     CudaPDF *cuda_pdf0 = new CudaPDF();
     CudaPDF *cuda_pdf1 = new CudaPDF();
-    *cuda_pdf0 = cpu_to_cuda_pdf(*cpu_pdf0);
-    *cuda_pdf1 = cpu_to_cuda_pdf(*cpu_pdf1);
+    *cuda_pdf0 = cpu_to_cuda_pdf(cpu_pdf0);
+    *cuda_pdf1 = cpu_to_cuda_pdf(cpu_pdf1);
 
     cuda_pdf.data.mixture = CudaMixturePDF(cuda_pdf0->type, &cuda_pdf0->data,
                                            cuda_pdf1->type, &cuda_pdf1->data);
   } else {
     // Default to sphere PDF.
-    cuda_pdf.type = CUDA_PDF_SPHERE;
+    cuda_pdf.type = CudaPDFType::CUDA_PDF_SPHERE;
     cuda_pdf.data.sphere = CudaSpherePDF();
   }
 
