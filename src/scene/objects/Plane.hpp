@@ -14,6 +14,12 @@ public:
   // Getter functions.
 
   AABB get_bounding_box() const override;
+  Point3 get_corner() const { return m_corner; }
+  Vec3 get_u_side() const { return m_u_side; }
+  Vec3 get_v_side() const { return m_v_side; }
+  Vec3 get_normal() const { return m_normal; }
+  MaterialPtr get_material() const { return m_material; }
+  double get_surface_area() const { return m_surface_area; }
 
   // Action functions.
 
