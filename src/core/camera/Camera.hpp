@@ -86,9 +86,6 @@ protected:
   // Control CUDA GPU rendering.
   bool m_use_gpu = false;
 
-  // Control wavefront rendering.
-  bool m_use_wavefront = false;
-
   // Cold data: configuration parameters (used mainly during initialization).
 
   // Scene background color.
