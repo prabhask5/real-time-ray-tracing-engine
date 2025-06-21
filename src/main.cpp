@@ -151,8 +151,8 @@ int main(int argc, char **argv) {
       .use_gpu = is_cuda_enabled && options.use_gpu,
   };
 
-  populate_cornell_box_scene(world, lights, cam_config);
-  // populate_bouncing_spheres_scene(world, lights, cam_config);
+  // populate_cornell_box_scene(world, lights, cam_config);
+  populate_bouncing_spheres_scene(world, lights, cam_config);
 
   if (options.use_static) {
     // Set up static camera.
