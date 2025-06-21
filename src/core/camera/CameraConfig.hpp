@@ -30,5 +30,4 @@ struct alignas(16) CameraConfig {
   bool use_parallelism = false; // Enable parallel processing.
   bool use_bvh = false;         // Enable BVH acceleration.
   bool use_gpu = false;         // Enable GPU rendering.
-  bool use_wavefront = false;   // Enable wavefront path tracing.
 };
