@@ -34,6 +34,67 @@ bool Sphere::hit(const Ray &ray, Interval t_values, HitRecord &record) const {
   // c = [oc]^2 - r^2
   Point3 current_center = m_center.at(ray.time());
   Vec3 oc = current_center - ray.origin();
+
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+  // SIMD-optimized ray-sphere intersection calculation.
+
+  if constexpr (SIMD_DOUBLE_PRECISION) {
+    // Use SIMD-optimized Vec3 operations for quadratic equation coefficients.
+
+    double a = ray.direction().length_squared(); // Uses SIMD dot product
+    double h = ray.direction().dot(oc);          // Uses SIMD dot product
+    double c =
+        oc.length_squared() - m_radius * m_radius; // Uses SIMD dot product
+
+    // Find the discriminant to easily see if there's any intersection points.
+
+    double discriminant = h * h - a * c;
+    if (discriminant < 0)
+      return false;
+
+    double sqrtd = std::sqrt(discriminant);
+
+    // Find the nearest root that lies in the acceptable range.
+
+    double root = (h - sqrtd) / a; // Via the quadratic equation
+    if (!t_values.surrounds(root)) {
+      root = (h + sqrtd) / a; // Other root
+      if (!t_values.surrounds(root))
+        return false; // Seems like none exist then
+    }
+
+    // Populate the hit record.
+
+    record.t = root;
+    record.point = ray.at(record.t); // Uses SIMD-optimized ray evaluation
+    Vec3 outward_normal = (record.point - current_center) / m_radius;
+    record.set_face_normal(ray, outward_normal);
+    record.material = m_material;
+
+    // outward_normal: a given point on the sphere of radius one, centered at
+    // the.
+
+    // origin. record.u: returned value [0,1] of angle around the Y axis from.
+
+    // X=-1. record.v: returned value [0,1] of angle from Y=-1 to Y=+1.
+    //     <1 0 0> yields <0.50 0.50>       <-1  0  0> yields <0.00 0.50>.
+
+    //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>.
+
+    //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>.
+
+    double theta = std::acos(-outward_normal.y());
+    double phi = std::atan2(-outward_normal.z(), outward_normal.x()) + PI;
+
+    record.u = phi / (2 * PI);
+    record.v = theta / PI;
+
+    return true;
+  }
+#endif
+
+  // Fallback scalar implementation.
+
   double a = ray.direction().length_squared();
   double h = dot_product(ray.direction(), oc);
   double c = oc.length_squared() - m_radius * m_radius;
