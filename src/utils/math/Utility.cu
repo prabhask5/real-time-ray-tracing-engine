@@ -30,7 +30,7 @@ void cuda_free_random_states_batch(curandState *d_states) {
   }
 }
 
-// Optimized batch angle conversion
+// Optimized batch angle conversion.
 __global__ void cuda_degrees_to_radians_kernel(const double *degrees,
                                                double *radians, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;

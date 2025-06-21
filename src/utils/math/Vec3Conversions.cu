@@ -2,7 +2,7 @@
 
 #include "Vec3Conversions.cuh"
 
-// Batch conversion kernel from CPU to CUDA Vec3
+// Batch conversion kernel from CPU to CUDA Vec3.
 __global__ void batch_cpu_to_cuda_vec3_kernel(const Vec3 *cpu_vecs,
                                               CudaVec3 *cuda_vecs, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -11,7 +11,7 @@ __global__ void batch_cpu_to_cuda_vec3_kernel(const Vec3 *cpu_vecs,
   }
 }
 
-// Batch conversion kernel from CUDA to CPU Vec3
+// Batch conversion kernel from CUDA to CPU Vec3.
 __global__ void batch_cuda_to_cpu_vec3_kernel(const CudaVec3 *cuda_vecs,
                                               Vec3 *cpu_vecs, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;

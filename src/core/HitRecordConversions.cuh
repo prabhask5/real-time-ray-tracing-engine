@@ -53,7 +53,8 @@ inline HitRecord cuda_to_cpu_hit_record(const CudaHitRecord &cuda_record) {
         reinterpret_cast<const CudaMaterial *>(cuda_record.material_data);
     cpu_record.material = cuda_to_cpu_material(*cuda_material);
   } else {
-    // Create default Lambertian material
+    // Create default Lambertian material.
+
     auto default_texture =
         std::make_shared<SolidColorTexture>(Color(0.7, 0.7, 0.7));
     cpu_record.material = std::make_shared<LambertianMaterial>(default_texture);

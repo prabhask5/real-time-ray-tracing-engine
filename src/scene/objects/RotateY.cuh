@@ -102,7 +102,7 @@ struct CudaRotateY {
     return object->pdf_value(rotated_origin, rotated_direction);
   }
 
-  // Random direction toward the rotated object
+  // Random direction toward the rotated object.
   __device__ inline CudaVec3 random(const CudaPoint3 &origin,
                                     curandState *state) {
     // Transform origin to object space.

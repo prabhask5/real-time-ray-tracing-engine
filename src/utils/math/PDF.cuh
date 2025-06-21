@@ -89,7 +89,7 @@ struct CudaMixturePDF {
   }
 };
 
-// Unified PDF data structure using manual dispatch
+// Unified PDF data structure using manual dispatch.
 struct CudaPDF {
   CudaPDFType type;
   union {
@@ -128,7 +128,7 @@ struct CudaPDF {
   }
 };
 
-// Manual dispatch functions for PDF operations
+// Manual dispatch functions for PDF operations.
 __device__ inline double cuda_dispatch_pdf_value(CudaPDFType type, void *data,
                                                  const CudaVec3 &direction) {
   switch (type) {

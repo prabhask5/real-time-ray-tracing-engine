@@ -110,10 +110,12 @@ cuda_to_cpu_scatter_record(const CudaScatterRecord &cuda_scatter_record) {
     cpu_scatter_record.pdf_ptr = nullptr;
   }
 
-  // Copy skip_pdf flag
+  // Copy skip_pdf flag.
+
   cpu_scatter_record.skip_pdf = cuda_scatter_record.skip_pdf;
 
-  // Convert skip_pdf_ray
+  // Convert skip_pdf_ray.
+
   cpu_scatter_record.skip_pdf_ray =
       cuda_to_cpu_ray(cuda_scatter_record.skip_pdf_ray);
 

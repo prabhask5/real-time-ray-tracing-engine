@@ -40,7 +40,7 @@ inline std::shared_ptr<Plane> cuda_to_cpu_plane(const CudaPlane &cuda_plane) {
                                  cpu_material);
 }
 
-// Helper function for creating planes with explicit parameters
+// Helper function for creating planes with explicit parameters.
 __host__ __device__ inline CudaPlane
 create_cuda_plane(const Point3 &corner, const Vec3 &u_side, const Vec3 &v_side,
                   const CudaMaterial &material) {
@@ -48,14 +48,14 @@ create_cuda_plane(const Point3 &corner, const Vec3 &u_side, const Vec3 &v_side,
                    cpu_to_cuda_vec3(v_side), material);
 }
 
-// Helper function to create CUDA plane
+// Helper function to create CUDA plane.
 __host__ __device__ inline CudaPlane
 create_cuda_plane(const CudaPoint3 &corner, const CudaVec3 &u_side,
                   const CudaVec3 &v_side, const CudaMaterial &material) {
   return CudaPlane(corner, u_side, v_side, material);
 }
 
-// Batch conversion functions
+// Batch conversion functions.
 void batch_cpu_to_cuda_plane(const Plane **cpu_planes,
                              const CudaMaterial *cuda_materials,
                              CudaPlane *cuda_planes, int count);

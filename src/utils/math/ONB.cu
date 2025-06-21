@@ -2,7 +2,7 @@
 
 #ifdef USE_CUDA
 
-// Batch ONB operations for better GPU utilization
+// Batch ONB operations for better GPU utilization.
 
 __global__ void cuda_create_onb_from_normals_kernel(const CudaVec3 *normals,
                                                     CudaONB *onbs, int count) {
@@ -21,7 +21,7 @@ void cuda_batch_create_onb_from_normals(const CudaVec3 *d_normals,
   cudaDeviceSynchronize();
 }
 
-// Batch vector transformation
+// Batch vector transformation.
 __global__ void cuda_transform_vectors_kernel(const CudaONB *onbs,
                                               const CudaVec3 *local_vectors,
                                               CudaVec3 *world_vectors,

@@ -64,7 +64,7 @@ cuda_to_cpu_sphere_motion(const CudaSphere &cuda_sphere) {
                                   cpu_material);
 }
 
-// Helper functions for creating spheres with explicit parameters
+// Helper functions for creating spheres with explicit parameters.
 __host__ __device__ inline CudaSphere
 create_cuda_sphere_static(const Point3 &center, double radius,
                           const CudaMaterial &material) {
@@ -79,7 +79,7 @@ create_cuda_sphere_motion(const Point3 &before_center,
                     cpu_to_cuda_vec3(after_center), radius, material);
 }
 
-// Batch conversion functions
+// Batch conversion functions.
 void batch_cpu_to_cuda_sphere(const Sphere **cpu_spheres,
                               const CudaMaterial *cuda_materials,
                               CudaSphere *cuda_spheres, int count);

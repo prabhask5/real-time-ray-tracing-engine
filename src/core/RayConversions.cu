@@ -2,7 +2,8 @@
 
 #include "RayConversions.cuh"
 
-// Batch conversion kernel from CPU to CUDA Ray
+// Batch conversion kernel from CPU to CUDA Ray.
+
 __global__ void batch_cpu_to_cuda_ray_kernel(const Ray *cpu_rays,
                                              CudaRay *cuda_rays, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -11,7 +12,8 @@ __global__ void batch_cpu_to_cuda_ray_kernel(const Ray *cpu_rays,
   }
 }
 
-// Batch conversion kernel from CUDA to CPU Ray
+// Batch conversion kernel from CUDA to CPU Ray.
+
 __global__ void batch_cuda_to_cpu_ray_kernel(const CudaRay *cuda_rays,
                                              Ray *cpu_rays, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;

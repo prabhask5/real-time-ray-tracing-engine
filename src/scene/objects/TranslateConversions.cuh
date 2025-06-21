@@ -74,7 +74,7 @@ create_cuda_translated_plane(const CudaPoint3 &corner, const CudaVec3 &u,
   return CudaTranslate(plane_obj, offset);
 }
 
-// Memory management for translate objects
+// Memory management for translate objects.
 inline void cleanup_cuda_translate(CudaTranslate &cuda_translate) {
   if (cuda_translate.object) {
     delete cuda_translate.object;

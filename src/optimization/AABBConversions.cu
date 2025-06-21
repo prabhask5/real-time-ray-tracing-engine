@@ -2,7 +2,7 @@
 
 #include "AABBConversions.cuh"
 
-// Batch conversion kernel from CPU to CUDA AABB
+// Batch conversion kernel from CPU to CUDA AABB.
 __global__ void batch_cpu_to_cuda_aabb_kernel(const AABB *cpu_aabbs,
                                               CudaAABB *cuda_aabbs, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -11,7 +11,7 @@ __global__ void batch_cpu_to_cuda_aabb_kernel(const AABB *cpu_aabbs,
   }
 }
 
-// Batch conversion kernel from CUDA to CPU AABB
+// Batch conversion kernel from CUDA to CPU AABB.
 __global__ void batch_cuda_to_cpu_aabb_kernel(const CudaAABB *cuda_aabbs,
                                               AABB *cpu_aabbs, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;

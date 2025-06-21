@@ -13,20 +13,21 @@ struct alignas(16) CameraConfig {
 
   // Group doubles together for optimal packing and SIMD potential.
 
-  double aspect_ratio = 1.0; // Width/height ratio
-  double vfov = 90;          // Vertical field of view
-  double defocus_angle = 0;  // Aperture size for depth of field
-  double focus_dist = 10;    // Distance to focus plane
+  double aspect_ratio = 1.0; // Width/height ratio.
+  double vfov = 90;          // Vertical field of view.
+  double defocus_angle = 0;  // Aperture size for depth of field.
+  double focus_dist = 10;    // Distance to focus plane.
 
   // Warm data: Vec3 types grouped together (16-byte aligned already).
 
-  Point3 lookfrom = Point3(0, 0, 0); // Camera position
-  Point3 lookat = Point3(0, 0, -1);  // Look at point
-  Vec3 vup = Vec3(0, 1, 0);          // Up vector
-  Color background = Color(0, 0, 0); // Background color
+  Point3 lookfrom = Point3(0, 0, 0); // Camera position.
+  Point3 lookat = Point3(0, 0, -1);  // Look at point.
+  Vec3 vup = Vec3(0, 1, 0);          // Up vector.
+  Color background = Color(0, 0, 0); // Background color.
 
   // Cold data: boolean flags grouped together.
-  bool use_parallelism = false; // Enable parallel processing
-  bool use_bvh = false;         // Enable BVH acceleration
-  bool use_gpu = false;         // Enable GPU rendering
+
+  bool use_parallelism = false; // Enable parallel processing.
+  bool use_bvh = false;         // Enable BVH acceleration.
+  bool use_gpu = false;         // Enable GPU rendering.
 };

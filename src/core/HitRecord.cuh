@@ -6,7 +6,8 @@
 #include "Ray.cuh"
 #include "Vec3Types.cuh"
 
-// Forward declarations to avoid circular dependency
+// Forward declarations to avoid circular dependency.
+
 enum CudaMaterialType;
 struct CudaMaterial;
 

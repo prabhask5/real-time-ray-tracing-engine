@@ -351,11 +351,11 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
       lights = HittableList(std::make_shared<BVHNode>(lights));
   }
 
-  // Initialize SDL subsystems
+  // Initialize SDL subsystems.
   SDL_Init(SDL_INIT_VIDEO);
   TTF_Init();
 
-  // Create SDL window and rendering components
+  // Create SDL window and rendering components.
   m_window =
       SDL_CreateWindow("Dynamic Camera", m_image_width, m_image_height, 0);
   m_renderer = SDL_CreateRenderer(m_window, nullptr);
@@ -363,7 +363,7 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
                                 SDL_TEXTUREACCESS_STREAMING, m_image_width,
                                 m_image_height);
 
-  // Load font for displaying FPS text
+  // Load font for displaying FPS text.
   const char *try_paths[] = {
       "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
       "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
@@ -377,12 +377,12 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
       break;
   }
 
-  // Allocate memory for color accumulation and pixel buffer
+  // Allocate memory for color accumulation and pixel buffer.
   m_accumulation.assign(m_image_width * m_image_height, Color(0, 0, 0));
   m_pixels.assign(m_image_width * m_image_height * 3, 0);
   m_last_fps_time = SDL_GetTicks();
 
-  // CUDA setup
+  // CUDA setup.
   CudaColor *d_accumulation;
   curandState *d_rand_states;
   size_t accumulation_size = m_image_width * m_image_height * sizeof(CudaColor);
@@ -403,10 +403,10 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
     return;
   }
 
-  // Initialize CUDA accumulation buffer
+  // Initialize CUDA accumulation buffer.
   cudaMemset(d_accumulation, 0, accumulation_size);
 
-  // Initialize random states
+  // Initialize random states.
   dim3 block_size(16, 16);
   dim3 grid_size((m_image_width + block_size.x - 1) / block_size.x,
                  (m_image_height + block_size.y - 1) / block_size.y);
@@ -422,7 +422,7 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
     return;
   }
 
-  // Convert CPU objects to CUDA format using comprehensive conversion
+  // Convert CPU objects to CUDA format using comprehensive conversion.
   CudaSceneData cuda_scene_data = convert_complete_scene_to_cuda(world, lights);
   if (cuda_scene_data.world_objects_buffer == nullptr ||
       cuda_scene_data.lights_objects_buffer == nullptr) {
@@ -461,13 +461,13 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
         int s_i = m_samples_taken % sqrt_spp;
         int s_j = m_samples_taken / sqrt_spp;
 
-        // Launch CUDA kernel for this tile
+        // Launch CUDA kernel for this tile.
         dim3 tile_block_size(16, 16);
         dim3 tile_grid_size(
             (end_c - start_c + tile_block_size.x - 1) / tile_block_size.x,
             (end_r - start_r + tile_block_size.y - 1) / tile_block_size.y);
 
-        // Convert camera parameters to CUDA format
+        // Convert camera parameters to CUDA format.
         CudaPoint3 cuda_center(m_center.x(), m_center.y(), m_center.z());
         CudaPoint3 cuda_pixel00_loc(m_pixel00_loc.x(), m_pixel00_loc.y(),
                                     m_pixel00_loc.z());
@@ -501,12 +501,12 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
       m_samples_taken++;
     m_frame++;
 
-    // Copy accumulation buffer back to CPU
+    // Copy accumulation buffer back to CPU.
     std::vector<CudaColor> cuda_accumulation(m_image_width * m_image_height);
     cudaMemcpy(cuda_accumulation.data(), d_accumulation, accumulation_size,
                cudaMemcpyDeviceToHost);
 
-    // Convert CUDA accumulation to CPU format
+    // Convert CUDA accumulation to CPU format.
     for (int i = 0; i < m_image_width * m_image_height; ++i) {
       m_accumulation[i] = Color(cuda_accumulation[i].x, cuda_accumulation[i].y,
                                 cuda_accumulation[i].z);
@@ -514,7 +514,7 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
 
     update_texture();
 
-    // Update FPS counter
+    // Update FPS counter.
     Uint64 now = SDL_GetTicks();
     Uint64 elapsed = now - m_last_fps_time;
     if (elapsed >= 1000) {
@@ -534,12 +534,12 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
     SDL_RenderPresent(m_renderer);
   }
 
-  // Cleanup CUDA memory and scene data
+  // Cleanup CUDA memory and scene data.
   cleanup_cuda_scene_data(cuda_scene_data);
   cudaFree(d_accumulation);
   cudaFree(d_rand_states);
 #else
-  // Fall back to CPU rendering if CUDA is not available
+  // Fall back to CPU rendering if CUDA is not available.
   render_cpu(world, lights);
 #endif
 }

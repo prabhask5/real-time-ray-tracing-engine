@@ -54,7 +54,7 @@ cuda_to_cpu_constant_medium(const CudaConstantMedium &cuda_constant_medium) {
   return ConstantMedium(cpu_boundary, density, cpu_phase_function);
 }
 
-// Memory management for constant medium objects
+// Memory management for constant medium objects.
 inline void
 cleanup_cuda_constant_medium(CudaConstantMedium &cuda_constant_medium) {
   if (cuda_constant_medium.boundary) {

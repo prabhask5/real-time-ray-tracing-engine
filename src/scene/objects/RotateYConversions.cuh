@@ -67,7 +67,7 @@ create_cuda_rotated_sphere(const CudaPoint3 &center, double radius,
   return CudaRotateY(sphere_obj, angle_degrees, sphere_bbox);
 }
 
-// Helper function to create rotated plane
+// Helper function to create rotated plane.
 __host__ __device__ inline CudaRotateY
 create_cuda_rotated_plane(const CudaPoint3 &corner, const CudaVec3 &u,
                           const CudaVec3 &v, const CudaMaterial &material,
@@ -80,7 +80,7 @@ create_cuda_rotated_plane(const CudaPoint3 &corner, const CudaVec3 &u,
   return CudaRotateY(plane_obj, angle_degrees, plane_bbox);
 }
 
-// Memory management for rotate objects
+// Memory management for rotate objects.
 inline void cleanup_cuda_rotate_y(CudaRotateY &cuda_rotate_y) {
   if (cuda_rotate_y.object) {
     delete cuda_rotate_y.object;

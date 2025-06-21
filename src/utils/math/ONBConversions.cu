@@ -2,7 +2,7 @@
 
 #include "ONBConversions.cuh"
 
-// Batch conversion kernel from CPU to CUDA ONB
+// Batch conversion kernel from CPU to CUDA ONB.
 __global__ void batch_cpu_to_cuda_onb_kernel(const ONB *cpu_onbs,
                                              CudaONB *cuda_onbs, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -11,7 +11,7 @@ __global__ void batch_cpu_to_cuda_onb_kernel(const ONB *cpu_onbs,
   }
 }
 
-// Batch conversion kernel from CUDA to CPU ONB
+// Batch conversion kernel from CUDA to CPU ONB.
 __global__ void batch_cuda_to_cpu_onb_kernel(const CudaONB *cuda_onbs,
                                              ONB *cpu_onbs, int count) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;

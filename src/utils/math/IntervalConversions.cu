@@ -2,7 +2,7 @@
 
 #include "IntervalConversions.cuh"
 
-// Batch conversion kernel from CPU to CUDA Interval
+// Batch conversion kernel from CPU to CUDA Interval.
 __global__ void batch_cpu_to_cuda_interval_kernel(const Interval *cpu_intervals,
                                                   CudaInterval *cuda_intervals,
                                                   int count) {
@@ -12,7 +12,7 @@ __global__ void batch_cpu_to_cuda_interval_kernel(const Interval *cpu_intervals,
   }
 }
 
-// Batch conversion kernel from CUDA to CPU Interval
+// Batch conversion kernel from CUDA to CPU Interval.
 __global__ void
 batch_cuda_to_cpu_interval_kernel(const CudaInterval *cuda_intervals,
                                   Interval *cpu_intervals, int count) {

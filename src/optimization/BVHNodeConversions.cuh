@@ -11,7 +11,7 @@ class BVHNode;
 struct CudaHittable;
 class Hittable;
 
-// Forward declaration of conversion functions
+// Forward declaration of conversion functions.
 inline CudaHittable cpu_to_cuda_hittable(const HittablePtr &cpu_hittable);
 inline HittablePtr cuda_to_cpu_hittable(const CudaHittable &cuda_hittable);
 

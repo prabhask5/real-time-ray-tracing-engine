@@ -42,15 +42,15 @@ convert_complete_scene_to_cuda(const HittableList &cpu_world,
     const auto &cpu_object = world_objects[i];
 
     if (auto sphere = std::dynamic_pointer_cast<Sphere>(cpu_object)) {
-      // Use complete sphere conversion function
+      // Use complete sphere conversion function.
       scene_data.world_objects_buffer[i].type = HITTABLE_SPHERE;
       scene_data.world_objects_buffer[i].sphere = cpu_to_cuda_sphere(*sphere);
     } else if (auto plane = std::dynamic_pointer_cast<Plane>(cpu_object)) {
-      // Use complete plane conversion function
+      // Use complete plane conversion function.
       scene_data.world_objects_buffer[i].type = HITTABLE_PLANE;
       scene_data.world_objects_buffer[i].plane = cpu_to_cuda_plane(*plane);
     } else {
-      // Default object
+      // Default object.
       CudaTexture default_texture =
           cuda_make_solid_texture(Color(0.5, 0.5, 0.5));
       CudaMaterial default_material =
@@ -61,7 +61,7 @@ convert_complete_scene_to_cuda(const HittableList &cpu_world,
     }
   }
 
-  // Convert light objects
+  // Convert light objects.
   const auto &light_objects = cpu_lights.get_objects();
   scene_data.lights_object_count =
       std::min((int)light_objects.size(), max_objects);
@@ -70,11 +70,11 @@ convert_complete_scene_to_cuda(const HittableList &cpu_world,
     const auto &cpu_object = light_objects[i];
 
     if (auto sphere = std::dynamic_pointer_cast<Sphere>(cpu_object)) {
-      // Use complete sphere conversion function
+      // Use complete sphere conversion function.
       scene_data.lights_objects_buffer[i].type = HITTABLE_SPHERE;
       scene_data.lights_objects_buffer[i].sphere = cpu_to_cuda_sphere(*sphere);
     } else if (auto plane = std::dynamic_pointer_cast<Plane>(cpu_object)) {
-      // Use complete plane conversion function
+      // Use complete plane conversion function.
       scene_data.lights_objects_buffer[i].type = HITTABLE_PLANE;
       scene_data.lights_objects_buffer[i].plane = cpu_to_cuda_plane(*plane);
     } else {
@@ -88,7 +88,7 @@ convert_complete_scene_to_cuda(const HittableList &cpu_world,
     }
   }
 
-  // Create CUDA hittable lists using the buffers
+  // Create CUDA hittable lists using the buffers.
   scene_data.world = create_cuda_hittable_list_with_buffer(
       scene_data.world_objects_buffer, scene_data.world_object_count);
   scene_data.lights = create_cuda_hittable_list_with_buffer(
@@ -97,7 +97,7 @@ convert_complete_scene_to_cuda(const HittableList &cpu_world,
   return scene_data;
 }
 
-// Cleanup scene data
+// Cleanup scene data.
 inline void cleanup_cuda_scene_data(CudaSceneData &scene_data) {
   delete[] scene_data.world_objects_buffer;
   delete[] scene_data.lights_objects_buffer;
@@ -105,14 +105,15 @@ inline void cleanup_cuda_scene_data(CudaSceneData &scene_data) {
   scene_data.lights_objects_buffer = nullptr;
 }
 
-// Convert scene with specific Cornell Box setup
+// Convert scene with specific Cornell Box setup.
+
 inline CudaSceneData create_cornell_box_cuda_scene() {
   CudaSceneData scene_data;
   scene_data.world_objects_buffer =
       new CudaHittable[10]; // Enough for Cornell Box
   scene_data.lights_objects_buffer = new CudaHittable[5];
 
-  // Create materials
+  // Create materials.
   CudaTexture red_texture = cuda_make_solid_texture(Color(0.65, 0.05, 0.05));
   CudaMaterial red_material = cuda_make_lambertian_material(red_texture);
   CudaTexture white_texture = cuda_make_solid_texture(Color(0.73, 0.73, 0.73));
@@ -123,7 +124,7 @@ inline CudaSceneData create_cornell_box_cuda_scene() {
   CudaMaterial light_material = cuda_make_diffuse_light_material(light_texture);
   CudaMaterial glass_material = cuda_make_dielectric_material(1.5);
 
-  // Create Cornell Box walls
+  // Create Cornell Box walls.
   int obj_count = 0;
 
   // Left wall (green)
@@ -162,7 +163,7 @@ inline CudaSceneData create_cornell_box_cuda_scene() {
       Point3(213, 554, 227), Vec3(130, 0, 0), Vec3(0, 0, 105), light_material);
   obj_count++;
 
-  // Glass sphere
+  // Glass sphere.
   scene_data.world_objects_buffer[obj_count].type = HITTABLE_SPHERE;
   scene_data.world_objects_buffer[obj_count].sphere =
       create_cuda_sphere_static(Point3(190, 90, 190), 90, glass_material);
@@ -170,17 +171,17 @@ inline CudaSceneData create_cornell_box_cuda_scene() {
 
   scene_data.world_object_count = obj_count;
 
-  // Create lights list
+  // Create lights list.
   int light_count = 0;
 
-  // Light plane for sampling
+  // Light plane for sampling.
   scene_data.lights_objects_buffer[light_count].type = HITTABLE_PLANE;
   scene_data.lights_objects_buffer[light_count].plane =
       create_cuda_plane(Point3(343, 554, 332), Vec3(-130, 0, 0),
                         Vec3(0, 0, -105), white_material);
   light_count++;
 
-  // Glass sphere for light sampling
+  // Glass sphere for light sampling.
   scene_data.lights_objects_buffer[light_count].type = HITTABLE_SPHERE;
   scene_data.lights_objects_buffer[light_count].sphere =
       create_cuda_sphere_static(Point3(190, 90, 190), 90, white_material);
@@ -188,7 +189,7 @@ inline CudaSceneData create_cornell_box_cuda_scene() {
 
   scene_data.lights_object_count = light_count;
 
-  // Create hittable lists using the buffers
+  // Create hittable lists using the buffers.
   scene_data.world = create_cuda_hittable_list_with_buffer(
       scene_data.world_objects_buffer, scene_data.world_object_count);
   scene_data.lights = create_cuda_hittable_list_with_buffer(

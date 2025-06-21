@@ -10,7 +10,7 @@
 #include "../../optimization/AABBUtility.cuh"
 #include "../../utils/math/Interval.cuh"
 
-// CUDA-compatible translation wrapper for a hittable objec
+// CUDA-compatible translation wrapper for a hittable object.
 struct CudaTranslate {
   const CudaHittable *object; // Can be any hittable (e.g. CudaSphere, CudaBox)
   CudaVec3 offset;
@@ -26,7 +26,7 @@ struct CudaTranslate {
   __device__ inline bool hit(const CudaRay &ray, CudaInterval t_range,
                              CudaHitRecord &rec, curandState *rand_state) {
 
-    // Move the ray backwards by the translation offset,
+    // Move the ray backwards by the translation offset.
     CudaRay moved_ray = CudaRay(ray.origin - offset, ray.direction, ray.time);
 
     // Dispatch the hit function of the wrapped object.
@@ -42,7 +42,7 @@ struct CudaTranslate {
   // PDF value for the translated object.
   __device__ inline double pdf_value(const CudaPoint3 &origin,
                                      const CudaVec3 &direction) {
-    // Move the origin backwards by the translation offset,
+    // Move the origin backwards by the translation offset.
     return object->pdf_value(origin - offset, direction);
   }
 

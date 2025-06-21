@@ -4,7 +4,8 @@
 #include "../../utils/math/Vec3Utility.cuh"
 #include "CameraKernels.cuh"
 
-// Initialize random states for each pixel
+// Initialize random states for each pixel.
+
 __global__ void init_rand_states(curandState *rand_states, int width,
                                  int height, unsigned long seed) {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -17,7 +18,8 @@ __global__ void init_rand_states(curandState *rand_states, int width,
   curand_init(seed + pixel_index, pixel_index, 0, &rand_states[pixel_index]);
 }
 
-// Device function: Sample stratified square
+// Device function: Sample stratified square.
+
 __device__ CudaVec3 sample_square_stratified_cuda(int s_i, int s_j,
                                                   int sqrt_spp,
                                                   curandState *state) {
@@ -26,13 +28,15 @@ __device__ CudaVec3 sample_square_stratified_cuda(int s_i, int s_j,
   return CudaVec3(px, py, 0);
 }
 
-// Device function: Sample random square
+// Device function: Sample random square.
+
 __device__ CudaVec3 sample_square_cuda(curandState *state) {
   return CudaVec3(cuda_random_double(state) - 0.5,
                   cuda_random_double(state) - 0.5, 0);
 }
 
-// Device function: Sample disk
+// Device function: Sample disk.
+
 __device__ CudaVec3 sample_disk_cuda(double radius, curandState *state) {
   CudaVec3 p;
   do {
@@ -43,7 +47,8 @@ __device__ CudaVec3 sample_disk_cuda(double radius, curandState *state) {
   return radius * p;
 }
 
-// Device function: Sample defocus disk
+// Device function: Sample defocus disk.
+
 __device__ CudaPoint3 defocus_disk_sample_cuda(CudaVec3 defocus_disk_u,
                                                CudaVec3 defocus_disk_v,
                                                curandState *state) {
@@ -51,7 +56,8 @@ __device__ CudaPoint3 defocus_disk_sample_cuda(CudaVec3 defocus_disk_u,
   return p.x * defocus_disk_u + p.y * defocus_disk_v;
 }
 
-// Device function: Get ray
+// Device function: Get ray.
+
 __device__ CudaRay get_ray_cuda(int i, int j, int s_i, int s_j, int sqrt_spp,
                                 CudaPoint3 center, CudaPoint3 pixel00_loc,
                                 CudaVec3 pixel_delta_u, CudaVec3 pixel_delta_v,
@@ -73,13 +79,15 @@ __device__ CudaRay get_ray_cuda(int i, int j, int s_i, int s_j, int sqrt_spp,
   return CudaRay(ray_origin, ray_direction, ray_time);
 }
 
-// Forward declaration
+// Forward declaration.
+
 __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
                                     const CudaHittableList &world,
                                     const CudaHittableList &lights,
                                     CudaColor background, curandState *state);
 
-// Device function: Ray color computation with proper material handling
+// Device function: Ray color computation with proper material handling.
+
 __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
                                     const CudaHittableList &world,
                                     const CudaHittableList &lights,
@@ -91,9 +99,11 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
   if (!world.hit(ray, CudaInterval(0.001, CUDA_INF), rec, state))
     return background;
 
-  // Extract material from hit record
+  // Extract material from hit record.
+
   if (rec.material_data == nullptr) {
-    // Default diffuse behavior if no material
+    // Default diffuse behavior if no material.
+
     CudaVec3 scatter_direction = rec.normal + cuda_random_unit_vector(state);
     if (scatter_direction.near_zero())
       scatter_direction = rec.normal;
@@ -104,15 +114,18 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
                                         background, state);
   }
 
-  // Get material from hit record
+  // Get material from hit record.
+
   const CudaMaterial *material =
       reinterpret_cast<const CudaMaterial *>(rec.material_data);
 
-  // Calculate emission color
+  // Calculate emission color.
+
   CudaColor color_from_emission =
       material->emitted(ray, rec, rec.u, rec.v, rec.point);
 
-  // Try to scatter the ray
+  // Try to scatter the ray.
+
   CudaScatterRecord srec;
   if (!material->scatter(ray, rec, srec, state))
     return color_from_emission;
@@ -125,16 +138,20 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
 
   CudaColor color_from_scatter = CudaColor(0, 0, 0);
 
-  // Handle probabilistic scattering with PDF
+  // Handle probabilistic scattering with PDF.
+
   if (lights.count > 0) {
-    // Use importance sampling with lights
+    // Use importance sampling with lights.
+
     CudaPDF light_pdf = cuda_make_hittable_pdf(&lights, rec.point);
 
-    // Create complete mixed PDF with proper importance sampling
+    // Create complete mixed PDF with proper importance sampling.
+
     CudaVec3 scattered_direction;
     double pdf_value;
 
-    // Create material PDF based on scatter record type
+    // Create material PDF based on scatter record type.
+
     CudaPDF material_pdf;
     if (srec.pdf_type == CUDA_PDF_COSINE) {
       material_pdf = cuda_make_cosine_pdf(rec.normal);
@@ -144,18 +161,22 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
       material_pdf = cuda_make_cosine_pdf(rec.normal); // Default fallback
     }
 
-    // Create proper mixture PDF combining light and material PDFs
+    // Create proper mixture PDF combining light and material PDFs.
+
     CudaPDF mixture_pdf =
         cuda_make_mixture_pdf(light_pdf.type, (void *)&light_pdf.data,
                               material_pdf.type, (void *)&material_pdf.data);
 
-    // Sample from the mixture PDF
+    // Sample from the mixture PDF.
+
     scattered_direction = mixture_pdf.generate(state);
     pdf_value = mixture_pdf.value(scattered_direction);
 
-    // Ensure PDF value is valid
+    // Ensure PDF value is valid.
+
     if (pdf_value <= 0.0) {
-      // Fallback to material PDF only
+      // Fallback to material PDF only.
+
       scattered_direction = material_pdf.generate(state);
       pdf_value = material_pdf.value(scattered_direction);
     }
@@ -169,7 +190,8 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
                            pdf_value;
     }
   } else {
-    // No lights - use material PDF only
+    // No lights - use material PDF only.
+
     if (srec.pdf_type == CUDA_PDF_COSINE) {
       CudaPDF material_pdf = cuda_make_cosine_pdf(rec.normal);
       CudaVec3 scattered_direction = material_pdf.generate(state);
@@ -185,7 +207,8 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
                              pdf_value;
       }
     } else {
-      // Fallback to hemisphere sampling
+      // Fallback to hemisphere sampling.
+
       CudaVec3 scattered_direction =
           cuda_random_on_hemisphere(state, rec.normal);
       CudaRay scattered_ray(rec.point, scattered_direction, ray.time);
@@ -198,7 +221,8 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
   return color_from_emission + color_from_scatter;
 }
 
-// Dynamic camera tile rendering kernel
+// Dynamic camera tile rendering kernel.
+
 __global__ void dynamic_render_tile_kernel(
     CudaColor *accumulation, int image_width, int image_height, int start_r,
     int end_r, int start_c, int end_c, int s_i, int s_j, int sqrt_spp,
@@ -224,13 +248,15 @@ __global__ void dynamic_render_tile_kernel(
   CudaColor sample =
       ray_color_cuda(ray, max_depth, world, lights, background, state);
 
-  // Atomic add to accumulation buffer
+  // Atomic add to accumulation buffer.
+
   atomicAdd(&accumulation[pixel_index].x, sample.x);
   atomicAdd(&accumulation[pixel_index].y, sample.y);
   atomicAdd(&accumulation[pixel_index].z, sample.z);
 }
 
-// Static camera rendering kernel
+// Static camera rendering kernel.
+
 __global__ void static_render_kernel(
     CudaColor *pixel_colors, int image_width, int image_height, int start_row,
     int end_row, int sqrt_spp, int max_depth, CudaPoint3 center,
@@ -251,7 +277,8 @@ __global__ void static_render_kernel(
 
   CudaColor pixel_color(0, 0, 0);
 
-  // Sample all stratified samples for this pixel
+  // Sample all stratified samples for this pixel.
+
   for (int s_j_idx = 0; s_j_idx < sqrt_spp; ++s_j_idx) {
     for (int s_i_idx = 0; s_i_idx < sqrt_spp; ++s_i_idx) {
       CudaRay ray = get_ray_cuda(
@@ -263,7 +290,8 @@ __global__ void static_render_kernel(
     }
   }
 
-  // Scale and store final pixel color
+  // Scale and store final pixel color.
+
   pixel_colors[pixel_index] = pixel_samples_scale * pixel_color;
 }
 
