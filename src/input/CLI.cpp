@@ -39,6 +39,8 @@ CLIOptions parse_cli(int argc, char **argv) {
       opts.use_bvh = true;
     } else if (arg == "-g" || arg == "--gpu") {
       opts.use_gpu = true;
+    } else if (arg == "-w" || arg == "--wavefront") {
+      opts.use_wavefront = true;
     } else if (arg == "--width") {
       if (i + 1 < argc) {
         try {
@@ -105,6 +107,8 @@ void print_help() {
                "scene acceleration\n";
   std::cout << "  -g, --gpu                  Render using CUDA GPU kernels "
                "(default: false, cannot be true for no GPU)\n";
+  std::cout << "  -w, --wavefront            Use wavefront path tracing for "
+               "coherent scheduling (default: false)\n";
   std::cout << "  --width <int>              Image width for scene render "
                "(default: 600)\n";
   std::cout << "  --samples <int>            Number of samples per pixel for "

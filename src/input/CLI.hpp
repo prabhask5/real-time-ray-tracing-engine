@@ -17,6 +17,7 @@ struct alignas(16) CLIOptions {
   bool use_parallelism = false; // Parallelism flag.
   bool use_bvh = false;         // BVH acceleration flag.
   bool use_gpu = false;         // GPU rendering flag.
+  bool use_wavefront = false;   // Wavefront path tracing flag.
   bool any_errors = false;      // Error tracking flag.
 
   // Cold data: string data (larger, less frequently accessed).
