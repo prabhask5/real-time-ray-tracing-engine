@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../utils/math/SimdOps.hpp"
+#include "../../utils/math/SimdTypes.hpp"
 #include "Material.hpp"
 
 // Models transparent materials (like glass or water) that can both reflect and

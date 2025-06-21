@@ -23,6 +23,40 @@ bool DielectricMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
   double refraction_index =
       record.frontFace ? (1.0 / m_refraction_index) : m_refraction_index;
 
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+  // SIMD-optimized dielectric material calculations.
+  if constexpr (SIMD_DOUBLE_PRECISION) {
+    // Use Snell's Law to determine whether total internal reflection occurs.
+    // If cannot_refract == true, ray must reflect.
+    Vec3 unit_direction =
+        hit_ray.direction().normalize(); // SIMD-optimized normalize
+    double cos_theta = std::fmin((-unit_direction).dot(record.normal),
+                                 1.0); // SIMD-optimized dot product
+    double sin_theta = std::sqrt(1.0 - cos_theta * cos_theta);
+    bool cannot_refract = refraction_index * sin_theta > 1.0;
+
+    Vec3 direction;
+
+    // Use Schlick's approximation for reflectance.
+    double r0 = (1 - refraction_index) / (1 + refraction_index);
+    r0 = r0 * r0;
+    double reflectance = r0 + (1 - r0) * std::pow((1 - cos_theta), 5);
+
+    // Use Schlick's approximation to probabilistically reflect or refract.
+    if (cannot_refract || reflectance > random_double())
+      direction = reflect(unit_direction, record.normal);
+    else
+      direction = refract(unit_direction, record.normal, refraction_index);
+
+    // Set the new scattered ray.
+    scatter_record.skip_pdf_ray = Ray(record.point, direction);
+
+    return true;
+  }
+#endif
+
+  // Fallback scalar implementation.
+
   // Use Snell's Law to determine whether total internal reflection occurs.
   // If cannot_refract == true, ray must reflect.
   Vec3 unit_direction = unit_vector(hit_ray.direction());
@@ -38,7 +72,7 @@ bool DielectricMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
   r0 = r0 * r0;
   double reflectance = r0 + (1 - r0) * std::pow((1 - cos_theta), 5);
 
-  // Use Schlick’s approximation to probabilistically reflect or refract.
+  // Use Schlick's approximation to probabilistically reflect or refract.
   if (cannot_refract || reflectance > random_double())
     direction = reflect(unit_direction, record.normal);
   else
