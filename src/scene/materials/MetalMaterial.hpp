@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../utils/math/SimdOps.hpp"
+#include "../../utils/math/SimdTypes.hpp"
 #include "../../utils/math/Vec3.hpp"
 #include "Material.hpp"
 

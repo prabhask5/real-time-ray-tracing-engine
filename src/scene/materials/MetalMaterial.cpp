@@ -9,6 +9,39 @@ MetalMaterial::MetalMaterial(const Color &albedo, double fuzz)
 
 bool MetalMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
                             ScatterRecord &scatter_record) const {
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+  // SIMD-optimized metallic material scattering.
+
+  if constexpr (SIMD_DOUBLE_PRECISION) {
+    // Reflect the incoming ray around the surface normal using SIMD-optimized
+    // operations.
+
+    Vec3 reflected_direction = reflect(hit_ray.direction(), record.normal);
+
+    // Add some random fuzz to the direction (if fuzz > 0) and normalize to keep
+    // the ray unit-length using SIMD-optimized operations.
+
+    reflected_direction =
+        reflected_direction.normalize() +
+        (m_fuzz * random_unit_vector()); // Uses SIMD normalize
+
+    // Set the attenuation to the albedo of the material, and set the skip pdf
+    // ray.
+
+    // to represent a mirror reflection instead of diffuse scattering.
+
+    scatter_record.attenuation = m_albedo;
+    scatter_record.pdf_ptr = nullptr;
+    scatter_record.skip_pdf = true;
+    scatter_record.skip_pdf_ray =
+        Ray(record.point, reflected_direction, hit_ray.time());
+
+    return true;
+  }
+#endif
+
+  // Fallback scalar implementation.
+
   // Reflect the incoming ray around the surface normal.
   Vec3 reflected_direction = reflect(hit_ray.direction(), record.normal);
 
