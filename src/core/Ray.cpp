@@ -15,4 +15,4 @@ const Vec3 &Ray::direction() const { return m_direction; }
 
 double Ray::time() const { return m_time; }
 
-Point3 Ray::at(double t) const { return m_origin + t * m_direction; }
+// at() method moved to header file for SIMD optimization.
