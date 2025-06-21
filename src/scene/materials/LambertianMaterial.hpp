@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../../core/Vec3Types.hpp"
+#include "../../utils/math/SimdOps.hpp"
+#include "../../utils/math/SimdTypes.hpp"
 #include "../../utils/math/Vec3.hpp"
 #include "../textures/TextureTypes.hpp"
 #include "Material.hpp"

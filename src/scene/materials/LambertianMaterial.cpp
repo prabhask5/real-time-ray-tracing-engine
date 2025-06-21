@@ -34,6 +34,23 @@ bool LambertianMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
 double LambertianMaterial::scattering_pdf(const Ray &hit_ray,
                                           const HitRecord &record,
                                           const Ray &scattered) const {
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+  // SIMD-optimized scattering PDF calculation using Vec3's SIMD dot product.
+
+  if constexpr (SIMD_DOUBLE_PRECISION) {
+    Vec3 normalized_direction =
+        scattered.direction().normalize(); // SIMD-optimized normalize
+    double cos_theta =
+        record.normal.dot(normalized_direction); // SIMD-optimized dot product
+
+    // PDF formula for Lambertian materials.
+
+    return cos_theta < 0 ? 0 : cos_theta / PI;
+  }
+#endif
+
+  // Fallback scalar implementation.
+
   double cos_theta =
       dot_product(record.normal, unit_vector(scattered.direction()));
 
