@@ -4,20 +4,14 @@ services:
   raytracer:
     build: .
     container_name: raytracer
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
+    runtime: nvidia
     environment:
       - SDL_VIDEODRIVER=x11
       - NVIDIA_VISIBLE_DEVICES=all
       - DISPLAY=${DISPLAY}  # For GUI support (X11)
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-      - TMPDIR=/tmp
-      - LIBGL_ALWAYS_INDIRECT=1
     volumes:
       - .:/real-time-ray-tracing-engine
       - /tmp/.X11-unix:/tmp/.X11-unix
     stdin_open: true
     tty: true
+    
