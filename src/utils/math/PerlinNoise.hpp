@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SimdOps.hpp"
+#include "SimdTypes.hpp"
 #include "Vec3Utility.hpp"
 #include <algorithm>
 
@@ -116,27 +118,75 @@ private:
 
   // Interpolates dot products between the 8 corners of the unit cube:
   // - Uses Hermite cubic smoothing: u * u * (3 - 2 * u) to get a smooth noise
-  // Gradient.
+  // gradient.
   // - For each corner:
-  // - - Compute weight_v = vector from corner to p
-  // - - Dot with gradient vector c[i][j][k]
-  // - - Blend all 8 values together
+  // - - Compute weight_v = vector from corner to p.
+  // - - Dot with gradient vector c[i][j][k].
+  // - - Blend all 8 values together.
   double perlin_interp(const Vec3 c[2][2][2], double u, double v,
                        double w) const {
-    double uu = u * u * (3 - 2 * u);
-    double vv = v * v * (3 - 2 * v);
-    double ww = w * w * (3 - 2 * w);
-    double accum = 0.0;
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+    // SIMD-optimized Perlin interpolation for improved noise generation
+    // performance.
+    if constexpr (SIMD_DOUBLE_PRECISION) {
+      double uu = u * u * (3 - 2 * u);
+      double vv = v * v * (3 - 2 * v);
+      double ww = w * w * (3 - 2 * w);
 
-    for (int i = 0; i < 2; i++)
-      for (int j = 0; j < 2; j++)
-        for (int k = 0; k < 2; k++) {
-          Vec3 weight_v(u - i, v - j, w - k);
-          accum +=
-              (i * uu + (1 - i) * (1 - uu)) * (j * vv + (1 - j) * (1 - vv)) *
-              (k * ww + (1 - k) * (1 - ww)) * dot_product(c[i][j][k], weight_v);
+      // Process 8 corner calculations in parallel using SIMD.
+      simd_double4 accum_vec = SimdOps::zero_double4();
+
+      for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+          // Load weight vector components for both k=0 and k=1.
+          simd_double4 weight_data =
+              SimdOps::set_double4(u - i, v - j, w - 0, w - 1);
+
+          // Process k=0 and k=1 together.
+          Vec3 weight_v0(u - i, v - j, w - 0);
+          Vec3 weight_v1(u - i, v - j, w - 1);
+
+          double dot0 =
+              c[i][j][0].dot(weight_v0); // SIMD-optimized dot product.
+          double dot1 =
+              c[i][j][1].dot(weight_v1); // SIMD-optimized dot product.
+
+          double factor_i = (i * uu + (1 - i) * (1 - uu));
+          double factor_j = (j * vv + (1 - j) * (1 - vv));
+
+          double contrib0 =
+              factor_i * factor_j * (0 * ww + (1 - 0) * (1 - ww)) * dot0;
+          double contrib1 =
+              factor_i * factor_j * (1 * ww + (1 - 1) * (1 - ww)) * dot1;
+
+          simd_double4 contrib_vec =
+              SimdOps::set_double4(contrib0, contrib1, 0, 0);
+          accum_vec = SimdOps::add_double4(accum_vec, contrib_vec);
         }
+      }
 
-    return accum;
+      // Sum the accumulated values.
+      return accum_vec[0] + accum_vec[1];
+    } else {
+#endif
+      double uu = u * u * (3 - 2 * u);
+      double vv = v * v * (3 - 2 * v);
+      double ww = w * w * (3 - 2 * w);
+      double accum = 0.0;
+
+      for (int i = 0; i < 2; i++)
+        for (int j = 0; j < 2; j++)
+          for (int k = 0; k < 2; k++) {
+            Vec3 weight_v(u - i, v - j, w - k);
+            accum += (i * uu + (1 - i) * (1 - uu)) *
+                     (j * vv + (1 - j) * (1 - vv)) *
+                     (k * ww + (1 - k) * (1 - ww)) *
+                     dot_product(c[i][j][k], weight_v);
+          }
+
+      return accum;
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+    }
+#endif
   }
 };
