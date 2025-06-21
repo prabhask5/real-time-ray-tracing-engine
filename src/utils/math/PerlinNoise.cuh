@@ -8,32 +8,40 @@
 // Number of random gradient vectors and permutations.
 static const int CUDA_PERLIN_POINT_COUNT = 256;
 
-// This struct implements Perlin noise for CUDA. It holds gradient vectors and
-// permutation tables.
+// Forward declarations.
+__device__ void cuda_perlin_generate_perm(int *p, curandState *state);
+__device__ double cuda_perlin_interp(const CudaVec3 c[2][2][2], double u,
+                                     double v, double w);
+
+// This class implements Perlin noise. Perlin noise is a type of gradient noise.
+// Instead of assigning random values to each point, it assigns random gradient
+// Vectors to grid points and uses interpolation between them. This creates
+// smooth, continuous noise (no harsh jumps like white noise).
 struct CudaPerlinNoise {
   CudaVec3 rand_vec[CUDA_PERLIN_POINT_COUNT];
   int perm_x[CUDA_PERLIN_POINT_COUNT];
   int perm_y[CUDA_PERLIN_POINT_COUNT];
   int perm_z[CUDA_PERLIN_POINT_COUNT];
 
+  // Default constructor.
+  __device__ CudaPerlinNoise() {}
+
   // Initializes the Perlin noise object by generating gradient vectors and
   // permutations.
   __device__ CudaPerlinNoise(curandState *state) {
-    for (int i = 0; i < CUDA_PERLIN_POINT_COUNT; i++) {
-      rand_vec[i] =
-          cuda_unit_vector(CudaVec3(cuda_random_double(state) * 2.0 - 1.0,
-                                    cuda_random_double(state) * 2.0 - 1.0,
-                                    cuda_random_double(state) * 2.0 - 1.0));
-    }
+    for (int i = 0; i < CUDA_PERLIN_POINT_COUNT; i++)
+      rand_vec[i] = cuda_unit_vector(cuda_vec_random(-1, 1, state));
+
     cuda_perlin_generate_perm(perm_x, state);
     cuda_perlin_generate_perm(perm_y, state);
     cuda_perlin_generate_perm(perm_z, state);
   }
 
-  __device__ CudaPerlinNoise(CudaVec3 _rand_vec[CUDA_PERLIN_POINT_COUNT],
-                             int _perm_x[CUDA_PERLIN_POINT_COUNT],
-                             int _perm_y[CUDA_PERLIN_POINT_COUNT],
-                             int _perm_z[CUDA_PERLIN_POINT_COUNT]) {
+  __host__ __device__
+  CudaPerlinNoise(const CudaVec3 _rand_vec[CUDA_PERLIN_POINT_COUNT],
+                  const int _perm_x[CUDA_PERLIN_POINT_COUNT],
+                  const int _perm_y[CUDA_PERLIN_POINT_COUNT],
+                  const int _perm_z[CUDA_PERLIN_POINT_COUNT]) {
     for (int i = 0; i < CUDA_PERLIN_POINT_COUNT; i++) {
       rand_vec[i] = _rand_vec[i];
       perm_x[i] = _perm_x[i];
@@ -52,8 +60,10 @@ struct CudaPerlinNoise {
     int y_int = static_cast<int>(floor(p.y));
     int z_int = static_cast<int>(floor(p.z));
 
+    // Stores gradient vectors at the 8 corners of the cube surrounding point p.
     CudaVec3 c[2][2][2];
 
+    // Hash the permutation values to get the gradient vectors.
     for (int di = 0; di < 2; di++)
       for (int dj = 0; dj < 2; dj++)
         for (int dk = 0; dk < 2; dk++) {
@@ -86,6 +96,8 @@ __device__ __forceinline__ void cuda_perlin_generate_perm(int *p,
                                                           curandState *state) {
   for (int i = 0; i < CUDA_PERLIN_POINT_COUNT; i++)
     p[i] = i;
+
+  // Shuffle around the values in a permutation array p, of length n.
   for (int i = CUDA_PERLIN_POINT_COUNT - 1; i > 0; i--) {
     int target = curand(state) % (i + 1); // Pseudo-shuffle with curand.
     int tmp = p[i];

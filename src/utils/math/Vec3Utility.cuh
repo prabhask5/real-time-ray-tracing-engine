@@ -114,9 +114,4 @@ __device__ inline CudaVec3 cuda_random_cosine_direction(curandState *state) {
   return CudaVec3(x, y, z);
 }
 
-// GPU batch processing functions (implemented in .cu file).
-void cuda_generate_random_vectors(CudaVec3 *d_vectors, int count,
-                                  curandState *d_states);
-void cuda_normalize_vectors(CudaVec3 *d_vectors, int count);
-
 #endif // USE_CUDA

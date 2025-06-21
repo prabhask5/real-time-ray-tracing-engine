@@ -47,6 +47,18 @@ int AABB::get_longest_axis() const {
     return m_y.size() > m_z.size() ? 1 : 2;
 }
 
+Point3 AABB::center() const {
+  return Point3((m_x.min() + m_x.max()) * 0.5, (m_y.min() + m_y.max()) * 0.5,
+                (m_z.min() + m_z.max()) * 0.5);
+}
+
+double AABB::surface_area() const {
+  double dx = m_x.size();
+  double dy = m_y.size();
+  double dz = m_z.size();
+  return 2.0 * (dx * dy + dy * dz + dz * dx);
+}
+
 bool AABB::hit(const Ray &ray, Interval t_values) const {
   const Point3 &origin = ray.origin();
   const Vec3 &dir = ray.direction();

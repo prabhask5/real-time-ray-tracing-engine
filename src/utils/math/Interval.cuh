@@ -10,10 +10,11 @@ struct CudaInterval {
   double min;
   double max;
 
-  // Empty interval.
+  // Simulates empty interval.
   __device__ CudaInterval() : min(+CUDA_INF), max(-CUDA_INF) {}
 
-  __device__ CudaInterval(double _min, double _max) : min(_min), max(_max) {}
+  __host__ __device__ CudaInterval(double _min, double _max)
+      : min(_min), max(_max) {}
 
   // Create the interval tightly enclosing the two input intervals.
   __device__ CudaInterval(const CudaInterval &a, const CudaInterval &b) {
@@ -44,18 +45,17 @@ struct CudaInterval {
   }
 };
 
-// Constants — defined as `__constant__` if reused across kernels, or
-// `__device__` if needed per thread.
-__device__ __constant__ CudaInterval CUDA_EMPTY_INTERVAL = {+CUDA_INF,
-                                                            -CUDA_INF};
-__device__ __constant__ CudaInterval CUDA_UNIVERSE_INTERVAL = {-CUDA_INF,
-                                                               +CUDA_INF};
+// Constants — use inline functions to avoid initialization issues
+__device__ inline CudaInterval cuda_empty_interval() {
+  return CudaInterval(+CUDA_INF, -CUDA_INF);
+}
 
-// GPU batch processing functions (implemented in .cu file).
-void cuda_batch_clamp_values(double *d_values, const CudaInterval *d_intervals,
-                             int count);
-void cuda_batch_intersect_intervals(const CudaInterval *d_intervals1,
-                                    const CudaInterval *d_intervals2,
-                                    CudaInterval *d_result, int count);
+__device__ inline CudaInterval cuda_universe_interval() {
+  return CudaInterval(-CUDA_INF, +CUDA_INF);
+}
+
+// For compatibility, define macros.
+#define CUDA_EMPTY_INTERVAL cuda_empty_interval()
+#define CUDA_UNIVERSE_INTERVAL cuda_universe_interval()
 
 #endif // USE_CUDA

@@ -12,9 +12,16 @@ class alignas(16) Translate : public Hittable {
 public:
   Translate(HittablePtr object, const Vec3 &offset);
 
+  // Initialize translate from direct members.
+  Translate(HittablePtr object, const Vec3 &offset, const AABB bbox);
+
   // Getter functions.
 
   AABB get_bounding_box() const override;
+
+  HittablePtr get_object() const { return m_object; }
+
+  Vec3 get_offset() const { return m_offset; }
 
   // Action functions.
 

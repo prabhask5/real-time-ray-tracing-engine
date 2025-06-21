@@ -2,44 +2,42 @@
 
 #ifdef USE_CUDA
 
+// Forward declarations
+struct CudaHittable;
+CudaHittable cpu_to_cuda_hittable(const Hittable &cpu_hittable);
+HittablePtr cuda_to_cpu_hittable(const CudaHittable &cuda_hittable);
+
+#include "../core/Hittable.cuh"
 #include "../core/HittableTypes.hpp"
 #include "AABBConversions.cuh"
 #include "BVHNode.cuh"
 
-// Forward declarations.
-class BVHNode;
-struct CudaHittable;
-class Hittable;
-
-// Forward declaration of conversion functions.
-inline CudaHittable cpu_to_cuda_hittable(const HittablePtr &cpu_hittable);
-inline HittablePtr cuda_to_cpu_hittable(const CudaHittable &cuda_hittable);
-
 // Convert CPU BVHNode to CUDA BVHNode.
 inline CudaBVHNode cpu_to_cuda_bvh_node(const BVHNode &cpu_bvh_node) {
-  // Extract properties from CPU BVHNode using reflection/getters.
-  // Note: This assumes BVHNode has getter methods for left, right, and bounding
-  // box.
+  CudaHittable *left = new CudaHittable();
+  CudaHittable *right = new CudaHittable();
 
-  // Get left and right children.
-  auto cpu_left = cpu_bvh_node.get_left();
-  auto cpu_right = cpu_bvh_node.get_right();
+  *left = cpu_to_cuda_hittable(*cpu_bvh_node.get_left());
+  *right = cpu_to_cuda_hittable(*cpu_bvh_node.get_right());
 
-  // Convert children to CUDA format.
-  CudaHittable cuda_left = cpu_to_cuda_hittable(cpu_left);
-  CudaHittable cuda_right = cpu_to_cuda_hittable(cpu_right);
+  bool is_leaf = left->type != CudaHittableType::HITTABLE_BVH_NODE &&
+                 right->type != CudaHittableType::HITTABLE_BVH_NODE;
 
-  // Create CUDA BVH node.
-  CudaBVHNode cuda_bvh_node(cuda_left, cuda_right, cpu_bvh_node.is_leaf());
-
-  return cuda_bvh_node;
+  return CudaBVHNode(left, right, is_leaf);
 }
 
 // Convert CUDA BVHNode to CPU BVHNode.
 inline BVHNode cuda_to_cpu_bvh_node(const CudaBVHNode &cuda_bvh_node) {
   // Convert children back to CPU format.
-  auto cpu_left = cuda_to_cpu_hittable(cuda_bvh_node.left);
-  auto cpu_right = cuda_to_cpu_hittable(cuda_bvh_node.right);
+  HittablePtr cpu_left = nullptr;
+  HittablePtr cpu_right = nullptr;
+
+  if (cuda_bvh_node.left) {
+    cpu_left = cuda_to_cpu_hittable(*cuda_bvh_node.left);
+  }
+  if (cuda_bvh_node.right) {
+    cpu_right = cuda_to_cpu_hittable(*cuda_bvh_node.right);
+  }
 
   // Create CPU BVH node with converted children.
   return BVHNode(cpu_left, cpu_right);

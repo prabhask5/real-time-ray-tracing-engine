@@ -6,6 +6,7 @@
 #include "scene/materials/DielectricMaterial.hpp"
 #include "scene/materials/DiffuseLightMaterial.hpp"
 #include "scene/materials/LambertianMaterial.hpp"
+#include "scene/materials/MaterialTypes.hpp"
 #include "scene/materials/MetalMaterial.hpp"
 #include "scene/objects/Plane.hpp"
 #include "scene/objects/PlaneUtility.hpp"
@@ -13,15 +14,18 @@
 #include "scene/objects/Sphere.hpp"
 #include "scene/objects/Translate.hpp"
 #include "scene/textures/CheckerTexture.hpp"
+#include "scene/textures/TextureTypes.hpp"
 #include "utils/math/Vec3Utility.hpp"
 #include <memory>
 
 void populate_cornell_box_scene(HittableList &world, HittableList &lights,
                                 CameraConfig &cam_config) {
-  auto red = std::make_shared<LambertianMaterial>(Color(.65, .05, .05));
-  auto white = std::make_shared<LambertianMaterial>(Color(.73, .73, .73));
-  auto green = std::make_shared<LambertianMaterial>(Color(.12, .45, .15));
-  auto light = std::make_shared<DiffuseLightMaterial>(Color(15, 15, 15));
+  MaterialPtr red = std::make_shared<LambertianMaterial>(Color(.65, .05, .05));
+  MaterialPtr white =
+      std::make_shared<LambertianMaterial>(Color(.73, .73, .73));
+  MaterialPtr green =
+      std::make_shared<LambertianMaterial>(Color(.12, .45, .15));
+  MaterialPtr light = std::make_shared<DiffuseLightMaterial>(Color(15, 15, 15));
 
   // Cornell box sides.
   world.add(std::make_shared<Plane>(Point3(555, 0, 0), Vec3(0, 0, 555),
@@ -46,11 +50,11 @@ void populate_cornell_box_scene(HittableList &world, HittableList &lights,
   world.add(box1);
 
   // Glass Sphere.
-  auto glass = std::make_shared<DielectricMaterial>(1.5);
+  MaterialPtr glass = std::make_shared<DielectricMaterial>(1.5);
   world.add(std::make_shared<Sphere>(Point3(190, 90, 190), 90, glass));
 
   // Light Sources.
-  auto empty_material = MaterialPtr();
+  MaterialPtr empty_material = MaterialPtr();
   lights.add(std::make_shared<Plane>(Point3(343, 554, 332), Vec3(-130, 0, 0),
                                      Vec3(0, 0, -105), empty_material));
   lights.add(
@@ -68,15 +72,15 @@ void populate_cornell_box_scene(HittableList &world, HittableList &lights,
 
 void populate_bouncing_spheres_scene(HittableList &world, HittableList &lights,
                                      CameraConfig &cam_config) {
-  auto checker = std::make_shared<CheckerTexture>(0.32, Color(.2, .3, .1),
-                                                  Color(.9, .9, .9));
+  TexturePtr checker = std::make_shared<CheckerTexture>(0.32, Color(.2, .3, .1),
+                                                        Color(.9, .9, .9));
   world.add(
       std::make_shared<Sphere>(Point3(0, -1000, 0), 1000,
                                std::make_shared<LambertianMaterial>(checker)));
 
   for (int a = -11; a < 11; a++) {
     for (int b = -11; b < 11; b++) {
-      auto choose_mat = random_double();
+      double choose_mat = random_double();
       Point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
 
       if ((center - Point3(4, 0.2, 0)).length() > 0.9) {
@@ -84,15 +88,15 @@ void populate_bouncing_spheres_scene(HittableList &world, HittableList &lights,
 
         if (choose_mat < 0.8) {
           // Diffuse.
-          auto albedo = Color::random() * Color::random();
+          Color albedo = Color::random() * Color::random();
           sphere_material = std::make_shared<LambertianMaterial>(albedo);
-          auto center2 = center + Vec3(0, random_double(0, .5), 0);
+          Point3 center2 = center + Vec3(0, random_double(0, .5), 0);
           world.add(
               std::make_shared<Sphere>(center, center2, 0.2, sphere_material));
         } else if (choose_mat < 0.95) {
           // Metal.
-          auto albedo = Color::random(0.5, 1);
-          auto fuzz = random_double(0, 0.5);
+          Color albedo = Color::random(0.5, 1);
+          double fuzz = random_double(0, 0.5);
           sphere_material = std::make_shared<MetalMaterial>(albedo, fuzz);
           world.add(std::make_shared<Sphere>(center, 0.2, sphere_material));
         } else {
@@ -104,13 +108,15 @@ void populate_bouncing_spheres_scene(HittableList &world, HittableList &lights,
     }
   }
 
-  auto material1 = std::make_shared<DielectricMaterial>(1.5);
+  MaterialPtr material1 = std::make_shared<DielectricMaterial>(1.5);
   world.add(std::make_shared<Sphere>(Point3(0, 1, 0), 1.0, material1));
 
-  auto material2 = std::make_shared<LambertianMaterial>(Color(0.4, 0.2, 0.1));
+  MaterialPtr material2 =
+      std::make_shared<LambertianMaterial>(Color(0.4, 0.2, 0.1));
   world.add(std::make_shared<Sphere>(Point3(-4, 1, 0), 1.0, material2));
 
-  auto material3 = std::make_shared<MetalMaterial>(Color(0.7, 0.6, 0.5), 0.0);
+  MaterialPtr material3 =
+      std::make_shared<MetalMaterial>(Color(0.7, 0.6, 0.5), 0.0);
   world.add(std::make_shared<Sphere>(Point3(4, 1, 0), 1.0, material3));
 
   // Populate custom cam config.

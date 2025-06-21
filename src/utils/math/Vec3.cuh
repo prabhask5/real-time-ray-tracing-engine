@@ -11,7 +11,8 @@ struct CudaVec3 {
 
   __device__ CudaVec3() : x(0), y(0), z(0) {}
 
-  __device__ CudaVec3(double x_, double y_, double z_) : x(x_), y(y_), z(z_) {}
+  __host__ __device__ CudaVec3(double x_, double y_, double z_)
+      : x(x_), y(y_), z(z_) {}
 
   // Operator overloads for 3D vector.
 

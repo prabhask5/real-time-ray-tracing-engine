@@ -9,6 +9,9 @@ Translate::Translate(HittablePtr object, const Vec3 &offset)
   m_bbox = object->get_bounding_box() + offset;
 }
 
+Translate::Translate(HittablePtr object, const Vec3 &offset, const AABB bbox)
+    : m_object(object), m_offset(offset), m_bbox(bbox) {}
+
 AABB Translate::get_bounding_box() const { return m_bbox; }
 
 bool Translate::hit(const Ray &ray, Interval t_values,

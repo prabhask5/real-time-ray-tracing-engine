@@ -3,68 +3,49 @@
 #ifdef USE_CUDA
 
 #include "../core/HitRecord.cuh"
-#include "../core/Hittable.cuh"
 #include "../core/Ray.cuh"
 #include "../utils/math/Interval.cuh"
 #include "../utils/math/Vec3Utility.cuh"
 #include "AABB.cuh"
 #include <curand_kernel.h>
 
+// Forward declaration.
+struct CudaHittable;
+
+// Represents a bounding box that can contain multiple inner bounding boxes as
+// children. A leaf node contains 1 or a few geometric objects. Optimizes the
+// ray hit algorithm by ignoring all the inner bounding boxes in which the ray
+// doesn't interact with the enclosing bounding box.
 struct CudaBVHNode {
-  CudaHittable left;  // Left child hittable.
-  CudaHittable right; // Right child hittable.
+  CudaHittable *left;  // Left child hittable.
+  CudaHittable *right; // Right child hittable.
   CudaAABB bbox;
   bool is_leaf; // True if this node contains actual objects, false if it has
                 // child nodes.
 
-  __device__ CudaBVHNode(const CudaHittable &_left, const CudaHittable &_right,
-                         bool _is_leaf = false)
-      : left(_left), right(_right), is_leaf(_is_leaf) {
-    // Compute bounding box from children.
-    CudaAABB left_box = left.get_bounding_box();
-    CudaAABB right_box = right.get_bounding_box();
-    bbox = CudaAABB(left_box, right_box);
-  }
+  __device__ CudaBVHNode() {} // Default constructor.
+
+  __device__ CudaBVHNode(CudaHittable *_left, CudaHittable *_right,
+                         bool _is_leaf = false);
+
+  __host__ __device__ CudaBVHNode(CudaHittable *_left, CudaHittable *_right,
+                                  bool _is_leaf, const CudaAABB &_bbox)
+      : left(_left), right(_right), is_leaf(_is_leaf), bbox(_bbox) {}
 
   // Hit test for BVH node.
-  __device__ inline bool hit(const CudaRay &ray, CudaInterval t_values,
-                             CudaHitRecord &record, curandState *rand_state) {
-    // Early exit if ray doesn't hit bounding box.
-    if (!bbox.hit(ray, t_values))
-      return false;
-
-    CudaHitRecord temp_record;
-    bool hit_left = left.hit(ray, t_values, temp_record, rand_state);
-
-    if (hit_left) {
-      t_values.max = temp_record.t;
-      record = temp_record;
-    }
-
-    bool hit_right = right.hit(ray, t_values, temp_record, rand_state);
-    if (hit_right && temp_record.t < record.t)
-      record = temp_record;
-
-    return hit_left || hit_right;
-  }
+  __device__ bool hit(const CudaRay &ray, CudaInterval t_values,
+                      CudaHitRecord &record, curandState *rand_state) const;
 
   // PDF value for BVH node (average of children).
-  __device__ inline double pdf_value(const CudaPoint3 &origin,
-                                     const CudaVec3 &direction) {
-    return 0.5 * left.pdf_value(origin, direction) +
-           0.5 * right.pdf_value(origin, direction);
-  }
+  __device__ double pdf_value(const CudaPoint3 &origin,
+                              const CudaVec3 &direction) const;
 
   // Random direction toward BVH node (random choice of children).
-  __device__ inline CudaVec3 random(const CudaPoint3 &origin,
-                                    curandState *state) {
-    if (cuda_random_double(state) < 0.5)
-      return left.random(origin, state);
-    return right.random(origin, state);
-  }
+  __device__ CudaVec3 random(const CudaPoint3 &origin,
+                             curandState *state) const;
 
   // Get bounding box for BVH node.
-  __device__ inline CudaAABB get_bounding_box() { return bbox; }
+  __device__ inline CudaAABB get_bounding_box() const { return bbox; }
 };
 
 #endif // USE_CUDA

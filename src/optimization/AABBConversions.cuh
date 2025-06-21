@@ -21,10 +21,4 @@ inline AABB cuda_to_cpu_aabb(const CudaAABB &cuda_aabb) {
               cuda_to_cpu_interval(cuda_aabb.z));
 }
 
-// Batch conversion functions for performance.
-void batch_cpu_to_cuda_aabb(const AABB *cpu_aabbs, CudaAABB *cuda_aabbs,
-                            int count);
-void batch_cuda_to_cpu_aabb(const CudaAABB *cuda_aabbs, AABB *cpu_aabbs,
-                            int count);
-
 #endif // USE_CUDA

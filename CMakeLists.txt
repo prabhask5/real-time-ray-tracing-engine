@@ -6,14 +6,16 @@ list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
 
 if (ENABLE_CUDA)
     enable_language(CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    add_definitions(-DUSE_CUDA)
 endif()
 
-# C++ Standard
+# C++ Standard.
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# CUDA Standard
+# CUDA Standard.
 if (ENABLE_CUDA)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
@@ -53,7 +55,7 @@ else()
     message(STATUS "Unknown processor architecture, SIMD disabled")
 endif()
 
-# Enable recommended warnings for Clang and GCC
+# Enable recommended warnings for Clang and GCC.
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     add_compile_options(
         -Wall
@@ -109,9 +111,7 @@ if (ENABLE_CUDA)
         CUDA_SEPARABLE_COMPILATION ON
         CUDA_ARCHITECTURES "native"
     )
-endif()
-
-if (ENABLE_CUDA)
+    target_include_directories(RealTimeRayTracingEngine PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
     target_compile_definitions(RealTimeRayTracingEngine PUBLIC USE_CUDA)
 endif()
 

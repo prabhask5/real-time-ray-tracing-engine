@@ -8,6 +8,7 @@
 
 #ifdef USE_CUDA
 #include "../../scene/SceneConversions.cuh"
+#include "CameraKernelWrappers.cuh"
 #include "CameraKernels.cuh"
 #include <ctime>
 #endif
@@ -411,9 +412,9 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
   dim3 grid_size((m_image_width + block_size.x - 1) / block_size.x,
                  (m_image_height + block_size.y - 1) / block_size.y);
 
-  init_rand_states<<<grid_size, block_size>>>(d_rand_states, m_image_width,
-                                              m_image_height,
-                                              (unsigned long)time(nullptr));
+  cuda_init_rand_states_wrapper(d_rand_states, m_image_width, m_image_height,
+                                (unsigned long)time(nullptr), grid_size,
+                                block_size);
   if (cudaDeviceSynchronize() != cudaSuccess) {
     std::cerr << "Failed to initialize CUDA random states" << std::endl;
     cudaFree(d_accumulation);
@@ -432,8 +433,8 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
     render_cpu(world, lights);
     return;
   }
-  CudaHittableList cuda_world = cuda_scene_data.world;
-  CudaHittableList cuda_lights = cuda_scene_data.lights;
+  CudaHittable cuda_world = cuda_scene_data.world;
+  CudaHittable cuda_lights = cuda_scene_data.lights;
 
   bool running = true;
 
@@ -485,13 +486,13 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
         CudaColor cuda_background(m_background.x(), m_background.y(),
                                   m_background.z());
 
-        dynamic_render_tile_kernel<<<tile_grid_size, tile_block_size>>>(
+        cuda_dynamic_render_tile_wrapper(
             d_accumulation, m_image_width, m_image_height, start_r, end_r,
             start_c, end_c, s_i, s_j, sqrt_spp, m_max_depth, cuda_center,
             cuda_pixel00_loc, cuda_pixel_delta_u, cuda_pixel_delta_v, cuda_u,
             cuda_v, cuda_w, cuda_defocus_disk_u, cuda_defocus_disk_v,
             m_defocus_angle, cuda_background, cuda_world, cuda_lights,
-            d_rand_states);
+            d_rand_states, tile_grid_size, tile_block_size);
 
         cudaDeviceSynchronize();
       }

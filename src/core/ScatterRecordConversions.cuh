@@ -20,42 +20,8 @@ cpu_to_cuda_scatter_record(const ScatterRecord &cpu_scatter_record) {
   // Handle PDF conversion - CPU uses shared_ptr, CUDA uses type enum + raw
   // pointer.
   if (cpu_scatter_record.pdf_ptr != nullptr) {
-    auto cuda_pdf = cpu_to_cuda_pdf(*cpu_scatter_record.pdf_ptr);
-    cuda_scatter_record.pdf_type = cuda_pdf.type;
-
-    // Allocate and copy PDF data on device.
-    switch (cuda_pdf.type) {
-    case CudaPDFType::CUDA_PDF_COSINE: {
-      CudaCosinePDF *device_pdf = new CudaCosinePDF();
-      *device_pdf = cuda_pdf.data.cosine_pdf;
-      cuda_scatter_record.pdf_data = (void *)device_pdf;
-      break;
-    }
-    case CudaPDFType::CUDA_PDF_SPHERE: {
-      CudaSpherePDF *device_pdf = new CudaSpherePDF();
-      *device_pdf = cuda_pdf.data.sphere_pdf;
-      cuda_scatter_record.pdf_data = (void *)device_pdf;
-      break;
-    }
-    case CudaPDFType::CUDA_PDF_HITTABLE: {
-      CudaHittablePDF *device_pdf = new CudaHittablePDF();
-      *device_pdf = cuda_pdf.data.hittable_pdf;
-      cuda_scatter_record.pdf_data = (void *)device_pdf;
-      break;
-    }
-    case CudaPDFType::CUDA_PDF_MIXTURE: {
-      CudaMixturePDF *device_pdf = new CudaMixturePDF();
-      *device_pdf = cuda_pdf.data.mixture_pdf;
-      cuda_scatter_record.pdf_data = (void *)device_pdf;
-      break;
-    }
-    default:
-      cuda_scatter_record.pdf_data = nullptr;
-      break;
-    }
-  } else {
-    cuda_scatter_record.pdf_type = CudaPDFType::CUDA_PDF_COSINE;
-    cuda_scatter_record.pdf_data = nullptr;
+    CudaPDF cuda_pdf = cpu_to_cuda_pdf(*cpu_scatter_record.pdf_ptr);
+    cuda_scatter_record.pdf_pointer = &cuda_pdf;
   }
 
   // Copy skip_pdf flag.
@@ -69,7 +35,7 @@ cpu_to_cuda_scatter_record(const ScatterRecord &cpu_scatter_record) {
 }
 
 // Convert CUDA ScatterRecord to CPU ScatterRecord.
-__host__ __device__ inline ScatterRecord
+inline ScatterRecord
 cuda_to_cpu_scatter_record(const CudaScatterRecord &cuda_scatter_record) {
   ScatterRecord cpu_scatter_record;
 
@@ -79,33 +45,9 @@ cuda_to_cpu_scatter_record(const CudaScatterRecord &cuda_scatter_record) {
 
   // Handle PDF conversion - CUDA uses type enum + raw pointer, CPU uses
   // shared_ptr.
-  if (cuda_scatter_record.pdf_data != nullptr) {
-    CudaPDF cuda_pdf;
-    cuda_pdf.type = cuda_scatter_record.pdf_type;
-
-    switch (cuda_scatter_record.pdf_type) {
-    case CudaPDFType::CUDA_PDF_COSINE:
-      cuda_pdf.data.cosine_pdf = *reinterpret_cast<const CudaCosinePDF *>(
-          cuda_scatter_record.pdf_data);
-      break;
-    case CudaPDFType::CUDA_PDF_SPHERE:
-      cuda_pdf.data.sphere_pdf = *reinterpret_cast<const CudaSpherePDF *>(
-          cuda_scatter_record.pdf_data);
-      break;
-    case CudaPDFType::CUDA_PDF_HITTABLE:
-      cuda_pdf.data.hittable_pdf = *reinterpret_cast<const CudaHittablePDF *>(
-          cuda_scatter_record.pdf_data);
-      break;
-    case CudaPDFType::CUDA_PDF_MIXTURE:
-      cuda_pdf.data.mixture_pdf = *reinterpret_cast<const CudaMixturePDF *>(
-          cuda_scatter_record.pdf_data);
-      break;
-    default:
-      cuda_pdf.type = CudaPDFType::CUDA_PDF_COSINE;
-      break;
-    }
-
-    cpu_scatter_record.pdf_ptr = cuda_to_cpu_pdf(cuda_pdf);
+  if (cuda_scatter_record.pdf_pointer != nullptr) {
+    cpu_scatter_record.pdf_ptr =
+        cuda_to_cpu_pdf(*cuda_scatter_record.pdf_pointer);
   } else {
     cpu_scatter_record.pdf_ptr = nullptr;
   }

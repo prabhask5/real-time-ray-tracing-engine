@@ -7,8 +7,6 @@
 #include "Vec3Types.cuh"
 
 // Forward declarations to avoid circular dependency.
-
-enum CudaMaterialType;
 struct CudaMaterial;
 
 // Represents captured info from a ray hitting a hittable object in CUDA.
@@ -20,8 +18,7 @@ struct CudaHitRecord {
   CudaVec3 normal;
 
   // The material of the hittable object.
-  CudaMaterialType material_type;
-  void *material_data;
+  CudaMaterial *material_pointer;
 
   // The parameter t (time) along the ray in which the ray hit the hittable
   // object.
@@ -31,7 +28,11 @@ struct CudaHitRecord {
   // ray). Back face = the ray hits from inside (normal faces same way as ray).
   bool front_face;
 
-  // 2D texture coordinates at the point of intersection.
+  // 2D coordinates used to map a 2D texture image onto a 3D surface. When a ray
+  // hits a surface (like a sphere or triangle), the u and v values tell the
+  // renderer which part of the texture to apply at that point. This would be
+  // able to determine what the texture of the object looks like at the position
+  // the ray hit the object.
   double u, v;
 };
 

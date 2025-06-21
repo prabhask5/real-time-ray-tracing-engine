@@ -31,6 +31,12 @@ public:
     std::copy(perm_z, perm_z + PERLIN_POINT_COUNT, m_perm_z);
   }
 
+  // Getters for conversion to CUDA.
+  const Vec3 *rand_vec() const { return m_rand_vec; }
+  const int *perm_x() const { return m_perm_x; }
+  const int *perm_y() const { return m_perm_y; }
+  const int *perm_z() const { return m_perm_z; }
+
   // Generates a noise value at point p.
   double noise(const Point3 &p) const {
     double x_frac = p.x() - std::floor(p.x());
@@ -69,16 +75,6 @@ public:
 
     return std::fabs(accum);
   }
-
-  // Getter const methods.
-
-  const Vec3 *rand_vec() const { return m_rand_vec; }
-
-  const int *perm_x() const { return m_perm_x; }
-
-  const int *perm_y() const { return m_perm_y; }
-
-  const int *perm_z() const { return m_perm_z; }
 
 private:
   // Hot data: most frequently accessed arrays for noise generation.

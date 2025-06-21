@@ -6,7 +6,11 @@
 #include "../core/Vec3Types.cuh"
 #include "../utils/math/Interval.cuh"
 
-// Axis-Aligned Bounding Box in CUDA: tight POD layout, GPU-friendly.
+// Defines an Axis-Aligned Bounding Box: the simplest type of bounding box: a
+// box aligned with the coordinate axes, defined by its minimum and maximum
+// points in 3D space. Checking ray-box intersections is much faster than
+// ray-triangle or ray-sphere intersections. So you wrap objects in AABBs and
+// check the ray against those first.
 struct CudaAABB {
   CudaInterval x;
   CudaInterval y;
@@ -54,8 +58,10 @@ struct CudaAABB {
     return 2;
   }
 
+  // This function checks if the ray hits the hittable object with the t values
+  // in the interval range ray_t.
   __device__ __forceinline__ bool hit(const CudaRay &ray,
-                                      CudaInterval t_values) {
+                                      CudaInterval t_values) const {
     for (int axis = 0; axis < 3; ++axis) {
       const CudaInterval &ax = get_axis_interval(axis);
       double origin_axis = ray.origin[axis];
@@ -79,6 +85,8 @@ struct CudaAABB {
     return true;
   }
 
+  // Adjust the AABB so that no side is narrower than some delta, padding if
+  // necessary.
   __device__ __forceinline__ void pad_to_minimums(double delta = 0.0001) {
     if (x.size() < delta)
       x = x.expand(delta);
@@ -89,9 +97,19 @@ struct CudaAABB {
   }
 };
 
-__device__ __constant__ CudaAABB CUDA_EMPTY_AABB = {
-    CUDA_EMPTY_INTERVAL, CUDA_EMPTY_INTERVAL, CUDA_EMPTY_INTERVAL};
-__device__ __constant__ CudaAABB CUDA_UNIVERSE_AABB = {
-    CUDA_UNIVERSE_INTERVAL, CUDA_UNIVERSE_INTERVAL, CUDA_UNIVERSE_INTERVAL};
+// Constants — use inline functions to avoid initialization issues
+__device__ inline CudaAABB cuda_empty_aabb() {
+  return CudaAABB(CUDA_EMPTY_INTERVAL, CUDA_EMPTY_INTERVAL,
+                  CUDA_EMPTY_INTERVAL);
+}
+
+__device__ inline CudaAABB cuda_universe_aabb() {
+  return CudaAABB(CUDA_UNIVERSE_INTERVAL, CUDA_UNIVERSE_INTERVAL,
+                  CUDA_UNIVERSE_INTERVAL);
+}
+
+// For compatibility, define macros
+#define CUDA_EMPTY_AABB cuda_empty_aabb()
+#define CUDA_UNIVERSE_AABB cuda_universe_aabb()
 
 #endif // USE_CUDA

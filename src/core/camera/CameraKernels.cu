@@ -1,7 +1,10 @@
 #ifdef USE_CUDA
 
+#include "../../scene/materials/Material.cuh"
+#include "../../utils/math/PDF.cuh"
 #include "../../utils/math/Utility.cuh"
 #include "../../utils/math/Vec3Utility.cuh"
+#include "../ScatterRecord.cuh"
 #include "CameraKernels.cuh"
 
 // Initialize random states for each pixel.
@@ -38,13 +41,7 @@ __device__ CudaVec3 sample_square_cuda(curandState *state) {
 // Device function: Sample disk.
 
 __device__ CudaVec3 sample_disk_cuda(double radius, curandState *state) {
-  CudaVec3 p;
-  do {
-    p = 2.0 *
-            CudaVec3(cuda_random_double(state), cuda_random_double(state), 0) -
-        CudaVec3(1, 1, 0);
-  } while (cuda_dot_product(p, p) >= 1.0);
-  return radius * p;
+  return radius * cuda_random_in_unit_disk(state);
 }
 
 // Device function: Sample defocus disk.
@@ -52,7 +49,7 @@ __device__ CudaVec3 sample_disk_cuda(double radius, curandState *state) {
 __device__ CudaPoint3 defocus_disk_sample_cuda(CudaVec3 defocus_disk_u,
                                                CudaVec3 defocus_disk_v,
                                                curandState *state) {
-  CudaVec3 p = sample_disk_cuda(1.0, state);
+  CudaVec3 p = cuda_random_in_unit_disk(state);
   return p.x * defocus_disk_u + p.y * defocus_disk_v;
 }
 
@@ -64,160 +61,134 @@ __device__ CudaRay get_ray_cuda(int i, int j, int s_i, int s_j, int sqrt_spp,
                                 CudaVec3 defocus_disk_u,
                                 CudaVec3 defocus_disk_v, double defocus_angle,
                                 curandState *state) {
+  // Computes a jittered offset within the pixel grid cell defined by (s_i,
+  // s_j). This random offset ensures that each ray passes through a different
+  // point inside its subpixel, enabling stratified sampling and reducing
+  // aliasing artifacts. Without this, all rays would pass through the exact
+  // center of their subpixels.
   CudaVec3 offset = sample_square_stratified_cuda(s_i, s_j, sqrt_spp, state);
+
+  // This calculates the 3D world-space point that corresponds to pixel (i, j),
+  // with subpixel jitter.
   CudaPoint3 pixel_sample = pixel00_loc + (i + offset.x) * pixel_delta_u +
                             (j + offset.y) * pixel_delta_v;
 
+  // If defocus_angle == 0: use the camera center -> behaves like a pinhole
+  // camera. Else: use a point sampled from a disk, simulating a lens with
+  // radius and blur (depth of field).
   CudaPoint3 ray_origin =
       (defocus_angle <= 0)
           ? center
-          : center +
-                defocus_disk_sample_cuda(defocus_disk_u, defocus_disk_v, state);
+          : defocus_disk_sample_cuda(defocus_disk_u, defocus_disk_v, state);
+
+  // Determine the ray direction by finding the vector difference between the
+  // pixel sample and the ray origin.
   CudaVec3 ray_direction = pixel_sample - ray_origin;
+
   double ray_time = cuda_random_double(state);
 
+  // Returns the resulting ray from the origin and direction.
   return CudaRay(ray_origin, ray_direction, ray_time);
 }
 
 // Forward declaration.
 
 __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
-                                    const CudaHittableList &world,
-                                    const CudaHittableList &lights,
+                                    const CudaHittable &world,
+                                    const CudaHittable &lights,
                                     CudaColor background, curandState *state);
 
 // Device function: Ray color computation with proper material handling.
 
 __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
-                                    const CudaHittableList &world,
-                                    const CudaHittableList &lights,
+                                    const CudaHittable &world,
+                                    const CudaHittable &lights,
                                     CudaColor background, curandState *state) {
+  // Base case: if we've exceeded the ray bounce limit, no more light is
+  // gathered.
   if (depth <= 0)
     return CudaColor(0, 0, 0);
 
   CudaHitRecord rec;
+
+  // If the ray hits nothing, return the background color.
   if (!world.hit(ray, CudaInterval(0.001, CUDA_INF), rec, state))
     return background;
 
-  // Extract material from hit record.
-
-  if (rec.material_data == nullptr) {
-    // Default diffuse behavior if no material.
-
-    CudaVec3 scatter_direction = rec.normal + cuda_random_unit_vector(state);
-    if (scatter_direction.near_zero())
-      scatter_direction = rec.normal;
-
-    CudaRay scattered(rec.point, scatter_direction, ray.time);
-    CudaColor attenuation = CudaColor(0.7, 0.7, 0.7);
-    return attenuation * ray_color_cuda(scattered, depth - 1, world, lights,
-                                        background, state);
-  }
+  // If the ray hits a hittable objct, we store the hit record and calculate the
+  // scattering based on the material.
 
   // Get material from hit record.
-
-  const CudaMaterial *material =
-      reinterpret_cast<const CudaMaterial *>(rec.material_data);
+  const CudaMaterial *material = rec.material_pointer;
 
   // Calculate emission color.
-
   CudaColor color_from_emission =
       material->emitted(ray, rec, rec.u, rec.v, rec.point);
 
   // Try to scatter the ray.
-
   CudaScatterRecord srec;
+
+  // If the material does not scatter, we just return the material's emitted
+  // color for that point.
   if (!material->scatter(ray, rec, srec, state))
     return color_from_emission;
 
-  // Handle deterministic scattering (like perfect reflections)
+  // If the material scatters the ray in a specific direction without using a
+  // PDF, follow that ray recursively and scale the result by the attenuation.
+  // This ONLY happens when the material chooses to bypass the PDF sampling
+  // logic.
   if (srec.skip_pdf) {
     return srec.attenuation * ray_color_cuda(srec.skip_pdf_ray, depth - 1,
                                              world, lights, background, state);
   }
 
-  CudaColor color_from_scatter = CudaColor(0, 0, 0);
-
-  // Handle probabilistic scattering with PDF.
-
-  if (lights.count > 0) {
-    // Use importance sampling with lights.
-
-    CudaPDF light_pdf = cuda_make_hittable_pdf(&lights, rec.point);
-
-    // Create complete mixed PDF with proper importance sampling.
-
-    CudaVec3 scattered_direction;
-    double pdf_value;
-
-    // Create material PDF based on scatter record type.
-
-    CudaPDF material_pdf;
-    if (srec.pdf_type == CUDA_PDF_COSINE) {
-      material_pdf = cuda_make_cosine_pdf(rec.normal);
-    } else if (srec.pdf_type == CUDA_PDF_SPHERE) {
-      material_pdf = cuda_make_sphere_pdf();
-    } else {
-      material_pdf = cuda_make_cosine_pdf(rec.normal); // Default fallback
-    }
-
-    // Create proper mixture PDF combining light and material PDFs.
-
-    CudaPDF mixture_pdf =
-        cuda_make_mixture_pdf(light_pdf.type, (void *)&light_pdf.data,
-                              material_pdf.type, (void *)&material_pdf.data);
-
-    // Sample from the mixture PDF.
-
-    scattered_direction = mixture_pdf.generate(state);
-    pdf_value = mixture_pdf.value(scattered_direction);
-
-    // Ensure PDF value is valid.
-
-    if (pdf_value <= 0.0) {
-      // Fallback to material PDF only.
-
-      scattered_direction = material_pdf.generate(state);
-      pdf_value = material_pdf.value(scattered_direction);
-    }
-
-    if (pdf_value > 0.0) {
-      CudaRay scattered_ray(rec.point, scattered_direction, ray.time);
-      double scattering_pdf = material->scattering_pdf(ray, rec, scattered_ray);
-      color_from_scatter = (srec.attenuation * scattering_pdf *
-                            ray_color_cuda(scattered_ray, depth - 1, world,
-                                           lights, background, state)) /
-                           pdf_value;
-    }
-  } else {
-    // No lights - use material PDF only.
-
-    if (srec.pdf_type == CUDA_PDF_COSINE) {
-      CudaPDF material_pdf = cuda_make_cosine_pdf(rec.normal);
-      CudaVec3 scattered_direction = material_pdf.generate(state);
-      double pdf_value = material_pdf.value(scattered_direction);
-
-      if (pdf_value > 0.0) {
-        CudaRay scattered_ray(rec.point, scattered_direction, ray.time);
-        double scattering_pdf =
-            material->scattering_pdf(ray, rec, scattered_ray);
-        color_from_scatter = (srec.attenuation * scattering_pdf *
-                              ray_color_cuda(scattered_ray, depth - 1, world,
-                                             lights, background, state)) /
-                             pdf_value;
-      }
-    } else {
-      // Fallback to hemisphere sampling.
-
-      CudaVec3 scattered_direction =
-          cuda_random_on_hemisphere(state, rec.normal);
-      CudaRay scattered_ray(rec.point, scattered_direction, ray.time);
-      color_from_scatter =
-          srec.attenuation * ray_color_cuda(scattered_ray, depth - 1, world,
-                                            lights, background, state);
-    }
+  // Create a PDF that samples directions toward the light sources from the hit
+  // point. This helps concentrate rays toward bright areas for better rendering
+  // efficiency.
+  // NOTE: In the case that the lights hittable list object is empty (there's no
+  // lights), we cannot use scattering from light sources, so we skip.
+  //
+  // Combine two PDFs: one from the material's scattering function and one
+  // toward the lights. This is a mixture of importance sampling strategies to
+  // improve convergence.
+  CudaPDF mixture_pdf;
+  if (lights.type != CudaHittableType::HITTABLE_LIST ||
+      lights.hittable_list->count == 0)
+    mixture_pdf = cuda_make_mixture_pdf(srec.pdf_pointer, srec.pdf_pointer);
+  else {
+    CudaPDF hittable_pdf = cuda_make_hittable_pdf(&lights, rec.point);
+    mixture_pdf = cuda_make_mixture_pdf(&hittable_pdf, srec.pdf_pointer);
   }
 
+  // Sample from the mixture PDF.
+  CudaVec3 scattered_direction = mixture_pdf.generate(state);
+
+  // Compute the probability density function (PDF) value of the sampled
+  // direction. This is used to correctly scale the Monte Carlo estimate.
+  double pdf_value = mixture_pdf.value(scattered_direction);
+
+  // Generate a new scattered ray based on the mixture PDF.
+  // This ray originates from the hit point and is aimed in a sampled direction.
+  CudaRay scattered_ray(rec.point, scattered_direction, ray.time);
+
+  // Ask the material what its theoretical scattering PDF is for this
+  // interaction. This is needed for physically-based importance sampling.
+  double scattering_pdf = material->scattering_pdf(ray, rec, scattered_ray);
+
+  // Scale the returned color by:
+  /// - `attenuation`: how much the material reduces the ray's energy.
+  /// - `scattering_pdf`: how likely the material is to scatter in that
+  /// direction.
+  /// - `1 / pdf_value`: normalizes the estimate based on how likely we were to
+  /// choose this ray.
+  CudaColor color_from_scatter =
+      (srec.attenuation * scattering_pdf *
+       ray_color_cuda(scattered_ray, depth - 1, world, lights, background,
+                      state)) /
+      pdf_value;
+
+  // Add any emitted light from the surface (like glowing surfaces) to the
+  // scattered result.
   return color_from_emission + color_from_scatter;
 }
 
@@ -229,8 +200,8 @@ __global__ void dynamic_render_tile_kernel(
     int max_depth, CudaPoint3 center, CudaPoint3 pixel00_loc,
     CudaVec3 pixel_delta_u, CudaVec3 pixel_delta_v, CudaVec3 u, CudaVec3 v,
     CudaVec3 w, CudaVec3 defocus_disk_u, CudaVec3 defocus_disk_v,
-    double defocus_angle, CudaColor background, CudaHittableList world,
-    CudaHittableList lights, curandState *rand_states) {
+    double defocus_angle, CudaColor background, CudaHittable world,
+    CudaHittable lights, curandState *rand_states) {
 
   int i = blockIdx.x * blockDim.x + threadIdx.x + start_c;
   int j = blockIdx.y * blockDim.y + threadIdx.y + start_r;
@@ -263,7 +234,7 @@ __global__ void static_render_kernel(
     CudaPoint3 pixel00_loc, CudaVec3 pixel_delta_u, CudaVec3 pixel_delta_v,
     CudaVec3 u, CudaVec3 v, CudaVec3 w, CudaVec3 defocus_disk_u,
     CudaVec3 defocus_disk_v, double defocus_angle, double pixel_samples_scale,
-    CudaColor background, CudaHittableList world, CudaHittableList lights,
+    CudaColor background, CudaHittable world, CudaHittable lights,
     curandState *rand_states) {
 
   int i = blockIdx.x * blockDim.x + threadIdx.x;

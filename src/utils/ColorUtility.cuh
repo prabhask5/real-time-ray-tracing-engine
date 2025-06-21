@@ -4,6 +4,8 @@
 
 #include "../core/Vec3Types.cuh"
 #include "math/Interval.cuh"
+#include "math/Vec3.cuh"
+#include "math/Vec3Utility.cuh"
 #include <cuda_runtime.h>
 
 // Applies gamma correction with gamma = 2.0.

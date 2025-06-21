@@ -13,6 +13,11 @@ ConstantMedium::ConstantMedium(HittablePtr boundary, double density,
     : m_boundary(boundary), m_density(density),
       m_phase_function(std::make_shared<IsotropicMaterial>(albedo)) {}
 
+ConstantMedium::ConstantMedium(HittablePtr boundary, double density,
+                               MaterialPtr phase_function)
+    : m_boundary(boundary), m_density(density),
+      m_phase_function(phase_function) {}
+
 AABB ConstantMedium::get_bounding_box() const {
   return m_boundary->get_bounding_box();
 }

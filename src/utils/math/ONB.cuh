@@ -12,6 +12,9 @@
 struct CudaONB {
   CudaVec3 axis[3];
 
+  // Default constructor.
+  __device__ CudaONB() {}
+
   // Constructs an ONB from a normal vector.
   // We use n as the z-axis, and compute cross-products to find the x and y-axes
   // (they need to be perpendicular).
@@ -34,12 +37,5 @@ struct CudaONB {
     return (v[0] * axis[0]) + (v[1] * axis[1]) + (v[2] * axis[2]);
   }
 };
-
-// GPU batch utility functions (defined in .cu file)
-void cuda_batch_create_onb_from_normals(const CudaVec3 *d_normals,
-                                        CudaONB *d_onbs, int count);
-void cuda_batch_transform_vectors(const CudaONB *d_onbs,
-                                  const CudaVec3 *d_local_vectors,
-                                  CudaVec3 *d_world_vectors, int count);
 
 #endif // USE_CUDA

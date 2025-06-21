@@ -2,23 +2,29 @@
 
 #ifdef USE_CUDA
 
-#include "../../core/Hittable.cuh"
-#include "../../core/Vec3Types.cuh"
+// Forward declaration to avoid circular dependency
+struct CudaHittable;
 #include "ONB.cuh"
 #include "Utility.cuh"
+#include "Vec3.cuh"
 #include "Vec3Utility.cuh"
 #include <curand_kernel.h>
 
 // PDF types enumeration for manual dispatch.
-enum CudaPDFType {
-  CUDA_PDF_SPHERE = 0,
-  CUDA_PDF_COSINE = 1,
-  CUDA_PDF_HITTABLE = 2,
-  CUDA_PDF_MIXTURE = 3
+enum class CudaPDFType {
+  CUDA_PDF_SPHERE,
+  CUDA_PDF_COSINE,
+  CUDA_PDF_HITTABLE,
+  CUDA_PDF_MIXTURE
 };
+
+// Forward declarations.
+struct CudaPDF;
 
 // Uniform sampling over the unit sphere.
 struct CudaSpherePDF {
+  __host__ __device__ CudaSpherePDF() {} // Default constructor.
+
   __device__ double value(const CudaVec3 &direction) const {
     return 1.0 / (4.0 * CUDA_PI);
   }
@@ -32,7 +38,8 @@ struct CudaSpherePDF {
 struct CudaCosinePDF {
   CudaONB uvw;
 
-  __device__ CudaCosinePDF(const CudaVec3 &w) : uvw(w) {}
+  __device__ CudaCosinePDF() {} // Default constructor.
+  __host__ __device__ CudaCosinePDF(const CudaVec3 &w) : uvw(w) {}
 
   __device__ double value(const CudaVec3 &direction) const {
     double cosine_theta =
@@ -47,149 +54,54 @@ struct CudaCosinePDF {
 
 // PDF for sampling based on a hittable object.
 struct CudaHittablePDF {
-  const void *objects_data;
+  const CudaHittable *hittable_pointer;
   CudaPoint3 origin;
 
-  __device__ CudaHittablePDF(const void *objects_data, const CudaPoint3 &origin)
-      : objects_data(objects_data), origin(origin) {}
+  __device__ CudaHittablePDF() {} // Default constructor.
+  __host__ __device__ CudaHittablePDF(const CudaHittable *_hittable_pointer,
+                                      const CudaPoint3 &_origin)
+      : hittable_pointer(_hittable_pointer), origin(_origin) {}
 
-  __device__ double value(const CudaVec3 &direction) const {
-    const CudaHittable *objects =
-        reinterpret_cast<const CudaHittable *>(objects_data);
-    return objects->pdf_value(origin, direction);
-  }
-
-  __device__ CudaVec3 generate(curandState *state) const {
-    const CudaHittable *objects =
-        reinterpret_cast<const CudaHittable *>(objects_data);
-    return objects->random(origin, state);
-  }
+  __device__ double value(const CudaVec3 &direction) const;
+  __device__ CudaVec3 generate(curandState *state) const;
 };
 
 // Mixture of two PDFs.
 struct CudaMixturePDF {
-  CudaPDFType type0, type1;
-  void *data0;
-  void *data1;
+  const CudaPDF *pdf0_pointer;
+  const CudaPDF *pdf1_pointer;
 
-  __device__ CudaMixturePDF(CudaPDFType type0, void *data0, CudaPDFType type1,
-                            void *data1)
-      : type0(type0), data0(data0), type1(type1), data1(data1) {}
+  __device__ CudaMixturePDF() {} // Default constructor.
+  __host__ __device__ CudaMixturePDF(const CudaPDF *_pdf0_pointer,
+                                     const CudaPDF *_pdf1_pointer)
+      : pdf0_pointer(_pdf0_pointer), pdf1_pointer(_pdf1_pointer) {}
 
-  __device__ double value(const CudaVec3 &direction) const {
-    double v0 = cuda_dispatch_pdf_value(type0, data0, direction);
-    double v1 = cuda_dispatch_pdf_value(type1, data1, direction);
-    return 0.5 * v0 + 0.5 * v1;
-  }
-
-  __device__ CudaVec3 generate(curandState *state) const {
-    if (cuda_random_double(state) < 0.5)
-      return cuda_dispatch_pdf_generate(type0, data0, state);
-    return cuda_dispatch_pdf_generate(type1, data1, state);
-  }
+  __device__ double value(const CudaVec3 &direction) const;
+  __device__ CudaVec3 generate(curandState *state) const;
 };
 
 // Unified PDF data structure using manual dispatch.
 struct CudaPDF {
   CudaPDFType type;
   union {
-    CudaSpherePDF sphere;
-    CudaCosinePDF cosine;
-    CudaHittablePDF hittable;
-    CudaMixturePDF mixture;
-  } data;
+    CudaSpherePDF *sphere;
+    CudaCosinePDF *cosine;
+    CudaHittablePDF *hittable;
+    CudaMixturePDF *mixture;
+  };
 
-  __device__ inline double value(const CudaVec3 &direction) {
-    switch (type) {
-    case CudaPDFType::CUDA_PDF_SPHERE:
-      return data.sphere.value(direction);
-    case CudaPDFType::CUDA_PDF_COSINE:
-      return data.cosine.value(direction);
-    case CudaPDFType::CUDA_PDF_HITTABLE:
-      return data.hittable.value(direction);
-    case CudaPDFType::CUDA_PDF_MIXTURE:
-      return data.mixture.value(direction);
-    }
-    return 0.0;
-  }
+  __host__ __device__ CudaPDF() {} // Default constructor.
 
-  __device__ inline CudaVec3 generate(curandState *state) {
-    switch (type) {
-    case CudaPDFType::CUDA_PDF_SPHERE:
-      return data.sphere.generate(state);
-    case CudaPDFType::CUDA_PDF_COSINE:
-      return data.cosine.generate(state);
-    case CudaPDFType::CUDA_PDF_HITTABLE:
-      return data.hittable.generate(state);
-    case CudaPDFType::CUDA_PDF_MIXTURE:
-      return data.mixture.generate(state);
-    }
-    return CudaVec3(0, 0, 1);
-  }
+  __device__ double value(const CudaVec3 &direction) const;
+  __device__ CudaVec3 generate(curandState *state) const;
 };
 
-// Manual dispatch functions for PDF operations.
-__device__ inline double cuda_dispatch_pdf_value(CudaPDFType type, void *data,
-                                                 const CudaVec3 &direction) {
-  switch (type) {
-  case CudaPDFType::CUDA_PDF_SPHERE:
-    return reinterpret_cast<CudaSpherePDF *>(data)->value(direction);
-  case CudaPDFType::CUDA_PDF_COSINE:
-    return reinterpret_cast<CudaCosinePDF *>(data)->value(direction);
-  case CudaPDFType::CUDA_PDF_HITTABLE:
-    return reinterpret_cast<CudaHittablePDF *>(data)->value(direction);
-  case CudaPDFType::CUDA_PDF_MIXTURE:
-    return reinterpret_cast<CudaMixturePDF *>(data)->value(direction);
-  }
-  return 0.0;
-}
-
-__device__ inline CudaVec3
-cuda_dispatch_pdf_generate(CudaPDFType type, void *data, curandState *state) {
-  switch (type) {
-  case CudaPDFType::CUDA_PDF_SPHERE:
-    return reinterpret_cast<CudaSpherePDF *>(data)->generate(state);
-  case CudaPDFType::CUDA_PDF_COSINE:
-    return reinterpret_cast<CudaCosinePDF *>(data)->generate(state);
-  case CudaPDFType::CUDA_PDF_HITTABLE:
-    return reinterpret_cast<CudaHittablePDF *>(data)->generate(state);
-  case CudaPDFType::CUDA_PDF_MIXTURE:
-    return reinterpret_cast<CudaMixturePDF *>(data)->generate(state);
-  }
-  return CudaVec3(0, 0, 1);
-}
-
 // Helper constructor functions.
-
-__device__ inline CudaPDF cuda_make_sphere_pdf() {
-  CudaPDF pdf;
-  pdf.type = CudaPDFType::CUDA_PDF_SPHERE;
-  pdf.data.sphere = CudaSpherePDF();
-  return pdf;
-}
-
-__device__ inline CudaPDF cuda_make_cosine_pdf(const CudaVec3 &normal) {
-  CudaPDF pdf;
-  pdf.type = CudaPDFType::CUDA_PDF_COSINE;
-  pdf.data.cosine = CudaCosinePDF(normal);
-  return pdf;
-}
-
-__device__ inline CudaPDF cuda_make_hittable_pdf(const void *objects_data,
-                                                 const CudaPoint3 &origin) {
-  CudaPDF pdf;
-  pdf.type = CudaPDFType::CUDA_PDF_HITTABLE;
-  pdf.data.hittable = CudaHittablePDF(objects_data, origin);
-  return pdf;
-}
-
-__device__ inline CudaPDF cuda_make_mixture_pdf(CudaPDFType type0, void *data0,
-                                                CudaPDFType type1,
-                                                void *data1) {
-  CudaPDF pdf;
-  pdf.type = CudaPDFType::CUDA_PDF_MIXTURE;
-  pdf.data.mixture = CudaMixturePDF(type0, data0, type1, data1);
-  return pdf;
-}
+__device__ CudaPDF cuda_make_sphere_pdf();
+__device__ CudaPDF cuda_make_cosine_pdf(const CudaVec3 &w);
+__device__ CudaPDF cuda_make_hittable_pdf(const CudaHittable *hittable_pointer,
+                                          const CudaPoint3 &origin);
+__device__ CudaPDF cuda_make_mixture_pdf(const CudaPDF *pdf0_pointer,
+                                         const CudaPDF *pdf1_pointer);
 
 #endif // USE_CUDA

@@ -19,6 +19,9 @@ public:
 
   ConstantMedium(HittablePtr boundary, double density, const Color &albedo);
 
+  ConstantMedium(HittablePtr boundary, double density,
+                 MaterialPtr phase_function);
+
   // Getter functions.
 
   AABB get_bounding_box() const override;

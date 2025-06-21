@@ -1,9 +1,14 @@
 #!/bin/bash
 
+# This script auto-offloads CUDA builds to cloudgpu if nvcc is not present locally.
+# If run on the cloud, make sure IS_REMOTE=true is set (automatically done by SSH call).
+
+# Detect if running on remote to avoid recursion.
+IS_REMOTE="${IS_REMOTE:-false}"
+
 mkdir -p logs
 exec &>logs/log.txt
 set -e
-set -x 
 
 # Determine if CUDA should be enabled.
 if [[ "$1" == "cuda" ]]; then
@@ -11,14 +16,35 @@ if [[ "$1" == "cuda" ]]; then
 elif [[ "$1" == "nocuda" ]]; then
     ENABLE_CUDA=OFF
 else
-    if command -v nvcc &> /dev/null; then
-        ENABLE_CUDA=ON
-    else
-        ENABLE_CUDA=OFF
-    fi
+    ENABLE_CUDA=OFF
 fi
 
 echo "CUDA support: $ENABLE_CUDA"
+
+if [[ "$ENABLE_CUDA" == "ON" && "$IS_REMOTE" != "true" ]]; then
+    # If CUDA is requested but nvcc isn't available, offload to cloud.
+    if ! command -v nvcc &> /dev/null; then
+        echo "CUDA requested but nvcc not found. Offloading build to cloudgpu..."
+
+        # Run the build remotely.
+        set +e # Turn off exiting on any error temporarily in case the ssh command fails.
+        ssh cloudgpu "cd /workspace/real-time-ray-tracing-engine && git pull && export IS_REMOTE=true && ./build.sh cuda"
+        REMOTE_EXIT_CODE=$?
+        set -e
+
+        echo "Syncing log from remote to local logs/cloudlog.txt..."
+        mkdir -p logs
+        scp cloudgpu:/workspace/real-time-ray-tracing-engine/logs/log.txt logs/cloudlog.txt || echo "Failed to copy logs from cloud."
+
+        if [[ $REMOTE_EXIT_CODE -ne 0 ]]; then
+            echo "Remote build failed with exit code $REMOTE_EXIT_CODE."
+            exit $REMOTE_EXIT_CODE
+        fi
+
+        exit 0
+    fi
+fi
+
 
 RTRT_SOURCE_DIR=`pwd`
 DEPS_BUILD_DIR=$RTRT_SOURCE_DIR/deps

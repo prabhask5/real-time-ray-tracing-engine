@@ -23,7 +23,8 @@ cpu_to_cuda_lambertian_material(const LambertianMaterial &lambertian) {
   TexturePtr cpu_texture = lambertian.get_texture();
   CudaTexture cuda_texture = cpu_to_cuda_texture(*cpu_texture);
 
-  cuda_material.data.lambertian = CudaLambertianMaterial(cuda_texture);
+  cuda_material.lambertian =
+      new CudaLambertianMaterial(new CudaTexture(cuda_texture));
   return cuda_material;
 }
 
@@ -37,7 +38,7 @@ inline CudaMaterial cpu_to_cuda_metal_material(const MetalMaterial &metal) {
   double fuzz = metal.get_fuzz();
   CudaColor cuda_albedo = cpu_to_cuda_vec3(cpu_albedo);
 
-  cuda_material.data.metal = CudaMetalMaterial(cuda_albedo, fuzz);
+  cuda_material.metal = new CudaMetalMaterial(cuda_albedo, fuzz);
   return cuda_material;
 }
 
@@ -48,8 +49,8 @@ cpu_to_cuda_dielectric_material(const DielectricMaterial &dielectric) {
   cuda_material.type = CudaMaterialType::MATERIAL_DIELECTRIC;
 
   // Extract refraction index.
-  cuda_material.data.dielectric =
-      CudaDielectricMaterial(dielectric.get_refraction_index());
+  cuda_material.dielectric =
+      new CudaDielectricMaterial(dielectric.get_refraction_index());
   return cuda_material;
 }
 
@@ -63,7 +64,8 @@ cpu_to_cuda_diffuse_light_material(const DiffuseLightMaterial &light) {
   TexturePtr cpu_texture = light.get_texture();
   CudaTexture cuda_texture = cpu_to_cuda_texture(*cpu_texture);
 
-  cuda_material.data.diffuse = CudaDiffuseLightMaterial(cuda_texture);
+  cuda_material.diffuse =
+      new CudaDiffuseLightMaterial(new CudaTexture(cuda_texture));
   return cuda_material;
 }
 
@@ -77,7 +79,8 @@ cpu_to_cuda_isotropic_material(const IsotropicMaterial &isotropic) {
   TexturePtr cpu_texture = isotropic.get_texture();
   CudaTexture cuda_texture = cpu_to_cuda_texture(*cpu_texture);
 
-  cuda_material.data.isotropic = CudaIsotropicMaterial(cuda_texture);
+  cuda_material.isotropic =
+      new CudaIsotropicMaterial(new CudaTexture(cuda_texture));
   return cuda_material;
 }
 
@@ -102,8 +105,10 @@ inline CudaMaterial cpu_to_cuda_material(const Material &cpu_material) {
     // Default to Lambertian.
     CudaMaterial cuda_material;
     cuda_material.type = CudaMaterialType::MATERIAL_LAMBERTIAN;
-    CudaTexture default_texture = cuda_make_solid_texture(Color(0.7, 0.7, 0.7));
-    cuda_material.data.lambertian = CudaLambertianMaterial(default_texture);
+    CudaTexture default_texture =
+        cuda_make_solid_texture(CudaColor(0.7, 0.7, 0.7));
+    cuda_material.lambertian =
+        new CudaLambertianMaterial(new CudaTexture(default_texture));
     return cuda_material;
   }
 }
@@ -113,37 +118,31 @@ inline MaterialPtr cuda_to_cpu_material(const CudaMaterial &cuda_material) {
   switch (cuda_material.type) {
   case CudaMaterialType::MATERIAL_LAMBERTIAN: {
     // Extract texture and create Lambertian material.
-    auto cpu_texture =
-        cuda_to_cpu_texture(cuda_material.data.lambertian.texture);
+    TexturePtr cpu_texture =
+        cuda_to_cpu_texture(*cuda_material.lambertian->texture);
     return std::make_shared<LambertianMaterial>(cpu_texture);
   }
   case CudaMaterialType::MATERIAL_METAL: {
-    Color albedo = cuda_to_cpu_vec3(cuda_material.data.metal.albedo);
-    return std::make_shared<MetalMaterial>(albedo,
-                                           cuda_material.data.metal.fuzz);
+    Color albedo = cuda_to_cpu_vec3(cuda_material.metal->albedo);
+    return std::make_shared<MetalMaterial>(albedo, cuda_material.metal->fuzz);
   }
   case CudaMaterialType::MATERIAL_DIELECTRIC: {
     return std::make_shared<DielectricMaterial>(
-        cuda_material.data.dielectric.refraction_index);
+        cuda_material.dielectric->refraction_index);
   }
   case CudaMaterialType::MATERIAL_DIFFUSE_LIGHT: {
-    auto cpu_texture = cuda_to_cpu_texture(cuda_material.data.diffuse.texture);
+    TexturePtr cpu_texture =
+        cuda_to_cpu_texture(*cuda_material.diffuse->texture);
     return std::make_shared<DiffuseLightMaterial>(cpu_texture);
   }
   case CudaMaterialType::MATERIAL_ISOTROPIC: {
-    auto cpu_texture =
-        cuda_to_cpu_texture(cuda_material.data.isotropic.texture);
+    TexturePtr cpu_texture =
+        cuda_to_cpu_texture(*cuda_material.isotropic->texture);
     return std::make_shared<IsotropicMaterial>(cpu_texture);
   }
   default:
     return std::make_shared<LambertianMaterial>(Color(0.7, 0.7, 0.7));
   }
 }
-
-// Batch conversion functions.
-void batch_cpu_to_cuda_material(const Material **cpu_materials,
-                                CudaMaterial *cuda_materials, int count);
-void batch_cuda_to_cpu_material(const CudaMaterial *cuda_materials,
-                                MaterialPtr *cpu_materials, int count);
 
 #endif // USE_CUDA

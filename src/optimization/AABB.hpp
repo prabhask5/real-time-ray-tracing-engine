@@ -37,6 +37,12 @@ public:
   // Returns the index of the longest axis of the bounding box.
   int get_longest_axis() const;
 
+  // Returns the center point of the bounding box.
+  Point3 center() const;
+
+  // Returns the surface area of the bounding box.
+  double surface_area() const;
+
   // Action methods.
 
   // This function checks if the ray hits the hittable object with the t values

@@ -20,9 +20,4 @@ inline Ray cuda_to_cpu_ray(const CudaRay &cuda_ray) {
              cuda_to_cpu_vec3(cuda_ray.direction), cuda_ray.time);
 }
 
-// Batch conversion functions for performance.
-
-void batch_cpu_to_cuda_ray(const Ray *cpu_rays, CudaRay *cuda_rays, int count);
-void batch_cuda_to_cpu_ray(const CudaRay *cuda_rays, Ray *cpu_rays, int count);
-
 #endif // USE_CUDA

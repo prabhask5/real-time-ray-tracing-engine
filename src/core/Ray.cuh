@@ -3,11 +3,13 @@
 #ifdef USE_CUDA
 
 #include "../utils/math/Vec3.cuh"
+#include "../utils/math/Vec3Utility.cuh"
 #include "Vec3Types.cuh"
 
-// Represents a light ray in CUDA, using the parametric equation:
-// point = origin + t * direction. Time parameter `t` tracks distance
-// along the ray, useful for motion blur or time-varying scenes.
+// Represents a light ray, represented through the parametric equation Vec3
+// point = r.origin() + t * r.direction(), t is how far along the way you are (t
+// is the parameter, time usually), if t = 0 we're at the origin and if t = INF
+// we're infinitly far in the direction of the ray.
 struct CudaRay {
   CudaPoint3 origin;
   CudaVec3 direction;
@@ -23,8 +25,8 @@ struct CudaRay {
       : origin(_origin), direction(_direction), time(0.0) {}
 
   // Initializes a ray with specified origin, direction, and time.
-  __device__ CudaRay(const CudaPoint3 &_origin, const CudaVec3 &_direction,
-                     double _time)
+  __host__ __device__ CudaRay(const CudaPoint3 &_origin,
+                              const CudaVec3 &_direction, double _time)
       : origin(_origin), direction(_direction), time(_time) {}
 
   // Returns the point at parameter t: origin + t * direction.

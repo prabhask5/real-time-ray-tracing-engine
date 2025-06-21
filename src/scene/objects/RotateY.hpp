@@ -4,6 +4,7 @@
 #include "../../core/HittableTypes.hpp"
 #include "../../optimization/AABB.hpp"
 #include "../../utils/math/Vec3.hpp"
+#include <cmath>
 
 // Wrapper class. Rotates a hittable object around the Y-axis by a given angle.
 // Memory layout optimized for rotation operations.
@@ -14,6 +15,12 @@ public:
   // Getter functions.
 
   AABB get_bounding_box() const override;
+
+  HittablePtr get_object() const { return m_object; }
+
+  double get_angle() const {
+    return std::atan2(m_sin_theta, m_cos_theta) * 180.0 / M_PI;
+  }
 
   // Action functions.
 

@@ -22,6 +22,11 @@ Sphere::Sphere(const Point3 &before_center, const Point3 &after_center,
   m_bbox = AABB(box1, box2);
 }
 
+Sphere::Sphere(const Ray &center, double radius, const MaterialPtr material,
+               const AABB bbox)
+    : m_center(center), m_radius(std::fmax(0.0, radius)), m_material(material),
+      m_bbox(bbox) {}
+
 AABB Sphere::get_bounding_box() const { return m_bbox; }
 
 bool Sphere::hit(const Ray &ray, Interval t_values, HitRecord &record) const {

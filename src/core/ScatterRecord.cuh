@@ -16,14 +16,11 @@ struct CudaScatterRecord {
   // everything and leaves only red.
   CudaColor attenuation;
 
-  // Enum tag for dispatching the correct PDF type.
-  CudaPDFType pdf_type;
-
   // A raw pointer to a probability density function struct.
   // This tells the renderer how to randomly sample the direction of scattered
   // rays. Used when importance sampling (e.g. cosine-weighted scattering for
   // Lambertian surfaces or sampling toward lights).
-  void *pdf_data;
+  CudaPDF *pdf_pointer;
 
   // If this is true, the material wants to skip sampling a direction from the
   // PDF and instead explicitly provides the scattered ray in skip_pdf_ray. This

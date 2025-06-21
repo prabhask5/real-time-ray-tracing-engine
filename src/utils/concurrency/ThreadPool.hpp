@@ -33,7 +33,7 @@ private:
 
   void worker_loop(size_t worker_id) {
     get_worker_id() = worker_id;
-    auto &worker = *m_workers[worker_id];
+    WorkerThread &worker = *m_workers[worker_id];
 
     worker.active.store(true, std::memory_order_relaxed);
     m_active_workers.fetch_add(1, std::memory_order_relaxed);
@@ -155,7 +155,7 @@ public:
     m_stop.store(true, std::memory_order_relaxed);
 
     // Join all threads.
-    for (auto &worker : m_workers) {
+    for (std::unique_ptr<WorkerThread> &worker : m_workers) {
       if (worker->thread.joinable()) {
         worker->thread.join();
       }

@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   raytracer:
     build: .
@@ -12,7 +10,7 @@ services:
     environment:
       - SDL_VIDEODRIVER=x11
       - NVIDIA_VISIBLE_DEVICES=all
-      - DISPLAY=${DISPLAY}  # For GUI support (X11)
+      - DISPLAY=${DISPLAY:-:0}  # For GUI support (X11)
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
       - TMPDIR=/tmp
       - LIBGL_ALWAYS_INDIRECT=1

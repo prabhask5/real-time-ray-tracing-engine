@@ -8,8 +8,7 @@
 #include "HitRecord.hpp"
 
 // Convert CPU HitRecord to CUDA HitRecord.
-__host__ __device__ inline CudaHitRecord
-cpu_to_cuda_hit_record(const HitRecord &cpu_record) {
+inline CudaHitRecord cpu_to_cuda_hit_record(const HitRecord &cpu_record) {
   CudaHitRecord cuda_record;
 
   cuda_record.point = cpu_to_cuda_vec3(cpu_record.point);
@@ -20,17 +19,11 @@ cpu_to_cuda_hit_record(const HitRecord &cpu_record) {
   cuda_record.v = cpu_record.v;
 
   // Convert material with proper memory management.
-  if (cpu_record.material) {
+  if (cpu_record.material_pointer != nullptr) {
     CudaMaterial cuda_material = cpu_to_cuda_material(*cpu_record.material);
-    cuda_record.material_type = cuda_material.type;
-
-    // Allocate and copy material data.
-    CudaMaterial *device_material = new CudaMaterial();
-    *device_material = cuda_material;
-    cuda_record.material_data = (void *)device_material;
+    cuda_record.material_pointer = &cuda_material;
   } else {
-    cuda_record.material_type = CudaMaterialType::MATERIAL_LAMBERTIAN;
-    cuda_record.material_data = nullptr;
+    cuda_record.material_pointer = nullptr;
   }
 
   return cuda_record;
@@ -48,25 +41,12 @@ inline HitRecord cuda_to_cpu_hit_record(const CudaHitRecord &cuda_record) {
   cpu_record.v = cuda_record.v;
 
   // Convert material with proper reconstruction from CUDA data.
-  if (cuda_record.material_data != nullptr) {
-    const CudaMaterial *cuda_material =
-        reinterpret_cast<const CudaMaterial *>(cuda_record.material_data);
-    cpu_record.material = cuda_to_cpu_material(*cuda_material);
-  } else {
-    // Create default Lambertian material.
-
-    auto default_texture =
-        std::make_shared<SolidColorTexture>(Color(0.7, 0.7, 0.7));
-    cpu_record.material = std::make_shared<LambertianMaterial>(default_texture);
-  }
+  if (cuda_record.material_pointer != nullptr)
+    cpu_record.material = cuda_to_cpu_material(*cuda_record.material_pointer);
+  else
+    cpu_record.material = nullptr;
 
   return cpu_record;
 }
-
-// Batch conversion functions.
-void batch_cpu_to_cuda_hit_record(const HitRecord *cpu_records,
-                                  CudaHitRecord *cuda_records, int count);
-void batch_cuda_to_cpu_hit_record(const CudaHitRecord *cuda_records,
-                                  HitRecord *cpu_records, int count);
 
 #endif // USE_CUDA
