@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SimdOps.hpp"
+#include "SimdTypes.hpp"
 #include "Vec3.hpp"
 #include "Vec3Utility.hpp"
 
@@ -13,10 +15,26 @@ public:
   // We use n as the z-axis, and compute cross-products to find the x and y-axes
   // (they need to be perpendicular).
   ONB(const Vec3 &n) {
-    m_axis[2] = unit_vector(n);
-    Vec3 a = (std::fabs(m_axis[2].x()) > 0.9) ? Vec3(0, 1, 0) : Vec3(1, 0, 0);
-    m_axis[1] = unit_vector(cross_product(m_axis[2], a));
-    m_axis[0] = cross_product(m_axis[2], m_axis[1]);
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+    // SIMD-optimized orthonormal basis construction.
+
+    if constexpr (SIMD_DOUBLE_PRECISION) {
+      m_axis[2] = n.normalize(); // SIMD-optimized normalize
+      Vec3 a = (std::fabs(m_axis[2].x()) > 0.9) ? Vec3(0, 1, 0) : Vec3(1, 0, 0);
+      m_axis[1] =
+          m_axis[2]
+              .cross(a)
+              .normalize(); // SIMD-optimized cross product and normalize
+      m_axis[0] = m_axis[2].cross(m_axis[1]); // SIMD-optimized cross product
+    } else {
+#endif
+      m_axis[2] = unit_vector(n);
+      Vec3 a = (std::fabs(m_axis[2].x()) > 0.9) ? Vec3(0, 1, 0) : Vec3(1, 0, 0);
+      m_axis[1] = unit_vector(cross_product(m_axis[2], a));
+      m_axis[0] = cross_product(m_axis[2], m_axis[1]);
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+    }
+#endif
   }
 
   // Getter const methods.
@@ -27,6 +45,20 @@ public:
 
   // Transforms a vector from local space to world space using this ONB.
   Vec3 transform(const Vec3 &v) const {
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+    // SIMD-optimized vector transformation.
+
+    if constexpr (SIMD_DOUBLE_PRECISION) {
+      Vec3 result = (v[0] * m_axis[0]); // SIMD-optimized scalar multiplication
+      result +=
+          (v[1] *
+           m_axis[1]); // SIMD-optimized scalar multiplication and addition
+      result +=
+          (v[2] *
+           m_axis[2]); // SIMD-optimized scalar multiplication and addition
+      return result;
+    }
+#endif
     return (v[0] * m_axis[0]) + (v[1] * m_axis[1]) + (v[2] * m_axis[2]);
   }
 
