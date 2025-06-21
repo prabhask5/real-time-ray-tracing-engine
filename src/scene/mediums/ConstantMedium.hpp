@@ -3,6 +3,8 @@
 #include "../../core/Hittable.hpp"
 #include "../../core/HittableTypes.hpp"
 #include "../../core/Vec3Types.hpp"
+#include "../../utils/math/SimdOps.hpp"
+#include "../../utils/math/SimdTypes.hpp"
 #include "../materials/MaterialTypes.hpp"
 #include "../textures/TextureTypes.hpp"
 
@@ -36,12 +38,15 @@ public:
   MaterialPtr get_phase_function() const;
 
 private:
-  // Hot data: density used in scattering probability calculations
+  // Hot data: density used in scattering probability calculations.
+
   double m_density; // The density of the medium
 
-  // Warm data: boundary geometry for hit testing
+  // Warm data: boundary geometry for hit testing.
+
   HittablePtr m_boundary; // Container that holds the constant medium
 
-  // Cold data: phase function accessed only on confirmed scattering
+  // Cold data: phase function accessed only on confirmed scattering.
+
   MaterialPtr m_phase_function; // Material defining light scattering behavior
 };

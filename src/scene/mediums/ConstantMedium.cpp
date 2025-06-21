@@ -42,20 +42,44 @@ bool ConstantMedium::hit(const Ray &ray, Interval t_values,
 
   // This simulates a random scattering distance inside the medium using an
   // exponential distribution (common for modeling scattering).
-  double ray_length = ray.direction().length();
-  double distance_inside_boundary = (rec2.t - rec1.t) * ray_length;
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+  // SIMD-optimized volumetric scattering calculations.
+  if constexpr (SIMD_DOUBLE_PRECISION) {
+    double ray_length =
+        ray.direction().length(); // Uses SIMD-optimized Vec3 length.
+    double distance_inside_boundary = (rec2.t - rec1.t) * ray_length;
 
-  // This randomly determines when the ray scatters inside the medium.
-  double neg_inv_density = -1.0 / m_density;
-  double hit_distance = neg_inv_density * std::log(random_double());
+    // This randomly determines when the ray scatters inside the medium.
+    double neg_inv_density = -1.0 / m_density;
+    double hit_distance = neg_inv_density * std::log(random_double());
 
-  // If the scattering distance is longer than the ray distance inside the
-  // medium boundary, it does not scatter.
-  if (hit_distance > distance_inside_boundary)
-    return false;
+    // If the scattering distance is longer than the ray distance inside the.
 
-  record.t = rec1.t + hit_distance / ray_length;
-  record.point = ray.at(record.t);
+    // medium boundary, it does not scatter.
+    if (hit_distance > distance_inside_boundary)
+      return false;
+
+    record.t = rec1.t + hit_distance / ray_length;
+    record.point = ray.at(record.t); // Uses SIMD-optimized Ray::at method.
+  } else {
+#endif
+    double ray_length = ray.direction().length();
+    double distance_inside_boundary = (rec2.t - rec1.t) * ray_length;
+
+    // This randomly determines when the ray scatters inside the medium.
+    double neg_inv_density = -1.0 / m_density;
+    double hit_distance = neg_inv_density * std::log(random_double());
+
+    // If the scattering distance is longer than the ray distance inside the
+    // medium boundary, it does not scatter.
+    if (hit_distance > distance_inside_boundary)
+      return false;
+
+    record.t = rec1.t + hit_distance / ray_length;
+    record.point = ray.at(record.t);
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+  }
+#endif
 
   record.normal = Vec3(1, 0, 0); // arbitrary
   record.frontFace = true;       // also arbitrary
