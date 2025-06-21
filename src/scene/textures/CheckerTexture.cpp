@@ -12,6 +12,34 @@ CheckerTexture::CheckerTexture(double scale, const Color &c1, const Color &c2)
                      std::make_shared<SolidColorTexture>(c2)) {}
 
 Color CheckerTexture::value(double u, double v, const Point3 &p) const {
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+  // SIMD-optimized checker texture evaluation.
+
+  if constexpr (SIMD_DOUBLE_PRECISION) {
+    double inv_scale = 1.0 / m_scale;
+
+    // Scale the point down to the texture's scale using SIMD operations.
+
+    Vec3 scaled_point = p;
+    scaled_point *= inv_scale; // Uses SIMD-optimized scalar multiplication
+
+    // Extract components for index calculation.
+
+    int x_index = int(std::floor(scaled_point.x()));
+    int y_index = int(std::floor(scaled_point.y()));
+    int z_index = int(std::floor(scaled_point.z()));
+
+    // Use this to determine which checker space we're on.
+
+    bool is_even = (x_index + y_index + z_index) % 2 == 0;
+
+    return is_even ? m_even_texture->value(u, v, p)
+                   : m_odd_texture->value(u, v, p);
+  }
+#endif
+
+  // Fallback scalar implementation.
+
   double inv_scale = 1.0 / m_scale;
 
   // Scale the point down to the texture's scale, in all three dimensions.

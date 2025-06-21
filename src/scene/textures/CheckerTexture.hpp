@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../utils/math/SimdOps.hpp"
+#include "../../utils/math/SimdTypes.hpp"
 #include "Texture.hpp"
 #include "TextureTypes.hpp"
 
