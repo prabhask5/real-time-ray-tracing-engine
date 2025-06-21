@@ -23,16 +23,18 @@ inline Vec3 operator*(const Vec3 &v, double t) { return t * v; }
 
 inline Vec3 operator/(const Vec3 &v, double t) { return (1 / t) * v; }
 
+// SIMD-optimized vector operations using Vec3's built-in methods.
 inline double dot_product(const Vec3 &u, const Vec3 &v) {
-  return u.x() * v.x() + u.y() * v.y() + u.z() * v.z();
+  return u.dot(v); // Use Vec3's SIMD-optimized dot product.
 }
 
 inline Vec3 cross_product(const Vec3 &u, const Vec3 &v) {
-  return Vec3(u.y() * v.z() - u.z() * v.y(), u.z() * v.x() - u.x() * v.z(),
-              u.x() * v.y() - u.y() * v.x());
+  return u.cross(v); // Use Vec3's cross product.
 }
 
-inline Vec3 unit_vector(const Vec3 &v) { return v / v.length(); }
+inline Vec3 unit_vector(const Vec3 &v) {
+  return v.normalize(); // Use Vec3's SIMD-optimized normalize.
+}
 
 // Generates a random 3D point inside a unit sphere (z = 0). Used for simulating
 // camera lens aperture blur (depth of field).
