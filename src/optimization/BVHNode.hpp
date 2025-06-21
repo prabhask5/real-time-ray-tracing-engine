@@ -12,7 +12,8 @@ class AABB;         // From AABB.hpp.
 // children. A leaf node contains 1 or a few geometric objects. Optimizes the
 // ray hit algorithm by ignoring all the inner bounding boxes in which the ray
 // doesn't interact with the enclosing bounding box.
-class BVHNode : public Hittable {
+// Memory layout optimized for BVH traversal performance.
+class alignas(16) BVHNode : public Hittable {
 public:
   BVHNode(HittableList list);
 
@@ -31,7 +32,12 @@ public:
   Vec3 random(const Point3 &origin) const override;
 
 private:
+  // Hot data: bounding box checked first in every traversal.
+
+  AABB m_bbox;
+
+  // Child pointers: accessed only if bbox test passes.
+
   HittablePtr m_left;
   HittablePtr m_right;
-  AABB m_bbox;
 };

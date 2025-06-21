@@ -8,7 +8,8 @@ class Hittable;     // From Hittable.hpp.
 class HittableList; // From HittableList.hpp.
 class Ray;          // From Ray.hpp.
 
-class Camera {
+// Memory layout optimized for camera ray generation performance.
+class alignas(16) Camera {
 public:
   Camera(const CameraConfig &config);
 
@@ -20,13 +21,7 @@ public:
   virtual void render(HittableList &world, HittableList &lights) = 0;
 
 protected:
-  // Internal metadata.
-
-  // Rendered image height.
-  int m_image_height;
-
-  // Color scale factor for a sum of pixel samples.
-  double m_pixel_samples_scale;
+  // Hot data: accessed every ray generation (cache-line optimized).
 
   // Camera center.
   Point3 m_center;
@@ -40,19 +35,19 @@ protected:
   // Offset to pixel below.
   Vec3 m_pixel_delta_v;
 
-  // Camera frame basis vectors.
+  // Camera frame basis vectors (used together).
   Vec3 m_u, m_v, m_w;
 
-  // Defocus disk horizontal radius.
-  Vec3 m_defocus_disk_u;
+  // Defocus disk vectors (used together for DOF).
+  Vec3 m_defocus_disk_u; // Defocus disk horizontal radius.
+  Vec3 m_defocus_disk_v; // Defocus disk vertical radius.
 
-  // Defocus disk vertical radius.
-  Vec3 m_defocus_disk_v;
+  // Warm data: used during rendering setup and calculations.
 
-  // Camera config metadata.
+  // Group integers together for packing.
 
-  // Ratio of image width over height.
-  double m_aspect_ratio;
+  // Rendered image height.
+  int m_image_height;
 
   // Rendered image width in pixel count.
   int m_image_width = 100;
@@ -63,11 +58,38 @@ protected:
   // Maximum number of ray bounces into scene.
   int m_max_depth = 10;
 
-  // Scene background color.
-  Color m_background;
+  // Group doubles together for optimal packing.
+
+  // Color scale factor for pixel samples.
+  double m_pixel_samples_scale;
+
+  // Ratio of image width over height.
+  double m_aspect_ratio;
 
   // Vertical view angle (field of view).
   double m_vfov = 90;
+
+  // Variation angle of rays through each pixel.
+  double m_defocus_angle = 0;
+
+  // Distance to plane of perfect focus.
+  double m_focus_dist = 10;
+
+  // Group boolean flags together.
+
+  // Control parallelism usage.
+  bool m_use_parallelism = false;
+
+  // Control BVH node usage.
+  bool m_use_bvh = false;
+
+  // Control CUDA GPU rendering.
+  bool m_use_gpu = false;
+
+  // Cold data: configuration parameters (used mainly during initialization).
+
+  // Scene background color.
+  Color m_background;
 
   // Point camera is looking from.
   Point3 m_lookfrom = Point3(0, 0, 0);
@@ -77,21 +99,6 @@ protected:
 
   // Camera-relative "up" direction.
   Vec3 m_vup = Vec3(0, 1, 0);
-
-  // Variation angle of rays through each pixel.
-  double m_defocus_angle = 0;
-
-  // Distance from camera lookfrom point to plane of perfect focus.
-  double m_focus_dist = 10;
-
-  // Control whether the render() function uses parallelism or not.
-  bool m_use_parallelism = false;
-
-  // Control whether the world and lights are BVH nodes for input or not.
-  bool m_use_bvh = false;
-
-  // Control whether to render using CUDA on the GPU.
-  bool m_use_gpu = false;
 
 protected:
   // Calculates all internal fields used to construct rays.

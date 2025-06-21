@@ -7,7 +7,8 @@
 
 // Defines a Lambertian (diffuse) material — a surface that scatters light
 // uniformly in all directions from the point of intersection.
-class LambertianMaterial : public Material {
+// Cache-optimized for efficient material evaluation.
+class alignas(16) LambertianMaterial : public Material {
 public:
   LambertianMaterial(const Color &albedo);
 

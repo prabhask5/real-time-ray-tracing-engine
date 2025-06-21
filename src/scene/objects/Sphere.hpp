@@ -8,7 +8,8 @@
 #include "../materials/MaterialTypes.hpp"
 
 // Represents a sphere hittable object.
-class Sphere : public Hittable {
+// Memory layout optimized for ray-sphere intersection performance.
+class alignas(16) Sphere : public Hittable {
 public:
   Sphere(const Point3 &center, double radius, MaterialPtr material);
 
@@ -35,8 +36,21 @@ public:
   Vec3 random(const Point3 &origin) const override;
 
 private:
+  // Hot data: most frequently accessed in ray-sphere intersection.
+
+  // Center position (motion blur support).
   Ray m_center;
+
+  // Sphere radius - grouped with center for intersection math.
   double m_radius;
-  MaterialPtr m_material;
+
+  // Warm data: used for early rejection.
+
+  // Bounding box for acceleration structure.
   AABB m_bbox;
+
+  // Cold data: accessed only on confirmed hits.
+
+  // Material properties.
+  MaterialPtr m_material;
 };

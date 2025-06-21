@@ -2,11 +2,13 @@
 
 #include "Utility.hpp"
 
-class Vec3 {
+// SIMD-optimized Vec3 class with 16-byte alignment for future SSE/AVX
+// integration.
+class alignas(16) Vec3 {
 public:
-  Vec3() : m_coordinates{0, 0, 0} {}
+  Vec3() : m_coordinates{0, 0, 0, 0} {}
 
-  Vec3(double x, double y, double z) : m_coordinates{x, y, z} {}
+  Vec3(double x, double y, double z) : m_coordinates{x, y, z, 0} {}
 
   // Getter methods const methods.
 
@@ -73,5 +75,7 @@ public:
   }
 
 private:
-  double m_coordinates[3];
+  // 4 components for 16-byte alignment and SIMD compatibility (w component is
+  // padding).
+  double m_coordinates[4];
 };

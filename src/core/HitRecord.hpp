@@ -7,23 +7,21 @@
 #include "Vec3Types.hpp"
 
 // Represents captured info from a ray hitting a hittable object.
-struct HitRecord {
+// Memory layout optimized for cache efficiency and SIMD compatibility.
+struct alignas(16) HitRecord {
+  // Hot data: most frequently accessed members first.
+
   // The point it hit at.
   Point3 point;
 
   // The normal vector to the ray/object intersection.
   Vec3 normal;
 
-  // The material of the hittable object.
-  MaterialPtr material;
+  // Group doubles together for optimal packing and cache usage.
 
   // The parameter t, time, along the ray in which the ray hit the hittable
   // object.
   double t;
-
-  // Front face = the ray hits the surface from outside (normal opposes the
-  // ray). Back face = the ray hits from inside (normal faces same way as ray).
-  bool frontFace;
 
   // 2D coordinates used to map a 2D texture image onto a 3D surface. When a ray
   // hits a surface (like a sphere or triangle), the u and v values tell the
@@ -31,6 +29,15 @@ struct HitRecord {
   // able to determine what the texture of the object looks like at the position
   // the ray hit the object.
   double u, v;
+
+  // Cold data: less frequently accessed members last.
+
+  // The material of the hittable object.
+  MaterialPtr material;
+
+  // Front face = the ray hits the surface from outside (normal opposes the
+  // ray). Back face = the ray hits from inside (normal faces same way as ray).
+  bool frontFace;
 
   // Sets the hit record normal vector.
   // NOTE: the parameter `outward_normal` is assumed to have unit length.

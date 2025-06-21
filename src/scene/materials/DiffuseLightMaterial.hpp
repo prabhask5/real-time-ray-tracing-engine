@@ -6,7 +6,8 @@
 // Represents a pure emissive surface—a material that emits light rather than
 // reflecting or scattering it. Think of glowing surfaces like light bulbs,
 // lava, or emissive panels.
-class DiffuseLightMaterial : public Material {
+// Memory layout optimized for light emission calculations.
+class alignas(16) DiffuseLightMaterial : public Material {
 public:
   DiffuseLightMaterial(TexturePtr texture);
 

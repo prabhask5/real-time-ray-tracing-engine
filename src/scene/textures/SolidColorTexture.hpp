@@ -3,7 +3,8 @@
 #include "../../utils/math/Vec3.hpp"
 #include "Texture.hpp"
 
-class SolidColorTexture : public Texture {
+// Memory layout optimized for efficient color evaluation.
+class alignas(16) SolidColorTexture : public Texture {
 public:
   SolidColorTexture(const Color &albedo);
 

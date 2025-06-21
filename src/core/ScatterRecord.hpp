@@ -8,13 +8,18 @@
 // Used in a ray tracer to describe the result of a material's scatter()
 // function — that is, how a ray interacts with a surface (reflection,
 // transmission, etc).
-class ScatterRecord {
+// Memory layout optimized for cache efficiency.
+class alignas(16) ScatterRecord {
 public:
+  // Hot data: most frequently accessed first.
+
   // Represents how much the surface attenuates (reduces or filters) light
   // passing through it. Think of it as the color tint the surface gives to the
   // scattered ray. If it's (1, 1, 1) → no change. If it's (0.5, 0, 0) → dims
   // everything and leaves only red.
   Color attenuation;
+
+  // Group smaller frequently accessed data together.
 
   // A smart pointer (shared_ptr) to a probability density function object.
   // This tells the renderer how to randomly sample the direction of scattered
@@ -27,6 +32,8 @@ public:
   // is useful for perfect specular reflection (like a mirror), where the
   // direction is deterministic.
   bool skip_pdf;
+
+  // Cold data: conditionally used, place last.
 
   // Only used if skip_pdf is true.
   // Represents the actual scattered ray (for deterministic materials like

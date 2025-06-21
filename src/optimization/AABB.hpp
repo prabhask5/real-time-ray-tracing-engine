@@ -10,7 +10,8 @@ class Ray; // From Ray.hpp.
 // points in 3D space. Checking ray-box intersections is much faster than
 // ray-triangle or ray-sphere intersections. So you wrap objects in AABBs and
 // check the ray against those first.
-class AABB {
+// Cache-optimized layout for fast ray-box intersection tests.
+class alignas(16) AABB {
 public:
   AABB();
 

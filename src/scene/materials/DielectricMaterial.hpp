@@ -4,7 +4,8 @@
 
 // Models transparent materials (like glass or water) that can both reflect and
 // refract rays.
-class DielectricMaterial : public Material {
+// Memory layout optimized for dielectric calculations.
+class alignas(16) DielectricMaterial : public Material {
 public:
   DielectricMaterial(double refraction_index);
 

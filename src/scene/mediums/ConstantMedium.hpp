@@ -10,7 +10,8 @@
 // rays randomly inside a volume instead of just reflecting off surfaces. It
 // wraps another hittable object (usually a box or sphere) and simulates light
 // scattering inside it.
-class ConstantMedium : public Hittable {
+// Memory layout optimized for volumetric scattering calculations.
+class alignas(16) ConstantMedium : public Hittable {
 public:
   ConstantMedium(HittablePtr boundary, double density, TexturePtr texture);
 
@@ -35,12 +36,12 @@ public:
   MaterialPtr get_phase_function() const;
 
 private:
-  // Defines the container that holds the constant medium (smoke or fog).
-  HittablePtr m_boundary;
+  // Hot data: density used in scattering probability calculations
+  double m_density; // The density of the medium
 
-  // The density of the medium.
-  double m_density;
+  // Warm data: boundary geometry for hit testing
+  HittablePtr m_boundary; // Container that holds the constant medium
 
-  // The material that defines how light is scattered inside of the medium.
-  MaterialPtr m_phase_function;
+  // Cold data: phase function accessed only on confirmed scattering
+  MaterialPtr m_phase_function; // Material defining light scattering behavior
 };

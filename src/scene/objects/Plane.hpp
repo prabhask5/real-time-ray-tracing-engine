@@ -6,7 +6,8 @@
 #include "../materials/Material.hpp"
 #include "../materials/MaterialTypes.hpp"
 
-class Plane : public Hittable {
+// Memory layout optimized for ray-plane intersection performance.
+class alignas(16) Plane : public Hittable {
 public:
   Plane(const Point3 &corner, const Vec3 &u_side, const Vec3 &v_side,
         MaterialPtr material);
@@ -30,27 +31,22 @@ public:
   Vec3 random(const Point3 &origin) const override;
 
 private:
-  // Corner of the plane.
-  Point3 m_corner;
+  // Hot data: core geometry accessed in every ray-plane intersection
+  Point3 m_corner; // Corner of the plane
 
-  // Vectors spanning the rectangle's sides.
-  Vec3 m_u_side, m_v_side;
-
-  // Used to project 3D points to 2D coordinates in the quad plane.
-  Vec3 m_w;
-
-  // Surface material.
-  MaterialPtr m_material;
-
-  // Bounding box.
-  AABB m_bbox;
-
-  // Surface normal.
-  Vec3 m_normal;
+  Vec3 m_u_side, m_v_side; // Vectors spanning the rectangle's sides
+  Vec3 m_normal;           // Surface normal
+  Vec3 m_w;                // Used to project 3D points to 2D coordinates
 
   // The plane equation’s constant term.
   double m_D;
 
   // Surface area (used in light sampling).
   double m_surface_area;
+
+  // Warm data: early rejection and PDF calculations
+  AABB m_bbox; // Bounding box
+
+  // Cold data: accessed only on confirmed hits
+  MaterialPtr m_material; // Surface material
 };

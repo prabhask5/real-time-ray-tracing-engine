@@ -9,7 +9,8 @@ static const int PERLIN_POINT_COUNT = 256;
 // Instead of assigning random values to each point, it assigns random gradient
 // Vectors to grid points and uses interpolation between them. This creates
 // smooth, continuous noise (no harsh jumps like white noise).
-class PerlinNoise {
+// Memory layout optimized for noise generation performance.
+class alignas(16) PerlinNoise {
 public:
   PerlinNoise() {
     for (int i = 0; i < PERLIN_POINT_COUNT; i++)
@@ -78,9 +79,20 @@ public:
   const int *perm_z() const { return m_perm_z; }
 
 private:
+  // Hot data: most frequently accessed arrays for noise generation.
+
+  // Random gradient vectors (accessed in noise()).
   Vec3 m_rand_vec[PERLIN_POINT_COUNT];
+
+  // Warm data: permutation arrays grouped together for cache locality.
+
+  // X-axis permutation array.
   int m_perm_x[PERLIN_POINT_COUNT];
+
+  // Y-axis permutation array.
   int m_perm_y[PERLIN_POINT_COUNT];
+
+  // Z-axis permutation array.
   int m_perm_z[PERLIN_POINT_COUNT];
 
   // Generates a permutation array used to shuffle access to gradients, ensuring

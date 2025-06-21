@@ -6,7 +6,8 @@
 // Represents a scattering material where rays scatter equally in all
 // directions—used for things like volumetric fog, smoke, or constant-density
 // media.
-class IsotropicMaterial : public Material {
+// Memory layout optimized for isotropic scattering calculations.
+class alignas(16) IsotropicMaterial : public Material {
 public:
   IsotropicMaterial(const Color &albedo);
 

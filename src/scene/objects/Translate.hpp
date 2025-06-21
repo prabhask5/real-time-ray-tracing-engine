@@ -7,7 +7,8 @@
 
 // Wrapper class. Moves (translates) a hittable object by an offset vector in
 // world space.
-class Translate : public Hittable {
+// Memory layout optimized for translation operations.
+class alignas(16) Translate : public Hittable {
 public:
   Translate(HittablePtr object, const Vec3 &offset);
 
@@ -24,12 +25,18 @@ public:
   Vec3 random(const Point3 &origin) const override;
 
 private:
-  // Underlying object.
-  HittablePtr m_object;
+  // Hot data: translation offset used in every transform.
 
-  // Vector that defines the offset distance of the object.
+  // Vector that defines the offset distance.
   Vec3 m_offset;
+
+  // Warm data: bounding box for early rejection.
 
   // New bbox after translating.
   AABB m_bbox;
+
+  // Cold data: underlying object (accessed only after bbox/offset checks).
+
+  // Underlying object.
+  HittablePtr m_object;
 };

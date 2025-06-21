@@ -10,7 +10,8 @@
 #include <memory>
 
 // Abstract base class for probability density functions.
-class PDF {
+// Memory layout optimized for PDF calculations.
+class alignas(16) PDF {
 public:
   virtual ~PDF() = default;
 
@@ -19,7 +20,8 @@ public:
 };
 
 // Uniform sampling over the unit sphere.
-class SpherePDF : public PDF {
+// Optimized for uniform sphere sampling.
+class alignas(16) SpherePDF : public PDF {
 public:
   SpherePDF() = default;
 
@@ -31,7 +33,8 @@ public:
 };
 
 // Cosine-weighted hemisphere sampling PDF.
-class CosinePDF : public PDF {
+// Optimized for cosine-weighted hemisphere sampling.
+class alignas(16) CosinePDF : public PDF {
 public:
   CosinePDF(const Vec3 &w) : m_uvw(w) {}
 
@@ -51,7 +54,8 @@ private:
 };
 
 // PDF for sampling based on a hittable object.
-class HittablePDF : public PDF {
+// Optimized for object-based importance sampling.
+class alignas(16) HittablePDF : public PDF {
 public:
   HittablePDF(const Hittable &objects, const Point3 &origin)
       : m_objects(objects), m_origin(origin) {}
@@ -67,12 +71,20 @@ public:
   Point3 get_origin() const { return m_origin; }
 
 private:
-  const Hittable &m_objects;
+  // Hot data: origin point used in sampling calculations.
+
+  // Sampling origin point.
   Point3 m_origin;
+
+  // Warm data: object reference for sampling.
+
+  // Objects to sample from.
+  const Hittable &m_objects;
 };
 
 // Mixture of two PDFs.
-class MixturePDF : public PDF {
+// Optimized for PDF mixing operations.
+class alignas(16) MixturePDF : public PDF {
 public:
   MixturePDF(PDFPtr p0, PDFPtr p1) {
     m_p[0] = p0;

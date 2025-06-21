@@ -3,22 +3,30 @@
 #include "../../utils/math/Vec3.hpp"
 #include "../Vec3Types.hpp"
 
-struct CameraConfig {
-  double aspect_ratio = 1.0;
-  int image_width = 600;
-  int samples_per_pixel = 10;
-  int max_depth = 10;
-  Color background = Color(0, 0, 0);
+// Memory layout optimized for camera configuration access.
+struct alignas(16) CameraConfig {
+  // Hot data: most frequently accessed during rendering setup.
 
-  double vfov = 90;
-  Point3 lookfrom = Point3(0, 0, 0);
-  Point3 lookat = Point3(0, 0, -1);
-  Vec3 vup = Vec3(0, 1, 0);
+  int image_width = 600;      // Image width (checked constantly)
+  int samples_per_pixel = 10; // Sample count (checked per pixel)
+  int max_depth = 10;         // Ray depth limit (checked per ray)
 
-  double defocus_angle = 0;
-  double focus_dist = 10;
+  // Group doubles together for optimal packing and SIMD potential.
 
-  bool use_parallelism = false;
-  bool use_bvh = false;
-  bool use_gpu = false;
+  double aspect_ratio = 1.0; // Width/height ratio
+  double vfov = 90;          // Vertical field of view
+  double defocus_angle = 0;  // Aperture size for depth of field
+  double focus_dist = 10;    // Distance to focus plane
+
+  // Warm data: Vec3 types grouped together (16-byte aligned already).
+
+  Point3 lookfrom = Point3(0, 0, 0); // Camera position
+  Point3 lookat = Point3(0, 0, -1);  // Look at point
+  Vec3 vup = Vec3(0, 1, 0);          // Up vector
+  Color background = Color(0, 0, 0); // Background color
+
+  // Cold data: boolean flags grouped together.
+  bool use_parallelism = false; // Enable parallel processing
+  bool use_bvh = false;         // Enable BVH acceleration
+  bool use_gpu = false;         // Enable GPU rendering
 };

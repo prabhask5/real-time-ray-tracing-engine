@@ -6,7 +6,8 @@
 #include <vector>
 
 // Defines a list of hittable objects.
-class HittableList : public Hittable {
+// Memory layout optimized for ray traversal performance.
+class alignas(16) HittableList : public Hittable {
 public:
   HittableList();
 
@@ -33,6 +34,13 @@ public:
   Vec3 random(const Point3 &origin) const override;
 
 private:
-  std::vector<HittablePtr> m_objects;
+  // Hot data: bounding box for early rejection.
+
+  // Precomputed bounding box for the entire list.
   AABB m_bbox;
+
+  // Warm data: object container (accessed after bbox check passes).
+
+  // Container of hittable objects.
+  std::vector<HittablePtr> m_objects;
 };

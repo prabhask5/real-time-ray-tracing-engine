@@ -5,7 +5,8 @@
 
 // Models metallic (specular) surfaces like brushed aluminum or mirrors, where
 // rays reflect off the surface with some optional fuzziness.
-class MetalMaterial : public Material {
+// Memory layout optimized for reflection calculations.
+class alignas(16) MetalMaterial : public Material {
 public:
   MetalMaterial(const Color &albedo, double fuzz);
 

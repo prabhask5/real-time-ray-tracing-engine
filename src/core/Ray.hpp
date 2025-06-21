@@ -7,7 +7,8 @@
 // point = r.origin() + t * r.direction(), t is how far along the way you are (t
 // is the parameter, time usually), if t = 0 we're at the origin and if t = INF
 // we're infinitly far in the direction of the ray.
-class Ray {
+// Cache-line aligned for optimal memory access patterns.
+class alignas(16) Ray {
 public:
   Ray();
 

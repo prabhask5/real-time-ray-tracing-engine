@@ -6,7 +6,8 @@
 #include "../../utils/math/Vec3.hpp"
 
 // Wrapper class. Rotates a hittable object around the Y-axis by a given angle.
-class RotateY : public Hittable {
+// Memory layout optimized for rotation operations.
+class alignas(16) RotateY : public Hittable {
 public:
   RotateY(HittablePtr object, double angle);
 
@@ -23,12 +24,21 @@ public:
   Vec3 random(const Point3 &origin) const override;
 
 private:
-  // Underlying object.
-  HittablePtr m_object;
+  // Hot data: trigonometric values used in every rotation calculation.
 
+  // Precomputed sine of rotation angle.
   double m_sin_theta;
+
+  // Precomputed cosine of rotation angle.
   double m_cos_theta;
 
-  // New bbox after translating.
+  // Warm data: bounding box for early rejection.
+
+  // New bbox after rotation.
   AABB m_bbox;
+
+  // Cold data: underlying object (accessed only after bbox checks).
+
+  // Underlying object.
+  HittablePtr m_object;
 };

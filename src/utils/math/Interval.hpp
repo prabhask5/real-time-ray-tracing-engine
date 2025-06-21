@@ -2,7 +2,8 @@
 
 #include "Utility.hpp"
 
-class Interval {
+// SIMD-optimized Interval class with optimal memory layout.
+class alignas(16) Interval {
 public:
   Interval() : m_min(+INF), m_max(-INF) {} // Simulates empty interval.
 

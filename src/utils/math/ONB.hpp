@@ -6,7 +6,8 @@
 // This ONB (orthonormal basis) class constructs and manages a local coordinate
 // system — often used in ray tracing to convert vectors between local and world
 // space, particularly for sampling directions relative to a surface normal.
-class ONB {
+// Memory layout optimized for coordinate transformations.
+class alignas(16) ONB {
 public:
   // Constructs an ONB from a normal vector.
   // We use n as the z-axis, and compute cross-products to find the x and y-axes

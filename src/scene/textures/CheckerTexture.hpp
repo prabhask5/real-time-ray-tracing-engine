@@ -3,7 +3,8 @@
 #include "Texture.hpp"
 #include "TextureTypes.hpp"
 
-class CheckerTexture : public Texture {
+// Cache-optimized checker texture for efficient pattern evaluation.
+class alignas(16) CheckerTexture : public Texture {
 public:
   CheckerTexture(double scale, TexturePtr even_texture, TexturePtr odd_texture);
 
