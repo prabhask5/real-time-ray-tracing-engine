@@ -24,6 +24,35 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
+# Detect and enable SIMD support.
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64|ARM|AARCH64")
+    # ARM/AArch64 processors.
+    message(STATUS "Detected ARM processor, enabling NEON SIMD")
+    add_compile_definitions(SIMD_ARM_NEON=1)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(-march=native)
+    endif()
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "x86|x86_64|X86|X86_64|amd64|AMD64")
+    # x86/x86_64 processors.
+    message(STATUS "Detected x86/x86_64 processor, enabling SSE/AVX SIMD")
+    add_compile_definitions(SIMD_X86_SSE=1)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(-march=native -msse -msse2 -msse3 -msse4.1 -msse4.2)
+        # Enable AVX if supported.
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag("-mavx" COMPILER_SUPPORTS_AVX)
+        if(COMPILER_SUPPORTS_AVX)
+            add_compile_options(-mavx)
+        endif()
+        check_cxx_compiler_flag("-mavx2" COMPILER_SUPPORTS_AVX2)  
+        if(COMPILER_SUPPORTS_AVX2)
+            add_compile_options(-mavx2)
+        endif()
+    endif()
+else()
+    message(STATUS "Unknown processor architecture, SIMD disabled")
+endif()
+
 # Enable recommended warnings for Clang and GCC
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     add_compile_options(
