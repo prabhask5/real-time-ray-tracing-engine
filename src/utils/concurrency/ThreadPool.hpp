@@ -42,15 +42,18 @@ private:
       Task task;
       bool found_work = false;
 
-      // 1. Try local queue first
+      // 1. Try local queue first.
+
       if (worker.local_queue.pop(task)) {
         found_work = true;
       }
-      // 2. Try global queue
+      // 2. Try global queue.
+
       else if (m_global_queue.steal(task)) {
         found_work = true;
       }
-      // 3. Try to steal from other workers
+      // 3. Try to steal from other workers.
+
       else {
         for (size_t i = 1; i <= m_thread_count && !found_work; ++i) {
           size_t steal_from = (worker_id + i) % m_thread_count;

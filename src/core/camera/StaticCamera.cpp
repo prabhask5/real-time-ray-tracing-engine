@@ -147,7 +147,7 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
   }
   image << "P3\n" << m_image_width << ' ' << m_image_height << "\n255\n";
 
-  // CUDA setup
+  // CUDA setup.
   CudaColor *d_pixel_colors;
   curandState *d_rand_states;
   size_t colors_size = m_image_width * m_image_height * sizeof(CudaColor);
@@ -167,7 +167,7 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
     return;
   }
 
-  // Initialize random states
+  // Initialize random states.
   dim3 block_size(16, 16);
   dim3 grid_size((m_image_width + block_size.x - 1) / block_size.x,
                  (m_image_height + block_size.y - 1) / block_size.y);
@@ -183,7 +183,7 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
     return;
   }
 
-  // Convert CPU objects to CUDA format using comprehensive conversion
+  // Convert CPU objects to CUDA format using comprehensive conversion.
   CudaSceneData cuda_scene_data = convert_complete_scene_to_cuda(world, lights);
   if (cuda_scene_data.world_objects_buffer == nullptr ||
       cuda_scene_data.lights_objects_buffer == nullptr) {
@@ -198,7 +198,7 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
 
   int sqrt_spp = static_cast<int>(std::sqrt(m_samples_per_pixel));
 
-  // Convert camera parameters to CUDA format
+  // Convert camera parameters to CUDA format.
   CudaPoint3 cuda_center(m_center.x(), m_center.y(), m_center.z());
   CudaPoint3 cuda_pixel00_loc(m_pixel00_loc.x(), m_pixel00_loc.y(),
                               m_pixel00_loc.z());
@@ -216,7 +216,7 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
   CudaColor cuda_background(m_background.x(), m_background.y(),
                             m_background.z());
 
-  // Process rows in batches to avoid memory issues
+  // Process rows in batches to avoid memory issues.
   const int batch_size = 64; // Process 64 rows at a time
   for (int start_row = 0; start_row < m_image_height; start_row += batch_size) {
     std::clog << "\rScanlines remaining: " << (m_image_height - start_row)
@@ -224,11 +224,11 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
 
     int end_row = std::min(start_row + batch_size, m_image_height);
 
-    // Clear pixel colors for this batch
+    // Clear pixel colors for this batch.
     cudaMemset(d_pixel_colors + start_row * m_image_width, 0,
                (end_row - start_row) * m_image_width * sizeof(CudaColor));
 
-    // Launch CUDA kernel for this batch
+    // Launch CUDA kernel for this batch.
     dim3 batch_grid_size((m_image_width + block_size.x - 1) / block_size.x,
                          (end_row - start_row + block_size.y - 1) /
                              block_size.y);
@@ -243,13 +243,13 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
 
     cudaDeviceSynchronize();
 
-    // Copy results back to CPU and write to file
+    // Copy results back to CPU and write to file.
     std::vector<CudaColor> batch_colors((end_row - start_row) * m_image_width);
     cudaMemcpy(batch_colors.data(), d_pixel_colors + start_row * m_image_width,
                (end_row - start_row) * m_image_width * sizeof(CudaColor),
                cudaMemcpyDeviceToHost);
 
-    // Write batch to file
+    // Write batch to file.
     for (int row = 0; row < (end_row - start_row); ++row) {
       for (int col = 0; col < m_image_width; ++col) {
         int idx = row * m_image_width + col;
@@ -262,12 +262,12 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
 
   std::clog << "\rDone.                 \n";
 
-  // Cleanup CUDA memory and scene data
+  // Cleanup CUDA memory and scene data.
   cleanup_cuda_scene_data(cuda_scene_data);
   cudaFree(d_pixel_colors);
   cudaFree(d_rand_states);
 #else
-  // Fall back to CPU rendering if CUDA is not available
+  // Fall back to CPU rendering if CUDA is not available.
   render_cpu(world, lights);
 #endif
 }
