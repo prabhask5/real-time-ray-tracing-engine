@@ -2,6 +2,8 @@
 
 #include "../core/Vec3Types.hpp"
 #include "../utils/math/Interval.hpp"
+#include "../utils/math/SimdOps.hpp"
+#include "../utils/math/SimdTypes.hpp"
 
 class Ray; // From Ray.hpp.
 
