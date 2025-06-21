@@ -2,6 +2,8 @@
 
 #include "../../core/Hittable.hpp"
 #include "../../optimization/AABB.hpp"
+#include "../../utils/math/SimdOps.hpp"
+#include "../../utils/math/SimdTypes.hpp"
 #include "../../utils/math/Vec3.hpp"
 #include "../materials/Material.hpp"
 #include "../materials/MaterialTypes.hpp"
@@ -31,12 +33,19 @@ public:
   Vec3 random(const Point3 &origin) const override;
 
 private:
-  // Hot data: core geometry accessed in every ray-plane intersection
-  Point3 m_corner; // Corner of the plane
+  // Hot data: core geometry accessed in every ray-plane intersection.
 
-  Vec3 m_u_side, m_v_side; // Vectors spanning the rectangle's sides
-  Vec3 m_normal;           // Surface normal
-  Vec3 m_w;                // Used to project 3D points to 2D coordinates
+  // Corner of the plane.
+  Point3 m_corner;
+
+  // Vectors spanning the rectangle's sides.
+  Vec3 m_u_side, m_v_side;
+
+  // Surface normal.
+  Vec3 m_normal;
+
+  // Used to project 3D points to 2D coordinates.
+  Vec3 m_w;
 
   // The plane equation’s constant term.
   double m_D;
@@ -44,9 +53,13 @@ private:
   // Surface area (used in light sampling).
   double m_surface_area;
 
-  // Warm data: early rejection and PDF calculations
-  AABB m_bbox; // Bounding box
+  // Warm data: early rejection and PDF calculations.
 
-  // Cold data: accessed only on confirmed hits
-  MaterialPtr m_material; // Surface material
+  // Bounding box.
+  AABB m_bbox;
+
+  // Cold data: accessed only on confirmed hits.
+
+  // Surface material.
+  MaterialPtr m_material;
 };

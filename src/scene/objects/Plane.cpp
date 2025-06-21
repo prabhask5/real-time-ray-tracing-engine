@@ -23,6 +23,58 @@ Plane::Plane(const Point3 &corner, const Vec3 &u_side, const Vec3 &v_side,
 AABB Plane::get_bounding_box() const { return m_bbox; }
 
 bool Plane::hit(const Ray &ray, Interval t_values, HitRecord &record) const {
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+  // SIMD-optimized ray-plane intersection using Vec3's SIMD dot products.
+
+  if constexpr (SIMD_DOUBLE_PRECISION) {
+    double denom = m_normal.dot(ray.direction()); // SIMD-optimized dot product
+
+    // No hit if the ray is parallel to the plane.
+
+    if (std::fabs(denom) < 1e-8)
+      return false;
+
+    // Return false if the hit point parameter t is outside the ray interval.
+
+    double t = (m_D - m_normal.dot(ray.origin())) /
+               denom; // SIMD-optimized dot product
+    if (!t_values.contains(t))
+      return false;
+
+    // Determine if the hit point lies within the planar shape using its plane
+    // coordinates.
+
+    Point3 intersection = ray.at(t); // SIMD-optimized ray evaluation
+    Vec3 planar_hitpt_vector = intersection - m_corner;
+    double alpha = m_w.dot(
+        planar_hitpt_vector.cross(m_v_side)); // SIMD-optimized operations
+    double beta = m_w.dot(
+        m_u_side.cross(planar_hitpt_vector)); // SIMD-optimized operations
+
+    Interval unit_interval = Interval(0, 1);
+    // Given the hit point in plane coordinates, return false if it is outside
+    // the.
+
+    // primitive, otherwise set the hit record UV coordinates and return true.
+
+    if (!unit_interval.contains(alpha) || !unit_interval.contains(beta))
+      return false;
+
+    record.u = alpha;
+    record.v = beta;
+
+    // Ray hits the 2D shape; set the rest of the hit record and return true
+    record.t = t;
+    record.point = intersection;
+    record.material = m_material;
+    record.set_face_normal(ray, m_normal);
+
+    return true;
+  }
+#endif
+
+  // Fallback scalar implementation.
+
   double denom = dot_product(m_normal, ray.direction());
 
   // No hit if the ray is parallel to the plane.
