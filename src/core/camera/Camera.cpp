@@ -70,6 +70,34 @@ Ray Camera::get_ray(int i, int j, int s_i, int s_j) const {
   // center of their subpixels.
   Vec3 offset = sample_square_stratified(s_i, s_j);
 
+#if SIMD_AVAILABLE && SIMD_DOUBLE_PRECISION
+  // SIMD-optimized ray generation calculation.
+
+  if constexpr (SIMD_DOUBLE_PRECISION) {
+    // This calculates the 3D world-space point that corresponds to pixel (i,
+    // j), with subpixel jitter. Uses SIMD-optimized Vec3 operations.
+    Vec3 pixel_sample = m_pixel00_loc + ((i + offset.x()) * m_pixel_delta_u) +
+                        ((j + offset.y()) * m_pixel_delta_v);
+
+    // If defocus_angle == 0: use the camera center -> behaves like a pinhole
+    // camera. Else: use a point sampled from a disk, simulating a lens with
+    // radius and blur (depth of field).
+    Point3 ray_origin =
+        (m_defocus_angle <= 0) ? m_center : defocus_disk_sample();
+
+    // Determine the ray direction by finding the vector difference between the
+    // pixel sample and the ray origin. Uses SIMD-optimized Vec3 subtraction.
+    Vec3 ray_direction = pixel_sample - ray_origin;
+
+    double ray_time = random_double();
+
+    // Returns the resulting ray from the origin and direction.
+    return Ray(ray_origin, ray_direction, ray_time);
+  }
+#endif
+
+  // Fallback scalar implementation.
+
   // This calculates the 3D world-space point that corresponds to pixel (i, j),
   // with subpixel jitter.
   Vec3 pixel_sample = m_pixel00_loc + ((i + offset.x()) * m_pixel_delta_u) +
