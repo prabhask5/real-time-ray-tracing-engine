@@ -2,6 +2,8 @@
 
 #ifdef USE_CUDA
 
+#include <stdexcept>
+
 #include "../optimization/BVHNode.hpp"
 #include "../optimization/BVHNodeConversions.cuh"
 #include "../scene/materials/LambertianMaterial.hpp"
@@ -57,12 +59,10 @@ inline CudaHittable cpu_to_cuda_hittable(const Hittable &cpu_hittable) {
     cuda_hittable.hittable_list = new CudaHittableList(
         cpu_to_cuda_hittable_list(*hittable_list, nested_buffer));
   } else {
-    // Default fallback to sphere.
-    cuda_hittable.type = CudaHittableType::HITTABLE_SPHERE;
-    cuda_hittable.sphere = new CudaSphere(
-        CudaPoint3(0, 0, 0), 1.0,
-        new CudaMaterial(cuda_make_lambertian_material(new CudaTexture(
-            cuda_make_solid_texture(CudaColor(0.5, 0.5, 0.5))))));
+    throw std::runtime_error(
+        "HittableConversions.cuh::cpu_to_cuda_hittable: Unknown hittable type "
+        "encountered during CPU to CUDA conversion. Unable to convert "
+        "unrecognized hittable object.");
   }
 
   return cuda_hittable;
@@ -91,11 +91,10 @@ inline HittablePtr cuda_to_cpu_hittable(const CudaHittable &cuda_hittable) {
     return std::make_shared<HittableList>(
         cuda_to_cpu_hittable_list(*cuda_hittable.hittable_list));
   default:
-    // Return default sphere.
-    return std::make_shared<Sphere>(
-        Point3(0, 0, 0), 1.0,
-        std::make_shared<LambertianMaterial>(
-            std::make_shared<SolidColorTexture>(Color(0.5, 0.5, 0.5))));
+    throw std::runtime_error(
+        "HittableConversions.cuh::cuda_to_cpu_hittable: Unknown CUDA hittable "
+        "type encountered during CUDA to CPU conversion. Invalid hittable type "
+        "in switch statement.");
   }
 }
 

@@ -30,7 +30,9 @@ __device__ bool CudaHittable::hit(const CudaRay &ray, CudaInterval t_values,
   case CudaHittableType::HITTABLE_LIST:
     return hittable_list->hit(ray, t_values, record, rand_state);
   default:
-    return false;
+    // ERROR: Hittable.cu::hit - Unknown hittable type in switch statement. This
+    // should never happen in well-formed code.
+    return false; // Safe fallback for GPU device code.
   }
 }
 
@@ -52,7 +54,9 @@ __device__ double CudaHittable::pdf_value(const CudaPoint3 &origin,
   case CudaHittableType::HITTABLE_LIST:
     return hittable_list->pdf_value(origin, direction);
   default:
-    return 0.0;
+    // ERROR: Hittable.cu::pdf_value - Unknown hittable type in switch
+    // statement. This should never happen in well-formed code.
+    return 0.0; // Safe fallback for GPU device code.
   }
 }
 
@@ -74,7 +78,9 @@ __device__ CudaVec3 CudaHittable::random(const CudaPoint3 &origin,
   case CudaHittableType::HITTABLE_LIST:
     return hittable_list->random(origin, state);
   default:
-    return CudaVec3(1, 0, 0);
+    // ERROR: Hittable.cu::random - Unknown hittable type in switch statement.
+    // This should never happen in well-formed code.
+    return CudaVec3(1, 0, 0); // Safe fallback for GPU device code.
   }
 }
 
@@ -95,7 +101,9 @@ __device__ CudaAABB CudaHittable::get_bounding_box() const {
   case CudaHittableType::HITTABLE_LIST:
     return hittable_list->get_bounding_box();
   default:
-    return CudaAABB();
+    // ERROR: Hittable.cu::get_bounding_box - Unknown hittable type in switch
+    // statement. This should never happen in well-formed code.
+    return CudaAABB(); // Safe fallback for GPU device code.
   }
 }
 

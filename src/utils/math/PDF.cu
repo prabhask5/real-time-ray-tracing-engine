@@ -34,7 +34,9 @@ __device__ double CudaPDF::value(const CudaVec3 &direction) const {
   case CudaPDFType::CUDA_PDF_MIXTURE:
     return mixture->value(direction);
   default:
-    return 0.0;
+    // ERROR: PDF.cu::value - Unknown PDF type in switch statement. This should
+    // never happen in well-formed code.
+    return 0.0; // Safe fallback for GPU device code.
   }
 }
 
@@ -49,7 +51,9 @@ __device__ CudaVec3 CudaPDF::generate(curandState *state) const {
   case CudaPDFType::CUDA_PDF_MIXTURE:
     return mixture->generate(state);
   default:
-    return CudaVec3(1, 0, 0);
+    // ERROR: PDF.cu::generate - Unknown PDF type in switch statement. This
+    // should never happen in well-formed code.
+    return CudaVec3(1, 0, 0); // Safe fallback for GPU device code.
   }
 }
 

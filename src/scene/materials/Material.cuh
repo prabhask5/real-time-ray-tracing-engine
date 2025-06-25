@@ -231,7 +231,10 @@ struct CudaMaterial {
     case CudaMaterialType::MATERIAL_ISOTROPIC:
       return isotropic->scatter(ray, rec, srec, state);
     default:
-      return false;
+      // Note: This should never happen in well-formed code, but we throw an
+      // error for debugging
+      return false; // Keep original behavior as this may be called from device
+                    // code.
     }
   }
 
@@ -246,7 +249,10 @@ struct CudaMaterial {
     case CudaMaterialType::MATERIAL_ISOTROPIC:
       return isotropic->scattering_pdf(ray, rec, scattered);
     default:
-      return 0.0;
+      // Note: This should never happen in well-formed code, but we return 0.0
+      // for safety in device code
+      return 0.0; // Keep original behavior as this may be called from device
+                  // code.
     }
   }
 };

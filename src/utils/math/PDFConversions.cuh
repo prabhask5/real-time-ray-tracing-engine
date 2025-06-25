@@ -2,6 +2,8 @@
 
 #ifdef USE_CUDA
 
+#include <stdexcept>
+
 #include "../../core/HittableConversions.cuh"
 #include "ONBConversions.cuh"
 #include "PDF.cuh"
@@ -49,9 +51,10 @@ inline CudaPDF cpu_to_cuda_pdf(const PDF &cpu_pdf) {
 
     cuda_pdf.mixture = CudaMixturePDF(&cuda_pdf0, &cuda_pdf1);
   } else {
-    // Fallback to sphere PDF.
-    cuda_pdf.type = CudaPDFType::CUDA_PDF_SPHERE;
-    cuda_pdf.sphere = CudaSpherePDF();
+    throw std::runtime_error(
+        "PDFConversions.cuh::cpu_to_cuda_pdf: Unknown PDF type encountered "
+        "during CPU to CUDA PDF conversion. Unable to convert unrecognized PDF "
+        "object.");
   }
 
   return cuda_pdf;
@@ -91,7 +94,10 @@ inline PDFPtr cuda_to_cpu_pdf(const CudaPDF &cuda_pdf) {
   }
 
   default:
-    return std::make_shared<SpherePDF>();
+    throw std::runtime_error(
+        "PDFConversions.cuh::cuda_to_cpu_pdf: Unknown CUDA PDF type "
+        "encountered during CUDA to CPU PDF conversion. Invalid PDF type in "
+        "switch statement.");
   }
 }
 

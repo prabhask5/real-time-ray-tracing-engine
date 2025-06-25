@@ -29,7 +29,9 @@ __device__ CudaColor CudaTexture::value(double u, double v,
   case CudaTextureType::TEXTURE_CHECKER:
     return checker->value(u, v, p);
   }
-  return CudaColor(0, 0, 0); // Should never reach here.
+  // ERROR: Texture.cu::value - Unknown texture type in switch statement. This
+  // should never happen in well-formed code.
+  return CudaColor(0, 0, 0); // Safe fallback for GPU device code.
 }
 
 __device__ CudaTexture cuda_make_solid_texture(CudaColor albedo) {

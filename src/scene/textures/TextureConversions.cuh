@@ -2,6 +2,8 @@
 
 #ifdef USE_CUDA
 
+#include <stdexcept>
+
 #include "../../utils/math/PerlinNoiseConversions.cuh"
 #include "../../utils/math/Vec3Conversions.cuh"
 #include "CheckerTexture.hpp"
@@ -70,9 +72,10 @@ inline CudaTexture cpu_to_cuda_texture(const Texture &cpu_texture) {
                  dynamic_cast<const NoiseTexture *>(&cpu_texture)) {
     return cpu_to_cuda_noise_texture(*noise_texture);
   } else {
-    // Fallback: create solid color texture by sampling.
-    Color sampled_color = cpu_texture.value(0.5, 0.5, Point3(0, 0, 0));
-    return cuda_make_solid_texture(cpu_to_cuda_vec3(sampled_color));
+    throw std::runtime_error(
+        "TextureConversions.cuh::cpu_to_cuda_texture: Unknown texture type "
+        "encountered during CPU to CUDA texture conversion. Unable to convert "
+        "unrecognized texture object.");
   }
 }
 
@@ -113,7 +116,10 @@ inline TexturePtr cuda_to_cpu_texture(const CudaTexture &cuda_texture) {
                                           cpu_perlin_noise);
   }
   default:
-    return std::make_shared<SolidColorTexture>(Color(0.7, 0.7, 0.7));
+    throw std::runtime_error(
+        "TextureConversions.cuh::cuda_to_cpu_texture: Unknown CUDA texture "
+        "type encountered during CUDA to CPU texture conversion. Invalid "
+        "texture type in switch statement.");
   }
 }
 

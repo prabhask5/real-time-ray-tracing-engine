@@ -2,6 +2,8 @@
 
 #ifdef USE_CUDA
 
+#include <stdexcept>
+
 #include "../../utils/math/Vec3Conversions.cuh"
 #include "../textures/TextureConversions.cuh"
 #include "DielectricMaterial.hpp"
@@ -102,14 +104,10 @@ inline CudaMaterial cpu_to_cuda_material(const Material &cpu_material) {
                  dynamic_cast<const IsotropicMaterial *>(&cpu_material)) {
     return cpu_to_cuda_isotropic_material(*isotropic);
   } else {
-    // Default to Lambertian.
-    CudaMaterial cuda_material;
-    cuda_material.type = CudaMaterialType::MATERIAL_LAMBERTIAN;
-    CudaTexture default_texture =
-        cuda_make_solid_texture(CudaColor(0.7, 0.7, 0.7));
-    cuda_material.lambertian =
-        new CudaLambertianMaterial(new CudaTexture(default_texture));
-    return cuda_material;
+    throw std::runtime_error(
+        "MaterialConversions.cuh::cpu_to_cuda_material: Unknown material type "
+        "encountered during CPU to CUDA material conversion. Unable to convert "
+        "unrecognized material object.");
   }
 }
 
@@ -141,7 +139,10 @@ inline MaterialPtr cuda_to_cpu_material(const CudaMaterial &cuda_material) {
     return std::make_shared<IsotropicMaterial>(cpu_texture);
   }
   default:
-    return std::make_shared<LambertianMaterial>(Color(0.7, 0.7, 0.7));
+    throw std::runtime_error(
+        "MaterialConversions.cuh::cuda_to_cpu_material: Unknown CUDA material "
+        "type encountered during CUDA to CPU material conversion. Invalid "
+        "material type in switch statement.");
   }
 }
 
