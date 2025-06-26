@@ -15,7 +15,7 @@ bool DielectricMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
 
   // Set the skip pdf ray to represent a mirror reflection instead of diffuse
   // scattering.
-  scatter_record.pdf_ptr = nullptr;
+  scatter_record.pdf = nullptr;
   scatter_record.skip_pdf = true;
 
   // If hitting the front face -> divide (air -> glass).

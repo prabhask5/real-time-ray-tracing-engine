@@ -16,7 +16,7 @@ bool IsotropicMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
 
   // Uses a uniform sphere PDF (sphere_pdf) to scatter rays randomly in all
   // directions, regardless of normal or incident direction.
-  scatter_record.pdf_ptr = std::make_shared<SpherePDF>();
+  scatter_record.pdf = std::make_shared<SpherePDF>();
   scatter_record.skip_pdf = false;
 
   return true;

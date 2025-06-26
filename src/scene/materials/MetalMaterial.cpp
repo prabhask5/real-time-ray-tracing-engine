@@ -31,7 +31,7 @@ bool MetalMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
     // to represent a mirror reflection instead of diffuse scattering.
 
     scatter_record.attenuation = m_albedo;
-    scatter_record.pdf_ptr = nullptr;
+    scatter_record.pdf = nullptr;
     scatter_record.skip_pdf = true;
     scatter_record.skip_pdf_ray =
         Ray(record.point, reflected_direction, hit_ray.time());
@@ -53,7 +53,7 @@ bool MetalMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
   // Set the attenuation to the albedo of the material, and set the skip pdf ray
   // to represent a mirror reflection instead of diffuse scattering.
   scatter_record.attenuation = m_albedo;
-  scatter_record.pdf_ptr = nullptr;
+  scatter_record.pdf = nullptr;
   scatter_record.skip_pdf = true;
   scatter_record.skip_pdf_ray =
       Ray(record.point, reflected_direction, hit_ray.time());

@@ -181,14 +181,14 @@ Color Camera::ray_color(const Ray &ray, int depth, const HittableList &world,
   // lights), we cannot use scattering from light sources, so we skip.
   PDFPtr light_ptr;
   if (lights.get_objects().empty())
-    light_ptr = scatter_record.pdf_ptr;
+    light_ptr = scatter_record.pdf;
   else
     light_ptr = std::make_shared<HittablePDF>(lights, record.point);
 
   // Combine two PDFs: one from the material's scattering function and one
   // toward the lights. This is a mixture of importance sampling strategies to
   // improve convergence.
-  MixturePDF p(light_ptr, scatter_record.pdf_ptr);
+  MixturePDF p(light_ptr, scatter_record.pdf);
 
   // Generate a new scattered ray based on the mixture PDF.
   // This ray originates from the hit point and is aimed in a sampled direction.

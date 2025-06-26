@@ -6,14 +6,9 @@
 #include "ONB.hpp"
 #include "Vec3Conversions.cuh"
 
-// Convert CPU ONB to CUDA ONB.
+// Convert CPU ONB to CUDA ONB POD struct.
 inline CudaONB cpu_to_cuda_onb(const ONB &cpu_onb) {
-  return CudaONB(cpu_to_cuda_vec3(cpu_onb.w()));
-}
-
-// Convert CUDA ONB to CPU ONB  .
-inline ONB cuda_to_cpu_onb(const CudaONB &cuda_onb) {
-  return ONB(cuda_to_cpu_vec3(cuda_onb.w()));
+  return cuda_make_onb(cpu_to_cuda_vec3(cpu_onb.w()));
 }
 
 #endif // USE_CUDA

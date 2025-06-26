@@ -25,7 +25,7 @@ bool LambertianMaterial::scatter(const Ray &hit_ray, const HitRecord &record,
   // This assigns a cosine-weighted probability density function (PDF) for
   // generating outgoing rays. This is ideal for diffuse materials, where light
   // scatters in many directions but is stronger near the normal.
-  scatter_record.pdf_ptr = std::make_shared<CosinePDF>(record.normal);
+  scatter_record.pdf = std::make_shared<CosinePDF>(record.normal);
   scatter_record.skip_pdf = false;
 
   return true;

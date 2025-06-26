@@ -8,68 +8,78 @@
 // POD vector type optimized for CUDA.
 struct CudaVec3 {
   double x, y, z;
-
-  __device__ CudaVec3() : x(0), y(0), z(0) {}
-
-  __host__ __device__ CudaVec3(double x_, double y_, double z_)
-      : x(x_), y(y_), z(z_) {}
-
-  // Operator overloads for 3D vector.
-
-  __device__ CudaVec3 operator-() const { return CudaVec3(-x, -y, -z); }
-
-  __device__ double operator[](int i) const {
-    return i == 0 ? x : (i == 1 ? y : z);
-  }
-
-  __device__ double &operator[](int i) { return i == 0 ? x : (i == 1 ? y : z); }
-
-  __device__ CudaVec3 &operator+=(const CudaVec3 &v) {
-    x += v.x;
-    y += v.y;
-    z += v.z;
-    return *this;
-  }
-
-  __device__ CudaVec3 &operator-=(const CudaVec3 &v) {
-    x -= v.x;
-    y -= v.y;
-    z -= v.z;
-    return *this;
-  }
-
-  __device__ CudaVec3 &operator*=(double t) {
-    x *= t;
-    y *= t;
-    z *= t;
-    return *this;
-  }
-
-  __device__ CudaVec3 &operator/=(double t) { return *this *= 1.0 / t; }
-
-  // Complex getter methods.
-
-  __device__ double length() const { return sqrt(x * x + y * y + z * z); }
-
-  __device__ double length_squared() const { return x * x + y * y + z * z; }
-
-  // Return true if the vector is close to zero in all dimensions.
-  __device__ bool near_zero() const {
-    const double s = 1e-8;
-    return fabs(x) < s && fabs(y) < s && fabs(z) < s;
-  }
 };
 
-__device__ inline CudaVec3 cuda_vec_random(curandState *state) {
-  return CudaVec3(cuda_random_double(state), cuda_random_double(state),
-                  cuda_random_double(state));
+// Vec3 initialization functions.
+__host__ __device__ inline CudaVec3 cuda_make_vec3(double x, double y,
+                                                   double z) {
+  CudaVec3 v;
+  v.x = x;
+  v.y = y;
+  v.z = z;
+  return v;
 }
 
-__device__ inline CudaVec3 cuda_vec_random(double min, double max,
-                                           curandState *state) {
-  return CudaVec3(cuda_random_double(state, min, max),
-                  cuda_random_double(state, min, max),
-                  cuda_random_double(state, min, max));
+// Vec3 utility functions.
+__device__ inline CudaVec3 cuda_vec3_negate(const CudaVec3 &v) {
+  return cuda_make_vec3(-v.x, -v.y, -v.z);
+}
+
+__device__ inline double cuda_vec3_get(const CudaVec3 &v, int i) {
+  return i == 0 ? v.x : (i == 1 ? v.y : v.z);
+}
+
+__device__ inline void cuda_vec3_set(CudaVec3 &v, int i, double val) {
+  if (i == 0)
+    v.x = val;
+  else if (i == 1)
+    v.y = val;
+  else
+    v.z = val;
+}
+
+__device__ inline CudaVec3 cuda_vec3_add(const CudaVec3 &a, const CudaVec3 &b) {
+  return cuda_make_vec3(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+
+__device__ inline CudaVec3 cuda_vec3_subtract(const CudaVec3 &a,
+                                              const CudaVec3 &b) {
+  return cuda_make_vec3(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+__device__ inline CudaVec3 cuda_vec3_multiply_scalar(const CudaVec3 &v,
+                                                     double t) {
+  return cuda_make_vec3(v.x * t, v.y * t, v.z * t);
+}
+
+__device__ inline CudaVec3 cuda_vec3_divide_scalar(const CudaVec3 &v,
+                                                   double t) {
+  return cuda_vec3_multiply_scalar(v, 1.0 / t);
+}
+
+__device__ inline double cuda_vec3_length(const CudaVec3 &v) {
+  return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+__device__ inline double cuda_vec3_length_squared(const CudaVec3 &v) {
+  return v.x * v.x + v.y * v.y + v.z * v.z;
+}
+
+__device__ inline bool cuda_vec3_near_zero(const CudaVec3 &v) {
+  const double s = 1e-8;
+  return fabs(v.x) < s && fabs(v.y) < s && fabs(v.z) < s;
+}
+
+__device__ inline CudaVec3 cuda_vec3_random(curandState *state) {
+  return cuda_make_vec3(cuda_random_double(state), cuda_random_double(state),
+                        cuda_random_double(state));
+}
+
+__device__ inline CudaVec3 cuda_vec3_random(double min, double max,
+                                            curandState *state) {
+  return cuda_make_vec3(cuda_random_double(state, min, max),
+                        cuda_random_double(state, min, max),
+                        cuda_random_double(state, min, max));
 }
 
 #endif // USE_CUDA

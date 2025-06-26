@@ -12,46 +12,52 @@
 #include "../materials/Material.cuh"
 #include <curand_kernel.h>
 
-// CUDA-compatible sphere with motion blur support.
-// Represents a sphere hittable object.
+// POD struct representing a sphere hittable object.
 struct CudaSphere {
   CudaRay center;
   double radius;
   const CudaMaterial *material;
   CudaAABB bbox;
-
-  __device__ CudaSphere() {} // Default constructor.
-
-  // Initialize sphere with static center.
-  __device__ CudaSphere(const CudaPoint3 &_center, double _radius,
-                        const CudaMaterial *_material);
-
-  // Initialize sphere with moving center (motion blur).
-  __device__ CudaSphere(const CudaPoint3 &before_center,
-                        const CudaPoint3 &after_center, double _radius,
-                        const CudaMaterial *_material);
-
-  // Initialize sphere from direct members.
-  __host__ __device__ CudaSphere(const CudaRay &_center, double _radius,
-                                 const CudaMaterial *_material,
-                                 const CudaAABB _bbox)
-      : center(_center), radius(fmax(0.0, _radius)), material(_material),
-        bbox(_bbox) {}
-
-  // Hit test for sphere.
-  __device__ bool hit(const CudaRay &ray, CudaInterval t_range,
-                      CudaHitRecord &rec, curandState *rand_state) const;
-
-  // PDF for sampling the sphere (solid angle).
-  __device__ double pdf_value(const CudaPoint3 &origin,
-                              const CudaVec3 &direction) const;
-
-  // Importance sample a direction toward the sphere.
-  __device__ CudaVec3 random(const CudaPoint3 &origin,
-                             curandState *rand_state) const;
-
-  // Get bounding box for the sphere.
-  __device__ inline CudaAABB get_bounding_box() const { return bbox; }
 };
+
+// Sphere initialization functions.
+
+__device__ inline CudaSphere cuda_make_sphere(const CudaPoint3 &center,
+                                              double radius,
+                                              const CudaMaterial *material);
+
+__device__ inline CudaSphere cuda_make_sphere(const CudaPoint3 &before_center,
+                                              const CudaPoint3 &after_center,
+                                              double radius,
+                                              const CudaMaterial *material);
+
+__host__ __device__ inline CudaSphere
+cuda_make_sphere(const CudaRay &center, double radius,
+                 const CudaMaterial *material, const CudaAABB &bbox) {
+  CudaSphere sphere;
+  sphere.center = center;
+  sphere.radius = fmax(0.0, radius);
+  sphere.material = material;
+  sphere.bbox = bbox;
+  return sphere;
+}
+
+// Sphere utility functions.
+__device__ bool cuda_sphere_hit(const CudaSphere &sphere, const CudaRay &ray,
+                                CudaInterval t_range, CudaHitRecord &rec,
+                                curandState *rand_state);
+
+__device__ double cuda_sphere_pdf_value(const CudaSphere &sphere,
+                                        const CudaPoint3 &origin,
+                                        const CudaVec3 &direction);
+
+__device__ CudaVec3 cuda_sphere_random(const CudaSphere &sphere,
+                                       const CudaPoint3 &origin,
+                                       curandState *rand_state);
+
+__device__ inline CudaAABB
+cuda_sphere_get_bounding_box(const CudaSphere &sphere) {
+  return sphere.bbox;
+}
 
 #endif // USE_CUDA

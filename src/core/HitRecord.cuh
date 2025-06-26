@@ -18,7 +18,7 @@ struct CudaHitRecord {
   CudaVec3 normal;
 
   // The material of the hittable object.
-  CudaMaterial *material_pointer;
+  CudaMaterial *material;
 
   // The parameter t (time) along the ray in which the ray hit the hittable
   // object.
@@ -39,10 +39,11 @@ struct CudaHitRecord {
 // Sets the hit record normal vector.
 // NOTE: `outward_normal` is assumed to be unit length.
 __device__ __forceinline__ void
-cuda_set_face_normal(CudaHitRecord &rec, const CudaRay &ray,
-                     const CudaVec3 &outward_normal) {
-  rec.front_face = cuda_dot_product(ray.direction, outward_normal) < 0.0;
-  rec.normal = rec.front_face ? outward_normal : -outward_normal;
+cuda_hit_record_set_face_normal(CudaHitRecord &rec, const CudaRay &ray,
+                                const CudaVec3 &outward_normal) {
+  rec.front_face = cuda_vec3_dot_product(ray.direction, outward_normal) < 0.0;
+  rec.normal =
+      rec.front_face ? outward_normal : cuda_vec3_negate(outward_normal);
 }
 
 #endif // USE_CUDA

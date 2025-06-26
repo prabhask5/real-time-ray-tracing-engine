@@ -25,7 +25,7 @@ public:
   // This tells the renderer how to randomly sample the direction of scattered
   // rays. Used when importance sampling (e.g. cosine-weighted scattering for
   // Lambertian surfaces or sampling toward lights).
-  PDFPtr pdf_ptr;
+  PDFPtr pdf;
 
   // If this is true, the material wants to skip sampling a direction from the
   // PDF and instead explicitly provides the scattered ray in skip_pdf_ray. This

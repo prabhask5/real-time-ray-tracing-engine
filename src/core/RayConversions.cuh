@@ -6,18 +6,10 @@
 #include "Ray.cuh"
 #include "Ray.hpp"
 
-// Convert CPU Ray to CUDA Ray.
-
+// Convert CPU Ray to CUDA Ray POD struct.
 inline CudaRay cpu_to_cuda_ray(const Ray &cpu_ray) {
-  return CudaRay(cpu_to_cuda_vec3(cpu_ray.origin()),
-                 cpu_to_cuda_vec3(cpu_ray.direction()), cpu_ray.time());
-}
-
-// Convert CUDA Ray to CPU Ray.
-
-inline Ray cuda_to_cpu_ray(const CudaRay &cuda_ray) {
-  return Ray(cuda_to_cpu_vec3(cuda_ray.origin),
-             cuda_to_cpu_vec3(cuda_ray.direction), cuda_ray.time);
+  return cuda_make_ray(cpu_to_cuda_vec3(cpu_ray.origin()),
+                       cpu_to_cuda_vec3(cpu_ray.direction()), cpu_ray.time());
 }
 
 #endif // USE_CUDA

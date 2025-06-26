@@ -3,103 +3,105 @@
 #include "../../core/Hittable.cuh"
 #include "RotateY.cuh"
 
-__device__ CudaRotateY::CudaRotateY(const CudaHittable *_object,
-                                    double angle_degrees)
-    : object(_object) {
+__device__ inline CudaRotateY cuda_make_rotate_y(const CudaHittable *object,
+                                                 double angle_degrees) {
+  CudaRotateY rotate;
+  rotate.object = object;
 
   double radians = cuda_degrees_to_radians(angle_degrees);
-  sin_theta = sin(radians);
-  cos_theta = cos(radians);
-  bbox = object->get_bounding_box();
+  rotate.sin_theta = sin(radians);
+  rotate.cos_theta = cos(radians);
+  rotate.bbox = cuda_hittable_get_bounding_box(*object);
 
-  CudaPoint3 min(CUDA_INF, CUDA_INF, CUDA_INF);
-  CudaPoint3 max(-CUDA_INF, -CUDA_INF, -CUDA_INF);
+  CudaPoint3 min = cuda_make_vec3(CUDA_INF, CUDA_INF, CUDA_INF);
+  CudaPoint3 max = cuda_make_vec3(-CUDA_INF, -CUDA_INF, -CUDA_INF);
 
-  // Computes the diagonal 3D space points of the rotated bbox by using
-  // precomputed sin and cos theta values.
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
       for (int k = 0; k < 2; k++) {
-        double x = i * bbox.x.max + (1 - i) * bbox.x.min;
-        double y = j * bbox.y.max + (1 - j) * bbox.y.min;
-        double z = k * bbox.z.max + (1 - k) * bbox.z.min;
+        double x = i * rotate.bbox.x.max + (1 - i) * rotate.bbox.x.min;
+        double y = j * rotate.bbox.y.max + (1 - j) * rotate.bbox.y.min;
+        double z = k * rotate.bbox.z.max + (1 - k) * rotate.bbox.z.min;
 
-        double new_x = cos_theta * x + sin_theta * z;
-        double new_z = -sin_theta * x + cos_theta * z;
+        double new_x = rotate.cos_theta * x + rotate.sin_theta * z;
+        double new_z = -rotate.sin_theta * x + rotate.cos_theta * z;
 
-        CudaVec3 tester(new_x, y, new_z);
+        CudaVec3 tester = cuda_make_vec3(new_x, y, new_z);
         for (int c = 0; c < 3; c++) {
-          min[c] = fmin(min[c], tester[c]);
-          max[c] = fmax(max[c], tester[c]);
+          cuda_vec3_set(min, c,
+                        fmin(cuda_vec3_get(min, c), cuda_vec3_get(tester, c)));
+          cuda_vec3_set(max, c,
+                        fmax(cuda_vec3_get(max, c), cuda_vec3_get(tester, c)));
         }
       }
     }
   }
 
-  bbox = CudaAABB(min, max);
+  rotate.bbox = cuda_make_aabb(min, max);
+  return rotate;
 }
 
-__device__ bool CudaRotateY::hit(const CudaRay &ray, CudaInterval t_values,
-                                 CudaHitRecord &record,
-                                 curandState *rand_state) const {
+__device__ bool cuda_rotate_y_hit(const CudaRotateY &rotate, const CudaRay &ray,
+                                  CudaInterval t_values, CudaHitRecord &record,
+                                  curandState *rand_state) {
+  CudaPoint3 origin = cuda_make_vec3(
+      rotate.cos_theta * ray.origin.x - rotate.sin_theta * ray.origin.z,
+      ray.origin.y,
+      rotate.sin_theta * ray.origin.x + rotate.cos_theta * ray.origin.z);
 
-  // Transform ray into object space.
-  CudaPoint3 origin(cos_theta * ray.origin.x - sin_theta * ray.origin.z,
-                    ray.origin.y,
-                    sin_theta * ray.origin.x + cos_theta * ray.origin.z);
+  CudaVec3 direction = cuda_make_vec3(
+      rotate.cos_theta * ray.direction.x - rotate.sin_theta * ray.direction.z,
+      ray.direction.y,
+      rotate.sin_theta * ray.direction.x + rotate.cos_theta * ray.direction.z);
 
-  CudaVec3 direction(cos_theta * ray.direction.x - sin_theta * ray.direction.z,
-                     ray.direction.y,
-                     sin_theta * ray.direction.x + cos_theta * ray.direction.z);
+  CudaRay rotated_ray = cuda_make_ray(origin, direction, ray.time);
 
-  CudaRay rotated_ray = CudaRay(origin, direction, ray.time);
-
-  // Determine whether an intersection exists in object space (and if so,
-  // where).
-
-  if (!object->hit(rotated_ray, t_values, record, rand_state))
+  if (!cuda_hittable_hit(*rotate.object, rotated_ray, t_values, record,
+                         rand_state))
     return false;
 
-  // Transform point and normal back to world space.
-  record.point = CudaPoint3(
-      cos_theta * record.point.x + sin_theta * record.point.z, record.point.y,
-      -sin_theta * record.point.x + cos_theta * record.point.z);
+  record.point = cuda_make_vec3(
+      rotate.cos_theta * record.point.x + rotate.sin_theta * record.point.z,
+      record.point.y,
+      -rotate.sin_theta * record.point.x + rotate.cos_theta * record.point.z);
 
-  record.normal =
-      CudaVec3(cos_theta * record.normal.x + sin_theta * record.normal.z,
-               record.normal.y,
-               -sin_theta * record.normal.x + cos_theta * record.normal.z);
+  record.normal = cuda_make_vec3(
+      rotate.cos_theta * record.normal.x + rotate.sin_theta * record.normal.z,
+      record.normal.y,
+      -rotate.sin_theta * record.normal.x + rotate.cos_theta * record.normal.z);
 
   return true;
 }
 
-__device__ double CudaRotateY::pdf_value(const CudaPoint3 &origin,
-                                         const CudaVec3 &direction) const {
-  // Transform origin and direction to object space.
-  CudaPoint3 rotated_origin(cos_theta * origin.x - sin_theta * origin.z,
-                            origin.y,
-                            sin_theta * origin.x + cos_theta * origin.z);
+__device__ double cuda_rotate_y_pdf_value(const CudaRotateY &rotate,
+                                          const CudaPoint3 &origin,
+                                          const CudaVec3 &direction) {
+  CudaPoint3 rotated_origin = cuda_make_vec3(
+      rotate.cos_theta * origin.x - rotate.sin_theta * origin.z, origin.y,
+      rotate.sin_theta * origin.x + rotate.cos_theta * origin.z);
 
-  CudaVec3 rotated_direction(cos_theta * direction.x - sin_theta * direction.z,
-                             direction.y,
-                             sin_theta * direction.x + cos_theta * direction.z);
+  CudaVec3 rotated_direction = cuda_make_vec3(
+      rotate.cos_theta * direction.x - rotate.sin_theta * direction.z,
+      direction.y,
+      rotate.sin_theta * direction.x + rotate.cos_theta * direction.z);
 
-  return object->pdf_value(rotated_origin, rotated_direction);
+  return cuda_hittable_pdf_value(*rotate.object, rotated_origin,
+                                 rotated_direction);
 }
 
-__device__ CudaVec3 CudaRotateY::random(const CudaPoint3 &origin,
-                                        curandState *state) const {
-  // Transform origin to object space.
-  CudaPoint3 rotated_origin(cos_theta * origin.x - sin_theta * origin.z,
-                            origin.y,
-                            sin_theta * origin.x + cos_theta * origin.z);
+__device__ CudaVec3 cuda_rotate_y_random(const CudaRotateY &rotate,
+                                         const CudaPoint3 &origin,
+                                         curandState *state) {
+  CudaPoint3 rotated_origin = cuda_make_vec3(
+      rotate.cos_theta * origin.x - rotate.sin_theta * origin.z, origin.y,
+      rotate.sin_theta * origin.x + rotate.cos_theta * origin.z);
 
-  // Get random direction in object space.
-  CudaVec3 obj_dir = object->random(rotated_origin, state);
+  CudaVec3 obj_dir =
+      cuda_hittable_random(*rotate.object, rotated_origin, state);
 
-  // Transform back to world space.
-  return CudaVec3(cos_theta * obj_dir.x + sin_theta * obj_dir.z, obj_dir.y,
-                  -sin_theta * obj_dir.x + cos_theta * obj_dir.z);
+  return cuda_make_vec3(
+      rotate.cos_theta * obj_dir.x + rotate.sin_theta * obj_dir.z, obj_dir.y,
+      -rotate.sin_theta * obj_dir.x + rotate.cos_theta * obj_dir.z);
 }
 
 #endif // USE_CUDA

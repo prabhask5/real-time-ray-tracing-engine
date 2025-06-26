@@ -12,40 +12,48 @@
 // Forward declaration.
 struct CudaHittable;
 
-// Represents a bounding box that can contain multiple inner bounding boxes as
-// children. A leaf node contains 1 or a few geometric objects. Optimizes the
-// ray hit algorithm by ignoring all the inner bounding boxes in which the ray
-// doesn't interact with the enclosing bounding box.
+// POD struct representing a BVH node.
 struct CudaBVHNode {
   CudaHittable *left;  // Left child hittable.
   CudaHittable *right; // Right child hittable.
   CudaAABB bbox;
   bool is_leaf; // True if this node contains actual objects, false if it has
                 // child nodes.
-
-  __device__ CudaBVHNode() {} // Default constructor.
-
-  __device__ CudaBVHNode(CudaHittable *_left, CudaHittable *_right,
-                         bool _is_leaf = false);
-
-  __host__ __device__ CudaBVHNode(CudaHittable *_left, CudaHittable *_right,
-                                  bool _is_leaf, const CudaAABB &_bbox)
-      : left(_left), right(_right), is_leaf(_is_leaf), bbox(_bbox) {}
-
-  // Hit test for BVH node.
-  __device__ bool hit(const CudaRay &ray, CudaInterval t_values,
-                      CudaHitRecord &record, curandState *rand_state) const;
-
-  // PDF value for BVH node (average of children).
-  __device__ double pdf_value(const CudaPoint3 &origin,
-                              const CudaVec3 &direction) const;
-
-  // Random direction toward BVH node (random choice of children).
-  __device__ CudaVec3 random(const CudaPoint3 &origin,
-                             curandState *state) const;
-
-  // Get bounding box for BVH node.
-  __device__ inline CudaAABB get_bounding_box() const { return bbox; }
 };
+
+// BVHNode initialization functions.
+
+__device__ CudaBVHNode cuda_make_bvh_node(CudaHittable *left,
+                                          CudaHittable *right,
+                                          bool is_leaf = false);
+
+__host__ __device__ inline CudaBVHNode
+cuda_make_bvh_node(CudaHittable *left, CudaHittable *right, bool is_leaf,
+                   const CudaAABB &bbox) {
+  CudaBVHNode node;
+  node.left = left;
+  node.right = right;
+  node.is_leaf = is_leaf;
+  node.bbox = bbox;
+  return node;
+}
+
+// BVHNode utility functions.
+__device__ bool cuda_bvh_node_hit(const CudaBVHNode &node, const CudaRay &ray,
+                                  CudaInterval t_values, CudaHitRecord &record,
+                                  curandState *rand_state);
+
+__device__ double cuda_bvh_node_pdf_value(const CudaBVHNode &node,
+                                          const CudaPoint3 &origin,
+                                          const CudaVec3 &direction);
+
+__device__ CudaVec3 cuda_bvh_node_random(const CudaBVHNode &node,
+                                         const CudaPoint3 &origin,
+                                         curandState *state);
+
+__device__ inline CudaAABB
+cuda_bvh_node_get_bounding_box(const CudaBVHNode &node) {
+  return node.bbox;
+}
 
 #endif // USE_CUDA

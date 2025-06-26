@@ -8,40 +8,45 @@
 #include "../../optimization/AABB.cuh"
 #include "../../optimization/AABBUtility.cuh"
 #include "../../utils/math/Interval.cuh"
+#include <curand_kernel.h>
 
-// Wrapper class. Moves (translates) a hittable object by an offset vector in
-// world space.
+// POD struct representing a translated hittable object.
 struct CudaTranslate {
   const CudaHittable *object; // Can be any hittable (e.g. CudaSphere, CudaBox).
   CudaVec3 offset;
   CudaAABB bbox;
-
-  __device__ CudaTranslate() {} // Default constructor.
-
-  // Initializes the translated object wrapper.
-  __device__ CudaTranslate(const CudaHittable *_object,
-                           const CudaVec3 &_offset);
-
-  // Initialize translate from direct members.
-  __host__ __device__ CudaTranslate(const CudaHittable *_object,
-                                    const CudaVec3 &_offset,
-                                    const CudaAABB &_bbox)
-      : object(_object), offset(_offset), bbox(_bbox) {}
-
-  // Hit test for a translated object.
-  __device__ bool hit(const CudaRay &ray, CudaInterval t_range,
-                      CudaHitRecord &rec, curandState *rand_state) const;
-
-  // PDF value for the translated object.
-  __device__ double pdf_value(const CudaPoint3 &origin,
-                              const CudaVec3 &direction) const;
-
-  // Random direction toward the translated object.
-  __device__ CudaVec3 random(const CudaPoint3 &origin,
-                             curandState *state) const;
-
-  // Get bounding box for the translated object.
-  __device__ inline CudaAABB get_bounding_box() const { return bbox; }
 };
+
+// Translate initialization functions.
+__device__ inline CudaTranslate cuda_make_translate(const CudaHittable *object,
+                                                    const CudaVec3 &offset);
+
+__host__ __device__ inline CudaTranslate
+cuda_make_translate(const CudaHittable *object, const CudaVec3 &offset,
+                    const CudaAABB &bbox) {
+  CudaTranslate translate;
+  translate.object = object;
+  translate.offset = offset;
+  translate.bbox = bbox;
+  return translate;
+}
+
+// Translate utility functions.
+__device__ bool cuda_translate_hit(const CudaTranslate &translate,
+                                   const CudaRay &ray, CudaInterval t_range,
+                                   CudaHitRecord &rec, curandState *rand_state);
+
+__device__ double cuda_translate_pdf_value(const CudaTranslate &translate,
+                                           const CudaPoint3 &origin,
+                                           const CudaVec3 &direction);
+
+__device__ CudaVec3 cuda_translate_random(const CudaTranslate &translate,
+                                          const CudaPoint3 &origin,
+                                          curandState *state);
+
+__device__ inline CudaAABB
+cuda_translate_get_bounding_box(const CudaTranslate &translate) {
+  return translate.bbox;
+}
 
 #endif // USE_CUDA

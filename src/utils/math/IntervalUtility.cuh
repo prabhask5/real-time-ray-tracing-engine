@@ -7,7 +7,7 @@
 // Adds a displacement to an interval (shifting the entire interval).
 __device__ inline CudaInterval operator+(const CudaInterval &ival,
                                          double displacement) {
-  return CudaInterval(ival.min + displacement, ival.max + displacement);
+  return cuda_make_interval(ival.min + displacement, ival.max + displacement);
 }
 
 // Allows addition in both operand orders.

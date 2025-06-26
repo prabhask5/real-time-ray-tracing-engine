@@ -5,14 +5,9 @@
 #include "Interval.cuh"
 #include "Interval.hpp"
 
-// Convert CPU Interval to CUDA Interval.
+// Convert CPU Interval to CUDA Interval POD struct.
 inline CudaInterval cpu_to_cuda_interval(const Interval &cpu_interval) {
-  return CudaInterval(cpu_interval.min(), cpu_interval.max());
-}
-
-// Convert CUDA Interval to CPU Interval.
-inline Interval cuda_to_cpu_interval(const CudaInterval &cuda_interval) {
-  return Interval(cuda_interval.min, cuda_interval.max);
+  return cuda_make_interval(cpu_interval.min(), cpu_interval.max());
 }
 
 #endif // USE_CUDA

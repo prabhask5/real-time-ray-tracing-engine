@@ -11,38 +11,46 @@
 #include "../../utils/math/Vec3Utility.cuh"
 #include <curand_kernel.h>
 
-// Wrapper class. Rotates a hittable object around the Y-axis by a given angle.
+// POD struct that rotates a hittable object around the Y-axis.
 struct CudaRotateY {
   const CudaHittable *object;
   double sin_theta;
   double cos_theta;
   CudaAABB bbox;
-
-  __device__ CudaRotateY() {} // Default constructor.
-
-  // Initializes a CudaRotateY wrapper given an object and angle in degrees.
-  __device__ CudaRotateY(const CudaHittable *_object, double angle_degrees);
-
-  __host__ __device__ CudaRotateY(const CudaHittable *_object,
-                                  double _sin_theta, double _cos_theta,
-                                  const CudaAABB &_bbox)
-      : object(_object), sin_theta(_sin_theta), cos_theta(_cos_theta),
-        bbox(_bbox) {}
-
-  // Tests hit against the rotated object.
-  __device__ bool hit(const CudaRay &ray, CudaInterval t_values,
-                      CudaHitRecord &record, curandState *rand_state) const;
-
-  // PDF value for the rotated object.
-  __device__ double pdf_value(const CudaPoint3 &origin,
-                              const CudaVec3 &direction) const;
-
-  // Random direction toward the rotated object.
-  __device__ CudaVec3 random(const CudaPoint3 &origin,
-                             curandState *state) const;
-
-  // Get bounding box for the rotated object.
-  __device__ inline CudaAABB get_bounding_box() const { return bbox; }
 };
+
+// RotateY initialization functions.
+
+__device__ inline CudaRotateY cuda_make_rotate_y(const CudaHittable *object,
+                                                 double angle_degrees);
+
+__host__ __device__ inline CudaRotateY
+cuda_make_rotate_y(const CudaHittable *object, double sin_theta,
+                   double cos_theta, const CudaAABB &bbox) {
+  CudaRotateY rotate;
+  rotate.object = object;
+  rotate.sin_theta = sin_theta;
+  rotate.cos_theta = cos_theta;
+  rotate.bbox = bbox;
+  return rotate;
+}
+
+// RotateY utility functions.
+__device__ bool cuda_rotate_y_hit(const CudaRotateY &rotate, const CudaRay &ray,
+                                  CudaInterval t_values, CudaHitRecord &record,
+                                  curandState *rand_state);
+
+__device__ double cuda_rotate_y_pdf_value(const CudaRotateY &rotate,
+                                          const CudaPoint3 &origin,
+                                          const CudaVec3 &direction);
+
+__device__ CudaVec3 cuda_rotate_y_random(const CudaRotateY &rotate,
+                                         const CudaPoint3 &origin,
+                                         curandState *state);
+
+__device__ inline CudaAABB
+cuda_rotate_y_get_bounding_box(const CudaRotateY &rotate) {
+  return rotate.bbox;
+}
 
 #endif // USE_CUDA

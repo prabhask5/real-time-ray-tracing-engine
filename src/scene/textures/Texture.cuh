@@ -11,53 +11,74 @@ enum class CudaTextureType { TEXTURE_SOLID, TEXTURE_CHECKER, TEXTURE_NOISE };
 // Forward declarations.
 struct CudaTexture;
 
+// POD struct for solid color texture.
 struct CudaSolidColorTexture {
   CudaColor albedo;
-
-  __device__ CudaSolidColorTexture() {} // Default constructor.
-  __host__ __device__ CudaSolidColorTexture(CudaColor _albedo)
-      : albedo(_albedo) {}
-
-  __device__ inline CudaColor value(double u, double v,
-                                    const CudaPoint3 &p) const {
-    return albedo;
-  }
 };
 
+// Solid color texture initialization function.
+__device__ inline CudaSolidColorTexture
+cuda_make_solid_color_texture(CudaColor albedo) {
+  CudaSolidColorTexture texture;
+  texture.albedo = albedo;
+  return texture;
+}
+
+// Solid color texture value function.
+__device__ inline CudaColor
+cuda_solid_color_texture_value(const CudaSolidColorTexture &texture, double u,
+                               double v, const CudaPoint3 &p) {
+  return texture.albedo;
+}
+
+// POD struct for checker texture.
 struct CudaCheckerTexture {
   double scale;
   const CudaTexture *even_texture;
   const CudaTexture *odd_texture;
-
-  __device__ CudaCheckerTexture() {} // Default constructor.
-  __host__ __device__ CudaCheckerTexture(double _scale,
-                                         const CudaTexture *_even_texture,
-                                         const CudaTexture *_odd_texture)
-      : scale(_scale), even_texture(_even_texture), odd_texture(_odd_texture) {}
-
-  __device__ CudaColor value(double u, double v, const CudaPoint3 &p) const;
 };
 
+// Checker texture initialization function.
+__device__ inline CudaCheckerTexture
+cuda_make_checker_texture(double scale, const CudaTexture *even_texture,
+                          const CudaTexture *odd_texture) {
+  CudaCheckerTexture texture;
+  texture.scale = scale;
+  texture.even_texture = even_texture;
+  texture.odd_texture = odd_texture;
+  return texture;
+}
+
+// Checker texture value function.
+__device__ CudaColor cuda_checker_texture_value(
+    const CudaCheckerTexture &texture, double u, double v, const CudaPoint3 &p);
+
+// POD struct for noise texture.
 struct CudaNoiseTexture {
   double scale;
   CudaPerlinNoise perlin;
-
-  __device__ CudaNoiseTexture() {} // Default constructor.
-  __host__ __device__ CudaNoiseTexture(double _scale, CudaPerlinNoise _perlin)
-      : scale(_scale), perlin(_perlin) {}
-
-  __device__ inline CudaColor value(double u, double v,
-                                    const CudaPoint3 &p) const {
-    // Calculates a procedural color value using sine-based noise, simulating
-    // complex textures like marble. Uses a base gray color, with a sin function
-    // to cause the brightness of the color to oscillate in a wavy pattern,
-    // creating stripes or veins.
-
-    return CudaColor(0.5, 0.5, 0.5) *
-           (1 + sin(scale * p.z + 10 * perlin.turb(p, 7)));
-  }
 };
 
+// Noise texture initialization function.
+__device__ inline CudaNoiseTexture
+cuda_make_noise_texture(double scale, CudaPerlinNoise perlin) {
+  CudaNoiseTexture texture;
+  texture.scale = scale;
+  texture.perlin = perlin;
+  return texture;
+}
+
+// Noise texture value function.
+__device__ inline CudaColor
+cuda_noise_texture_value(const CudaNoiseTexture &texture, double u, double v,
+                         const CudaPoint3 &p) {
+  CudaColor base_color = cuda_make_vec3(0.5, 0.5, 0.5);
+  double noise_value = 1.0 + sin(texture.scale * p.z +
+                                 10.0 * cuda_perlin_turb(texture.perlin, p, 7));
+  return cuda_vec3_multiply_scalar(base_color, noise_value);
+}
+
+// POD struct for unified texture using manual dispatch pattern.
 struct CudaTexture {
   CudaTextureType type;
   union {
@@ -65,18 +86,18 @@ struct CudaTexture {
     CudaCheckerTexture *checker;
     CudaNoiseTexture *noise;
   };
-
-  __host__ __device__ CudaTexture() {} // Default constructor.
-
-  __device__ CudaColor value(double u, double v, const CudaPoint3 &p) const;
 };
 
-// Helper constructor functions.
-__device__ CudaTexture cuda_make_solid_texture(CudaColor albedo);
+// Texture value function.
+__device__ CudaColor cuda_texture_value(const CudaTexture &texture, double u,
+                                        double v, const CudaPoint3 &p);
+
+// Helper texture constructor functions.
+__device__ CudaTexture cuda_make_texture_solid(CudaColor albedo);
 __device__ CudaTexture
-cuda_make_checker_texture(double scale, const CudaTexture *even_texture,
+cuda_make_texture_checker(double scale, const CudaTexture *even_texture,
                           const CudaTexture *odd_texture);
-__device__ CudaTexture cuda_make_noise_texture(double scale,
+__device__ CudaTexture cuda_make_texture_noise(double scale,
                                                CudaPerlinNoise perlin);
 
 #endif // USE_CUDA

@@ -3,36 +3,41 @@
 #include "../../core/Hittable.cuh"
 #include "PDF.cuh"
 
-__device__ double CudaHittablePDF::value(const CudaVec3 &direction) const {
-  return hittable_pointer->pdf_value(origin, direction);
+__device__ double cuda_hittable_pdf_value(const CudaHittablePDF &pdf,
+                                          const CudaVec3 &direction) {
+  return cuda_hittable_pdf_value(*pdf.hittable, pdf.origin, direction);
 }
 
-__device__ CudaVec3 CudaHittablePDF::generate(curandState *state) const {
-  return hittable_pointer->random(origin, state);
+__device__ CudaVec3 cuda_hittable_pdf_generate(const CudaHittablePDF &pdf,
+                                               curandState *state) {
+  return cuda_hittable_random(*pdf.hittable, pdf.origin, state);
 }
 
-__device__ double CudaMixturePDF::value(const CudaVec3 &direction) const {
-  return 0.5 * pdf0_pointer->value(direction) +
-         0.5 * pdf1_pointer->value(direction);
+__device__ double cuda_mixture_pdf_value(const CudaMixturePDF &pdf,
+                                         const CudaVec3 &direction) {
+  return 0.5 * cuda_pdf_value(*pdf.pdf0, direction) +
+         0.5 * cuda_pdf_value(*pdf.pdf1, direction);
 }
 
-__device__ CudaVec3 CudaMixturePDF::generate(curandState *state) const {
+__device__ CudaVec3 cuda_mixture_pdf_generate(const CudaMixturePDF &pdf,
+                                              curandState *state) {
   if (cuda_random_double(state) < 0.5)
-    return pdf0_pointer->generate(state);
+    return cuda_pdf_generate(*pdf.pdf0, state);
   else
-    return pdf1_pointer->generate(state);
+    return cuda_pdf_generate(*pdf.pdf1, state);
 }
 
-__device__ double CudaPDF::value(const CudaVec3 &direction) const {
-  switch (type) {
+__device__ double cuda_pdf_value(const CudaPDF &pdf,
+                                 const CudaVec3 &direction) {
+  switch (pdf.type) {
   case CudaPDFType::CUDA_PDF_SPHERE:
-    return sphere->value(direction);
+    return cuda_sphere_pdf_value(pdf.sphere, direction);
   case CudaPDFType::CUDA_PDF_COSINE:
-    return cosine->value(direction);
+    return cuda_cosine_pdf_value(pdf.cosine, direction);
   case CudaPDFType::CUDA_PDF_HITTABLE:
-    return hittable->value(direction);
+    return cuda_hittable_pdf_value(pdf.hittable, direction);
   case CudaPDFType::CUDA_PDF_MIXTURE:
-    return mixture->value(direction);
+    return cuda_mixture_pdf_value(pdf.mixture, direction);
   default:
     // ERROR: PDF.cu::value - Unknown PDF type in switch statement. This should
     // never happen in well-formed code.
@@ -40,51 +45,21 @@ __device__ double CudaPDF::value(const CudaVec3 &direction) const {
   }
 }
 
-__device__ CudaVec3 CudaPDF::generate(curandState *state) const {
-  switch (type) {
+__device__ CudaVec3 cuda_pdf_generate(const CudaPDF &pdf, curandState *state) {
+  switch (pdf.type) {
   case CudaPDFType::CUDA_PDF_SPHERE:
-    return sphere->generate(state);
+    return cuda_sphere_pdf_generate(pdf.sphere, state);
   case CudaPDFType::CUDA_PDF_COSINE:
-    return cosine->generate(state);
+    return cuda_cosine_pdf_generate(pdf.cosine, state);
   case CudaPDFType::CUDA_PDF_HITTABLE:
-    return hittable->generate(state);
+    return cuda_hittable_pdf_generate(pdf.hittable, state);
   case CudaPDFType::CUDA_PDF_MIXTURE:
-    return mixture->generate(state);
+    return cuda_mixture_pdf_generate(pdf.mixture, state);
   default:
     // ERROR: PDF.cu::generate - Unknown PDF type in switch statement. This
     // should never happen in well-formed code.
-    return CudaVec3(1, 0, 0); // Safe fallback for GPU device code.
+    return cuda_make_vec3(1, 0, 0); // Safe fallback for GPU device code.
   }
-}
-
-__device__ CudaPDF cuda_make_sphere_pdf() {
-  CudaPDF pdf;
-  pdf.type = CudaPDFType::CUDA_PDF_SPHERE;
-  pdf.sphere = new CudaSpherePDF();
-  return pdf;
-}
-
-__device__ CudaPDF cuda_make_cosine_pdf(const CudaVec3 &w) {
-  CudaPDF pdf;
-  pdf.type = CudaPDFType::CUDA_PDF_COSINE;
-  pdf.cosine = new CudaCosinePDF(w);
-  return pdf;
-}
-
-__device__ CudaPDF cuda_make_hittable_pdf(const CudaHittable *hittable_pointer,
-                                          const CudaPoint3 &origin) {
-  CudaPDF pdf;
-  pdf.type = CudaPDFType::CUDA_PDF_HITTABLE;
-  pdf.hittable = new CudaHittablePDF(hittable_pointer, origin);
-  return pdf;
-}
-
-__device__ CudaPDF cuda_make_mixture_pdf(const CudaPDF *pdf0_pointer,
-                                         const CudaPDF *pdf1_pointer) {
-  CudaPDF pdf;
-  pdf.type = CudaPDFType::CUDA_PDF_MIXTURE;
-  pdf.mixture = new CudaMixturePDF(pdf0_pointer, pdf1_pointer);
-  return pdf;
 }
 
 #endif // USE_CUDA
