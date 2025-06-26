@@ -16,28 +16,27 @@
 struct CudaSphere {
   CudaRay center;
   double radius;
-  const CudaMaterial *material;
+  size_t material_index;
   CudaAABB bbox;
 };
 
 // Sphere initialization functions.
 
-__device__ inline CudaSphere cuda_make_sphere(const CudaPoint3 &center,
-                                              double radius,
-                                              const CudaMaterial *material);
+CudaSphere cuda_make_sphere(const CudaPoint3 &center, double radius,
+                            size_t material_index);
 
-__device__ inline CudaSphere cuda_make_sphere(const CudaPoint3 &before_center,
-                                              const CudaPoint3 &after_center,
-                                              double radius,
-                                              const CudaMaterial *material);
+CudaSphere cuda_make_sphere(const CudaPoint3 &before_center,
+                            const CudaPoint3 &after_center, double radius,
+                            size_t material_index);
 
-__host__ __device__ inline CudaSphere
-cuda_make_sphere(const CudaRay &center, double radius,
-                 const CudaMaterial *material, const CudaAABB &bbox) {
+__host__ __device__ inline CudaSphere cuda_make_sphere(const CudaRay &center,
+                                                       double radius,
+                                                       size_t material_index,
+                                                       const CudaAABB &bbox) {
   CudaSphere sphere;
   sphere.center = center;
   sphere.radius = fmax(0.0, radius);
-  sphere.material = material;
+  sphere.material_index = material_index;
   sphere.bbox = bbox;
   return sphere;
 }
@@ -55,7 +54,7 @@ __device__ CudaVec3 cuda_sphere_random(const CudaSphere &sphere,
                                        const CudaPoint3 &origin,
                                        curandState *rand_state);
 
-__device__ inline CudaAABB
+__host__ __device__ inline CudaAABB
 cuda_sphere_get_bounding_box(const CudaSphere &sphere) {
   return sphere.bbox;
 }

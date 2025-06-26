@@ -12,9 +12,6 @@
 // Forward declaration.
 struct CudaHittable;
 
-// Maximum objects per list.
-static const int MAX_HITTABLES_PER_LIST = 1024;
-
 // POD struct representing a list of hittables.
 struct CudaHittableList {
   CudaHittable *hittables; // Pointer to array of hittables.
@@ -23,8 +20,7 @@ struct CudaHittableList {
 };
 
 // HittableList initialization functions.
-__device__ CudaHittableList cuda_make_hittable_list(CudaHittable *hittables,
-                                                    int count);
+CudaHittableList cuda_make_hittable_list(CudaHittable *hittables, int count);
 
 __host__ __device__ inline CudaHittableList
 cuda_make_hittable_list(CudaHittable *hittables, int count,
@@ -50,7 +46,7 @@ __device__ CudaVec3 cuda_hittable_list_random(const CudaHittableList &list,
                                               const CudaPoint3 &origin,
                                               curandState *state);
 
-__device__ inline CudaAABB
+__host__ __device__ inline CudaAABB
 cuda_hittable_list_get_bounding_box(const CudaHittableList &list) {
   return list.bbox;
 }

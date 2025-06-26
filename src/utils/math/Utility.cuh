@@ -10,7 +10,7 @@
 #define CUDA_INF INFINITY
 #define CUDA_PI 3.1415926535897932385
 
-__device__ inline double cuda_degrees_to_radians(double degrees) {
+__host__ __device__ inline double cuda_degrees_to_radians(double degrees) {
   return degrees * CUDA_PI / 180.0;
 }
 

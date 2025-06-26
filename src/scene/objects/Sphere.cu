@@ -2,28 +2,26 @@
 
 #include "Sphere.cuh"
 
-__device__ inline CudaSphere cuda_make_sphere(const CudaPoint3 &center_pos,
-                                              double radius,
-                                              const CudaMaterial *material) {
+CudaSphere cuda_make_sphere(const CudaPoint3 &center_pos, double radius,
+                            size_t material_index) {
   CudaSphere sphere;
   sphere.center = cuda_make_ray(center_pos, cuda_make_vec3(0, 0, 0));
   sphere.radius = fmax(0.0, radius);
-  sphere.material = material;
+  sphere.material_index = material_index;
   CudaVec3 r = cuda_make_vec3(radius, radius, radius);
   sphere.bbox = cuda_make_aabb(cuda_vec3_subtract(center_pos, r),
                                cuda_vec3_add(center_pos, r));
   return sphere;
 }
 
-__device__ inline CudaSphere cuda_make_sphere(const CudaPoint3 &before_center,
-                                              const CudaPoint3 &after_center,
-                                              double radius,
-                                              const CudaMaterial *material) {
+CudaSphere cuda_make_sphere(const CudaPoint3 &before_center,
+                            const CudaPoint3 &after_center, double radius,
+                            size_t material_index) {
   CudaSphere sphere;
   sphere.center = cuda_make_ray(
       before_center, cuda_vec3_subtract(after_center, before_center));
   sphere.radius = fmax(0.0, radius);
-  sphere.material = material;
+  sphere.material_index = material_index;
   CudaVec3 r = cuda_make_vec3(radius, radius, radius);
   CudaAABB box1 = cuda_make_aabb(cuda_vec3_subtract(before_center, r),
                                  cuda_vec3_add(before_center, r));
@@ -61,7 +59,7 @@ __device__ bool cuda_sphere_hit(const CudaSphere &sphere, const CudaRay &ray,
   CudaVec3 outward = cuda_vec3_divide_scalar(
       cuda_vec3_subtract(rec.point, current_center), sphere.radius);
   cuda_hit_record_set_face_normal(rec, ray, outward);
-  rec.material = const_cast<CudaMaterial *>(sphere.material);
+  rec.material_index = sphere.material_index;
 
   double theta = acos(-outward.y);
   double phi = atan2(-outward.z, outward.x) + CUDA_PI;

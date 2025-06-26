@@ -60,33 +60,8 @@ __device__ CudaVec3 cuda_hittable_random(const CudaHittable &hittable,
                                          const CudaPoint3 &origin,
                                          curandState *state);
 
-__device__ CudaAABB
+__host__ __device__ CudaAABB
 cuda_hittable_get_bounding_box(const CudaHittable &hittable);
-
-// Helper hittable wrapper functions.
-__device__ CudaHittable cuda_make_hittable_sphere(const CudaPoint3 &center,
-                                                  double radius,
-                                                  const CudaMaterial *material);
-__device__ CudaHittable cuda_make_hittable_sphere(
-    const CudaPoint3 &before_center, const CudaPoint3 &after_center,
-    double radius, const CudaMaterial *material);
-__device__ CudaHittable cuda_make_hittable_plane(const CudaPoint3 &corner,
-                                                 const CudaVec3 &u_side,
-                                                 const CudaVec3 &v_side,
-                                                 const CudaMaterial *material);
-__device__ CudaHittable cuda_make_hittable_box(const CudaPoint3 &a,
-                                               const CudaPoint3 &b,
-                                               const CudaMaterial &material);
-__device__ CudaHittable cuda_make_hittable_bvh_node(CudaHittable *left,
-                                                    CudaHittable *right,
-                                                    bool is_leaf = false);
-__device__ CudaHittable cuda_make_hittable_constant_medium(
-    const CudaHittable *boundary, double density, CudaTexture *texture);
-__device__ CudaHittable cuda_make_hittable_rotate_y(const CudaHittable *object,
-                                                    double angle_degrees);
-__device__ CudaHittable cuda_make_hittable_translate(const CudaHittable *object,
-                                                     const CudaVec3 &offset);
-__device__ CudaHittable cuda_make_hittable_from_list(CudaHittableList *list);
 
 // Include HittableList.cuh after CudaHittable is defined to avoid circular
 // dependency.

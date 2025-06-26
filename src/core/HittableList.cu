@@ -5,10 +5,7 @@
 #include "HittableList.cuh"
 #include <assert.h>
 
-__device__ CudaHittableList cuda_make_hittable_list(CudaHittable *hittables,
-                                                    int count) {
-  assert(count <= MAX_HITTABLES_PER_LIST);
-
+CudaHittableList cuda_make_hittable_list(CudaHittable *hittables, int count) {
   CudaHittableList list;
   list.hittables = hittables;
   list.count = count;

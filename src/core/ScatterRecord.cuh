@@ -5,6 +5,7 @@
 #include "../utils/math/PDF.cuh"
 #include "Ray.cuh"
 #include "Vec3Types.cuh"
+#include <climits>
 
 // Used in a ray tracer to describe the result of a material's scatter()
 // function — that is, how a ray interacts with a surface (reflection,
@@ -16,11 +17,11 @@ struct CudaScatterRecord {
   // everything and leaves only red.
   CudaColor attenuation;
 
-  // A raw pointer to a probability density function struct.
+  // Probability density function for importance sampling.
   // This tells the renderer how to randomly sample the direction of scattered
   // rays. Used when importance sampling (e.g. cosine-weighted scattering for
   // Lambertian surfaces or sampling toward lights).
-  CudaPDF *pdf;
+  CudaPDF pdf;
 
   // If this is true, the material wants to skip sampling a direction from the
   // PDF and instead explicitly provides the scattered ray in skip_pdf_ray. This

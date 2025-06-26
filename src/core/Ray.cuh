@@ -14,8 +14,8 @@ struct CudaRay {
 };
 
 // Ray initialization functions.
-__device__ inline CudaRay cuda_make_ray(const CudaPoint3 &origin,
-                                        const CudaVec3 &direction) {
+__host__ __device__ inline CudaRay cuda_make_ray(const CudaPoint3 &origin,
+                                                 const CudaVec3 &direction) {
   CudaRay ray;
   ray.origin = origin;
   ray.direction = direction;

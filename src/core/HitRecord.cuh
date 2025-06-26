@@ -17,8 +17,8 @@ struct CudaHitRecord {
   // The normal vector to the ray/object intersection.
   CudaVec3 normal;
 
-  // The material of the hittable object.
-  CudaMaterial *material;
+  // The material index of the hittable object.
+  size_t material_index;
 
   // The parameter t (time) along the ray in which the ray hit the hittable
   // object.

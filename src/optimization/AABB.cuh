@@ -14,11 +14,11 @@ struct CudaAABB {
 };
 
 // Forward declaration.
-__device__ __forceinline__ void
+__host__ __device__ __forceinline__ void
 cuda_aabb_pad_to_minimums(CudaAABB &aabb, double delta = 0.0001);
 
 // AABB initialization functions.
-__device__ inline CudaAABB cuda_make_aabb() {
+__host__ __device__ inline CudaAABB cuda_make_aabb() {
   CudaAABB aabb;
   aabb.x = cuda_make_interval();
   aabb.y = cuda_make_interval();
@@ -26,9 +26,9 @@ __device__ inline CudaAABB cuda_make_aabb() {
   return aabb;
 }
 
-__device__ inline CudaAABB cuda_make_aabb(const CudaInterval &x,
-                                          const CudaInterval &y,
-                                          const CudaInterval &z) {
+__host__ __device__ inline CudaAABB cuda_make_aabb(const CudaInterval &x,
+                                                   const CudaInterval &y,
+                                                   const CudaInterval &z) {
   CudaAABB aabb;
   aabb.x = x;
   aabb.y = y;
@@ -37,8 +37,8 @@ __device__ inline CudaAABB cuda_make_aabb(const CudaInterval &x,
   return aabb;
 }
 
-__device__ inline CudaAABB cuda_make_aabb(const CudaPoint3 &p1,
-                                          const CudaPoint3 &p2) {
+__host__ __device__ inline CudaAABB cuda_make_aabb(const CudaPoint3 &p1,
+                                                   const CudaPoint3 &p2) {
   CudaAABB aabb;
   aabb.x = cuda_make_interval(fmin(p1.x, p2.x), fmax(p1.x, p2.x));
   aabb.y = cuda_make_interval(fmin(p1.y, p2.y), fmax(p1.y, p2.y));
@@ -47,8 +47,8 @@ __device__ inline CudaAABB cuda_make_aabb(const CudaPoint3 &p1,
   return aabb;
 }
 
-__device__ inline CudaAABB cuda_make_aabb(const CudaAABB &a,
-                                          const CudaAABB &b) {
+__host__ __device__ inline CudaAABB cuda_make_aabb(const CudaAABB &a,
+                                                   const CudaAABB &b) {
   CudaAABB aabb;
   aabb.x = cuda_make_interval(a.x, b.x);
   aabb.y = cuda_make_interval(a.y, b.y);
@@ -108,8 +108,8 @@ cuda_aabb_hit(const CudaAABB &aabb, const CudaRay &ray, CudaInterval t_values) {
 
 // Adjust the AABB so that no side is narrower than some delta, padding if
 // necessary.
-__device__ __forceinline__ void cuda_aabb_pad_to_minimums(CudaAABB &aabb,
-                                                          double delta) {
+__host__ __device__ __forceinline__ void
+cuda_aabb_pad_to_minimums(CudaAABB &aabb, double delta) {
   if (cuda_interval_size(aabb.x) < delta)
     aabb.x = cuda_interval_expand(aabb.x, delta);
   if (cuda_interval_size(aabb.y) < delta)

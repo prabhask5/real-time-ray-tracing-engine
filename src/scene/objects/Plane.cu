@@ -2,15 +2,13 @@
 
 #include "Plane.cuh"
 
-__device__ CudaPlane cuda_make_plane(const CudaPoint3 &corner,
-                                     const CudaVec3 &u_side,
-                                     const CudaVec3 &v_side,
-                                     const CudaMaterial *material) {
+CudaPlane cuda_make_plane(const CudaPoint3 &corner, const CudaVec3 &u_side,
+                          const CudaVec3 &v_side, size_t material_index) {
   CudaPlane plane;
   plane.corner = corner;
   plane.u_side = u_side;
   plane.v_side = v_side;
-  plane.material = material;
+  plane.material_index = material_index;
 
   CudaVec3 n = cuda_vec3_cross_product(u_side, v_side);
   plane.normal = cuda_vec3_unit_vector(n);
@@ -57,7 +55,7 @@ __device__ bool cuda_plane_hit(const CudaPlane &plane, const CudaRay &ray,
   record.t = t;
   record.point = intersection;
   cuda_hit_record_set_face_normal(record, ray, plane.normal);
-  record.material = const_cast<CudaMaterial *>(plane.material);
+  record.material_index = plane.material_index;
 
   return true;
 }

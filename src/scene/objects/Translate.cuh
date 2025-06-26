@@ -8,6 +8,7 @@
 #include "../../optimization/AABB.cuh"
 #include "../../optimization/AABBUtility.cuh"
 #include "../../utils/math/Interval.cuh"
+#include "../../utils/math/IntervalUtility.cuh"
 #include <curand_kernel.h>
 
 // POD struct representing a translated hittable object.
@@ -18,8 +19,8 @@ struct CudaTranslate {
 };
 
 // Translate initialization functions.
-__device__ inline CudaTranslate cuda_make_translate(const CudaHittable *object,
-                                                    const CudaVec3 &offset);
+CudaTranslate cuda_make_translate(const CudaHittable *object,
+                                  const CudaVec3 &offset);
 
 __host__ __device__ inline CudaTranslate
 cuda_make_translate(const CudaHittable *object, const CudaVec3 &offset,
@@ -44,7 +45,7 @@ __device__ CudaVec3 cuda_translate_random(const CudaTranslate &translate,
                                           const CudaPoint3 &origin,
                                           curandState *state);
 
-__device__ inline CudaAABB
+__host__ __device__ inline CudaAABB
 cuda_translate_get_bounding_box(const CudaTranslate &translate) {
   return translate.bbox;
 }

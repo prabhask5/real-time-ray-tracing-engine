@@ -35,20 +35,20 @@ __device__ inline CudaVec3 operator/(const CudaVec3 &v, double t) {
 }
 
 // Computes the dot product of two vectors.
-__device__ inline double cuda_vec3_dot_product(const CudaVec3 &u,
-                                               const CudaVec3 &v) {
+__host__ __device__ inline double cuda_vec3_dot_product(const CudaVec3 &u,
+                                                        const CudaVec3 &v) {
   return u.x * v.x + u.y * v.y + u.z * v.z;
 }
 
 // Computes the cross product of two vectors.
-__device__ inline CudaVec3 cuda_vec3_cross_product(const CudaVec3 &u,
-                                                   const CudaVec3 &v) {
+__host__ __device__ inline CudaVec3 cuda_vec3_cross_product(const CudaVec3 &u,
+                                                            const CudaVec3 &v) {
   return cuda_make_vec3(u.y * v.z - u.z * v.y, u.z * v.x - u.x * v.z,
                         u.x * v.y - u.y * v.x);
 }
 
 // Returns the unit-length (normalized) vector.
-__device__ inline CudaVec3 cuda_vec3_unit_vector(const CudaVec3 &v) {
+__host__ __device__ inline CudaVec3 cuda_vec3_unit_vector(const CudaVec3 &v) {
   return cuda_vec3_divide_scalar(v, cuda_vec3_length(v));
 }
 

@@ -21,14 +21,12 @@ struct CudaPlane {
   double D;
   double surface_area;
   CudaAABB bbox;
-  const CudaMaterial *material;
+  size_t material_index;
 };
 
 // Plane initialization functions.
-__device__ CudaPlane cuda_make_plane(const CudaPoint3 &corner,
-                                     const CudaVec3 &u_side,
-                                     const CudaVec3 &v_side,
-                                     const CudaMaterial *material);
+CudaPlane cuda_make_plane(const CudaPoint3 &corner, const CudaVec3 &u_side,
+                          const CudaVec3 &v_side, size_t material_index);
 
 // Plane utility functions.
 __device__ bool cuda_plane_hit(const CudaPlane &plane, const CudaRay &ray,
@@ -43,7 +41,8 @@ __device__ CudaVec3 cuda_plane_random(const CudaPlane &plane,
                                       const CudaPoint3 &origin,
                                       curandState *rand_state);
 
-__device__ inline CudaAABB cuda_plane_get_bounding_box(const CudaPlane &plane) {
+__host__ __device__ inline CudaAABB
+cuda_plane_get_bounding_box(const CudaPlane &plane) {
   return plane.bbox;
 }
 

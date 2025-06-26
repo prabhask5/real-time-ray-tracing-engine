@@ -23,9 +23,8 @@ struct CudaBVHNode {
 
 // BVHNode initialization functions.
 
-__device__ CudaBVHNode cuda_make_bvh_node(CudaHittable *left,
-                                          CudaHittable *right,
-                                          bool is_leaf = false);
+CudaBVHNode cuda_make_bvh_node(CudaHittable *left, CudaHittable *right,
+                               bool is_leaf = false);
 
 __host__ __device__ inline CudaBVHNode
 cuda_make_bvh_node(CudaHittable *left, CudaHittable *right, bool is_leaf,
@@ -51,7 +50,7 @@ __device__ CudaVec3 cuda_bvh_node_random(const CudaBVHNode &node,
                                          const CudaPoint3 &origin,
                                          curandState *state);
 
-__device__ inline CudaAABB
+__host__ __device__ inline CudaAABB
 cuda_bvh_node_get_bounding_box(const CudaBVHNode &node) {
   return node.bbox;
 }

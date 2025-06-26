@@ -10,8 +10,9 @@
 #include <iostream>
 
 #ifdef USE_CUDA
-#include "../../scene/SceneConversions.cuh"
+#include "../../scene/CudaSceneInitialization.cuh"
 #include "../../utils/math/Vec3Conversions.cuh"
+#include "../../utils/memory/CudaMemoryUtility.cuh"
 #include "CameraKernelWrappers.cuh"
 #include "CameraKernels.cuh"
 #include <ctime>
@@ -186,19 +187,31 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
     return;
   }
 
-  // Convert CPU objects to CUDA format using comprehensive conversion.
-  CudaSceneData cuda_scene_data = convert_complete_scene_to_cuda(world, lights);
-  if (cuda_scene_data.world_objects_buffer == nullptr ||
-      (cuda_scene_data.lights.type == CudaHittableType::HITTABLE_LIST &&
-       cuda_scene_data.lights_objects_buffer == nullptr)) {
-    std::cerr << "Failed to convert scene to CUDA format" << std::endl;
+  // Check for CUDA errors before proceeding
+  cudaError_t cuda_error = cudaGetLastError();
+  if (cuda_error != cudaSuccess) {
+    std::cerr << "CUDA error before scene init: "
+              << cudaGetErrorString(cuda_error) << std::endl;
+  }
+
+  // Initialize CUDA scene using new comprehensive system.
+  std::clog << "DEBUG: Initializing CUDA scene" << std::endl;
+  CudaSceneData cuda_scene_data = initialize_cuda_scene(world, lights);
+  if (cuda_scene_data.world.get() == nullptr ||
+      cuda_scene_data.lights.get() == nullptr) {
+    std::cerr << "Failed to initialize CUDA scene" << std::endl;
     cudaFree(d_pixel_colors);
     cudaFree(d_rand_states);
     render_cpu(world, lights);
     return;
   }
-  CudaHittable cuda_world = cuda_scene_data.world;
-  CudaHittable cuda_lights = cuda_scene_data.lights;
+
+  // Copy CudaHittable structs from device to host for kernel launch.
+  std::clog << "DEBUG: Copying CudaHittable structs to host" << std::endl;
+  CudaHittable cuda_world, cuda_lights;
+  cudaMemcpyDeviceToHostSafe(&cuda_world, cuda_scene_data.world.get(), 1);
+  cudaMemcpyDeviceToHostSafe(&cuda_lights, cuda_scene_data.lights.get(), 1);
+  std::clog << "DEBUG: CudaHittable structs copied successfully" << std::endl;
 
   int sqrt_spp = static_cast<int>(std::sqrt(m_samples_per_pixel));
 
@@ -223,8 +236,17 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
     int end_row = std::min(start_row + batch_size, m_image_height);
 
     // Clear pixel colors for this batch.
-    cudaMemset(d_pixel_colors + start_row * m_image_width, 0,
-               (end_row - start_row) * m_image_width * sizeof(CudaColor));
+    if (cudaMemset(d_pixel_colors + start_row * m_image_width, 0,
+                   (end_row - start_row) * m_image_width * sizeof(CudaColor)) !=
+        cudaSuccess) {
+      std::cerr << "Failed to clear GPU memory for batch " << start_row
+                << std::endl;
+      cleanup_cuda_scene(cuda_scene_data);
+      cudaFree(d_pixel_colors);
+      cudaFree(d_rand_states);
+      render_cpu(world, lights);
+      return;
+    }
 
     // Launch CUDA kernel for this batch.
     dim3 batch_grid_size((m_image_width + block_size.x - 1) / block_size.x,
@@ -239,13 +261,30 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
         m_pixel_samples_scale, cuda_background, cuda_world, cuda_lights,
         d_rand_states, batch_grid_size, block_size);
 
-    cudaDeviceSynchronize();
+    if (cudaDeviceSynchronize() != cudaSuccess) {
+      std::cerr << "CUDA kernel execution failed at batch " << start_row
+                << std::endl;
+      cleanup_cuda_scene(cuda_scene_data);
+      cudaFree(d_pixel_colors);
+      cudaFree(d_rand_states);
+      render_cpu(world, lights);
+      return;
+    }
 
     // Copy results back to CPU and write to file.
     std::vector<CudaColor> batch_colors((end_row - start_row) * m_image_width);
-    cudaMemcpy(batch_colors.data(), d_pixel_colors + start_row * m_image_width,
-               (end_row - start_row) * m_image_width * sizeof(CudaColor),
-               cudaMemcpyDeviceToHost);
+    if (cudaMemcpy(batch_colors.data(),
+                   d_pixel_colors + start_row * m_image_width,
+                   (end_row - start_row) * m_image_width * sizeof(CudaColor),
+                   cudaMemcpyDeviceToHost) != cudaSuccess) {
+      std::cerr << "Failed to copy results from GPU at batch " << start_row
+                << std::endl;
+      cleanup_cuda_scene(cuda_scene_data);
+      cudaFree(d_pixel_colors);
+      cudaFree(d_rand_states);
+      render_cpu(world, lights);
+      return;
+    }
 
     // Write batch to file.
     for (int row = 0; row < (end_row - start_row); ++row) {
@@ -259,7 +298,7 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
   std::clog << "\rDone.                 \n";
 
   // Cleanup CUDA memory and scene data.
-  cleanup_cuda_scene_data(cuda_scene_data);
+  cleanup_cuda_scene(cuda_scene_data);
   cudaFree(d_pixel_colors);
   cudaFree(d_rand_states);
 #else

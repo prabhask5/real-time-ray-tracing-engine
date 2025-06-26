@@ -3,8 +3,8 @@
 #include "../../core/Hittable.cuh"
 #include "RotateY.cuh"
 
-__device__ inline CudaRotateY cuda_make_rotate_y(const CudaHittable *object,
-                                                 double angle_degrees) {
+CudaRotateY cuda_make_rotate_y(const CudaHittable *object,
+                               double angle_degrees) {
   CudaRotateY rotate;
   rotate.object = object;
 

@@ -7,7 +7,7 @@
 #include "../Ray.hpp"
 
 #ifdef USE_CUDA
-#include "../../scene/SceneConversions.cuh"
+#include "../../scene/CudaSceneInitialization.cuh"
 #include "CameraKernelWrappers.cuh"
 #include "CameraKernels.cuh"
 #include <ctime>
@@ -423,18 +423,17 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
     return;
   }
 
-  // Convert CPU objects to CUDA format using comprehensive conversion.
-  CudaSceneData cuda_scene_data = convert_complete_scene_to_cuda(world, lights);
-  if (cuda_scene_data.world_objects_buffer == nullptr ||
-      cuda_scene_data.lights_objects_buffer == nullptr) {
-    std::cerr << "Failed to convert scene to CUDA format" << std::endl;
+  // Initialize CUDA scene using new comprehensive system.
+  CudaSceneData cuda_scene_data = initialize_cuda_scene(world, lights);
+  if (cuda_scene_data.world.get() == nullptr || cuda_scene_data.lights.get()) {
+    std::cerr << "Failed to initialize CUDA scene" << std::endl;
     cudaFree(d_accumulation);
     cudaFree(d_rand_states);
     render_cpu(world, lights);
     return;
   }
-  CudaHittable cuda_world = cuda_scene_data.world;
-  CudaHittable cuda_lights = cuda_scene_data.lights;
+  CudaHittable cuda_world = *cuda_scene_data.world;
+  CudaHittable cuda_lights = *cuda_scene_data.lights;
 
   bool running = true;
 
@@ -536,7 +535,7 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
   }
 
   // Cleanup CUDA memory and scene data.
-  cleanup_cuda_scene_data(cuda_scene_data);
+  cleanup_cuda_scene(cuda_scene_data);
   cudaFree(d_accumulation);
   cudaFree(d_rand_states);
 #else

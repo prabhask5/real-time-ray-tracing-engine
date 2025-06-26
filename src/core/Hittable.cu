@@ -6,6 +6,7 @@
 #include "../scene/objects/RotateY.cuh"
 #include "../scene/objects/Sphere.cuh"
 #include "../scene/objects/Translate.cuh"
+#include "../utils/memory/CudaSceneContext.cuh"
 #include "Hittable.cuh"
 #include "HittableList.cuh"
 
@@ -80,7 +81,7 @@ __device__ CudaVec3 cuda_hittable_random(const CudaHittable &hittable,
   }
 }
 
-__device__ CudaAABB
+__host__ __device__ CudaAABB
 cuda_hittable_get_bounding_box(const CudaHittable &hittable) {
   switch (hittable.type) {
   case CudaHittableType::HITTABLE_SPHERE:
@@ -100,120 +101,6 @@ cuda_hittable_get_bounding_box(const CudaHittable &hittable) {
   default:
     return cuda_make_aabb();
   }
-}
-
-// Helper constructor functions.
-
-__device__ CudaHittable cuda_make_hittable_sphere(
-    const CudaPoint3 &center, double radius, const CudaMaterial *material) {
-  CudaHittable hittable;
-  hittable.type = CudaHittableType::HITTABLE_SPHERE;
-  hittable.sphere = new CudaSphere();
-  *hittable.sphere = cuda_make_sphere(center, radius, material);
-  return hittable;
-}
-
-__device__ CudaHittable cuda_make_hittable_sphere(
-    const CudaPoint3 &before_center, const CudaPoint3 &after_center,
-    double radius, const CudaMaterial *material) {
-  CudaHittable hittable;
-  hittable.type = CudaHittableType::HITTABLE_SPHERE;
-  hittable.sphere = new CudaSphere();
-  *hittable.sphere =
-      cuda_make_sphere(before_center, after_center, radius, material);
-  return hittable;
-}
-
-__device__ CudaHittable cuda_make_hittable_plane(const CudaPoint3 &corner,
-                                                 const CudaVec3 &u_side,
-                                                 const CudaVec3 &v_side,
-                                                 const CudaMaterial *material) {
-  CudaHittable hittable;
-  hittable.type = CudaHittableType::HITTABLE_PLANE;
-  hittable.plane = new CudaPlane();
-  *hittable.plane = cuda_make_plane(corner, u_side, v_side, material);
-  return hittable;
-}
-
-__device__ CudaHittable cuda_make_hittable_box(const CudaPoint3 &a,
-                                               const CudaPoint3 &b,
-                                               const CudaMaterial &material) {
-  CudaPoint3 min =
-      cuda_make_vec3(fmin(a.x, b.x), fmin(a.y, b.y), fmin(a.z, b.z));
-  CudaPoint3 max =
-      cuda_make_vec3(fmax(a.x, b.x), fmax(a.y, b.y), fmax(a.z, b.z));
-
-  CudaVec3 dx = cuda_make_vec3(max.x - min.x, 0, 0);
-  CudaVec3 dy = cuda_make_vec3(0, max.y - min.y, 0);
-  CudaVec3 dz = cuda_make_vec3(0, 0, max.z - min.z);
-
-  CudaHittable *box = new CudaHittable[6];
-  int i = 0;
-
-  box[i++] = cuda_make_hittable_plane(cuda_make_vec3(min.x, min.y, max.z), dx,
-                                      dy, &material);
-  box[i++] = cuda_make_hittable_plane(cuda_make_vec3(max.x, min.y, max.z),
-                                      cuda_vec3_negate(dz), dy, &material);
-  box[i++] = cuda_make_hittable_plane(cuda_make_vec3(max.x, min.y, min.z),
-                                      cuda_vec3_negate(dx), dy, &material);
-  box[i++] = cuda_make_hittable_plane(cuda_make_vec3(min.x, min.y, min.z), dz,
-                                      dy, &material);
-  box[i++] = cuda_make_hittable_plane(cuda_make_vec3(min.x, max.y, max.z), dx,
-                                      cuda_vec3_negate(dz), &material);
-  box[i++] = cuda_make_hittable_plane(cuda_make_vec3(min.x, min.y, min.z), dx,
-                                      dz, &material);
-
-  CudaHittableList *list = new CudaHittableList();
-  *list = cuda_make_hittable_list(box, 6);
-  CudaHittable hittable;
-  hittable.type = CudaHittableType::HITTABLE_LIST;
-  hittable.hittable_list = list;
-  return hittable;
-}
-
-__device__ CudaHittable cuda_make_hittable_bvh_node(CudaHittable *left,
-                                                    CudaHittable *right,
-                                                    bool is_leaf) {
-  CudaHittable hittable;
-  hittable.type = CudaHittableType::HITTABLE_BVH_NODE;
-  hittable.bvh_node = new CudaBVHNode();
-  *hittable.bvh_node = cuda_make_bvh_node(left, right, is_leaf);
-  return hittable;
-}
-
-__device__ CudaHittable cuda_make_hittable_constant_medium(
-    const CudaHittable *boundary, double density, CudaTexture *texture) {
-  CudaHittable hittable;
-  hittable.type = CudaHittableType::HITTABLE_CONSTANT_MEDIUM;
-  hittable.constant_medium = new CudaConstantMedium();
-  *hittable.constant_medium =
-      cuda_make_constant_medium(boundary, density, texture);
-  return hittable;
-}
-
-__device__ CudaHittable cuda_make_hittable_rotate_y(const CudaHittable *object,
-                                                    double angle_degrees) {
-  CudaHittable hittable;
-  hittable.type = CudaHittableType::HITTABLE_ROTATE_Y;
-  hittable.rotate_y = new CudaRotateY();
-  *hittable.rotate_y = cuda_make_rotate_y(object, angle_degrees);
-  return hittable;
-}
-
-__device__ CudaHittable cuda_make_hittable_translate(const CudaHittable *object,
-                                                     const CudaVec3 &offset) {
-  CudaHittable hittable;
-  hittable.type = CudaHittableType::HITTABLE_TRANSLATE;
-  hittable.translate = new CudaTranslate();
-  *hittable.translate = cuda_make_translate(object, offset);
-  return hittable;
-}
-
-__device__ CudaHittable cuda_make_hittable_from_list(CudaHittableList *list) {
-  CudaHittable hittable;
-  hittable.type = CudaHittableType::HITTABLE_LIST;
-  hittable.hittable_list = list;
-  return hittable;
 }
 
 #endif // USE_CUDA

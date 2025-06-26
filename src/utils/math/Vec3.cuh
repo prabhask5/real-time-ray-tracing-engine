@@ -21,15 +21,15 @@ __host__ __device__ inline CudaVec3 cuda_make_vec3(double x, double y,
 }
 
 // Vec3 utility functions.
-__device__ inline CudaVec3 cuda_vec3_negate(const CudaVec3 &v) {
+__host__ __device__ inline CudaVec3 cuda_vec3_negate(const CudaVec3 &v) {
   return cuda_make_vec3(-v.x, -v.y, -v.z);
 }
 
-__device__ inline double cuda_vec3_get(const CudaVec3 &v, int i) {
+__host__ __device__ inline double cuda_vec3_get(const CudaVec3 &v, int i) {
   return i == 0 ? v.x : (i == 1 ? v.y : v.z);
 }
 
-__device__ inline void cuda_vec3_set(CudaVec3 &v, int i, double val) {
+__host__ __device__ inline void cuda_vec3_set(CudaVec3 &v, int i, double val) {
   if (i == 0)
     v.x = val;
   else if (i == 1)
@@ -38,30 +38,31 @@ __device__ inline void cuda_vec3_set(CudaVec3 &v, int i, double val) {
     v.z = val;
 }
 
-__device__ inline CudaVec3 cuda_vec3_add(const CudaVec3 &a, const CudaVec3 &b) {
+__host__ __device__ inline CudaVec3 cuda_vec3_add(const CudaVec3 &a,
+                                                  const CudaVec3 &b) {
   return cuda_make_vec3(a.x + b.x, a.y + b.y, a.z + b.z);
 }
 
-__device__ inline CudaVec3 cuda_vec3_subtract(const CudaVec3 &a,
-                                              const CudaVec3 &b) {
+__host__ __device__ inline CudaVec3 cuda_vec3_subtract(const CudaVec3 &a,
+                                                       const CudaVec3 &b) {
   return cuda_make_vec3(a.x - b.x, a.y - b.y, a.z - b.z);
 }
 
-__device__ inline CudaVec3 cuda_vec3_multiply_scalar(const CudaVec3 &v,
-                                                     double t) {
+__host__ __device__ inline CudaVec3 cuda_vec3_multiply_scalar(const CudaVec3 &v,
+                                                              double t) {
   return cuda_make_vec3(v.x * t, v.y * t, v.z * t);
 }
 
-__device__ inline CudaVec3 cuda_vec3_divide_scalar(const CudaVec3 &v,
-                                                   double t) {
+__host__ __device__ inline CudaVec3 cuda_vec3_divide_scalar(const CudaVec3 &v,
+                                                            double t) {
   return cuda_vec3_multiply_scalar(v, 1.0 / t);
 }
 
-__device__ inline double cuda_vec3_length(const CudaVec3 &v) {
+__host__ __device__ inline double cuda_vec3_length(const CudaVec3 &v) {
   return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
-__device__ inline double cuda_vec3_length_squared(const CudaVec3 &v) {
+__host__ __device__ inline double cuda_vec3_length_squared(const CudaVec3 &v) {
   return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 

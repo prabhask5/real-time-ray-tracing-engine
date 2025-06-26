@@ -5,6 +5,7 @@
 #include "../../core/Vec3Types.cuh"
 #include "../../utils/math/PerlinNoise.cuh"
 #include "../../utils/math/Vec3.cuh"
+#include "../../utils/memory/CudaSceneContext.cuh"
 
 enum class CudaTextureType { TEXTURE_SOLID, TEXTURE_CHECKER, TEXTURE_NOISE };
 
@@ -34,24 +35,25 @@ cuda_solid_color_texture_value(const CudaSolidColorTexture &texture, double u,
 // POD struct for checker texture.
 struct CudaCheckerTexture {
   double scale;
-  const CudaTexture *even_texture;
-  const CudaTexture *odd_texture;
+  size_t even_texture_index;
+  size_t odd_texture_index;
 };
 
 // Checker texture initialization function.
 __device__ inline CudaCheckerTexture
-cuda_make_checker_texture(double scale, const CudaTexture *even_texture,
-                          const CudaTexture *odd_texture) {
+cuda_make_checker_texture(double scale, size_t even_texture_index,
+                          size_t odd_texture_index) {
   CudaCheckerTexture texture;
   texture.scale = scale;
-  texture.even_texture = even_texture;
-  texture.odd_texture = odd_texture;
+  texture.even_texture_index = even_texture_index;
+  texture.odd_texture_index = odd_texture_index;
   return texture;
 }
 
 // Checker texture value function.
-__device__ CudaColor cuda_checker_texture_value(
-    const CudaCheckerTexture &texture, double u, double v, const CudaPoint3 &p);
+__device__ inline CudaColor
+cuda_checker_texture_value(const CudaCheckerTexture &texture, double u,
+                           double v, const CudaPoint3 &p);
 
 // POD struct for noise texture.
 struct CudaNoiseTexture {
@@ -82,22 +84,73 @@ cuda_noise_texture_value(const CudaNoiseTexture &texture, double u, double v,
 struct CudaTexture {
   CudaTextureType type;
   union {
-    CudaSolidColorTexture *solid;
-    CudaCheckerTexture *checker;
-    CudaNoiseTexture *noise;
+    CudaSolidColorTexture solid;
+    CudaCheckerTexture checker;
+    CudaNoiseTexture noise;
   };
 };
 
 // Texture value function.
-__device__ CudaColor cuda_texture_value(const CudaTexture &texture, double u,
-                                        double v, const CudaPoint3 &p);
+__device__ inline CudaColor cuda_texture_value(const CudaTexture &texture,
+                                               double u, double v,
+                                               const CudaPoint3 &p) {
+  switch (texture.type) {
+  case CudaTextureType::TEXTURE_SOLID:
+    return cuda_solid_color_texture_value(texture.solid, u, v, p);
+  case CudaTextureType::TEXTURE_CHECKER:
+    return cuda_checker_texture_value(texture.checker, u, v, p);
+  case CudaTextureType::TEXTURE_NOISE:
+    return cuda_noise_texture_value(texture.noise, u, v, p);
+  default:
+    // ERROR: Texture.cu::cuda_texture_value - Unknown Texture type in switch
+    // statement. This should never happen in well-formed code.
+    return cuda_make_vec3(0.0, 0.0, 0.0); // Safe fallback for GPU device code.
+  }
+}
 
 // Helper texture constructor functions.
-__device__ CudaTexture cuda_make_texture_solid(CudaColor albedo);
-__device__ CudaTexture
-cuda_make_texture_checker(double scale, const CudaTexture *even_texture,
-                          const CudaTexture *odd_texture);
-__device__ CudaTexture cuda_make_texture_noise(double scale,
-                                               CudaPerlinNoise perlin);
+__device__ inline CudaTexture cuda_make_texture_solid_color(CudaColor albedo) {
+  CudaTexture texture;
+  texture.type = CudaTextureType::TEXTURE_SOLID;
+  texture.solid = cuda_make_solid_color_texture(albedo);
+  return texture;
+}
+
+__device__ inline CudaTexture
+cuda_make_texture_checker(double scale, size_t even_texture_index,
+                          size_t odd_texture_index) {
+  CudaTexture texture;
+  texture.type = CudaTextureType::TEXTURE_CHECKER;
+  texture.checker =
+      cuda_make_checker_texture(scale, even_texture_index, odd_texture_index);
+  return texture;
+}
+
+__device__ inline CudaTexture cuda_make_texture_noise(double scale,
+                                                      CudaPerlinNoise perlin) {
+  CudaTexture texture;
+  texture.type = CudaTextureType::TEXTURE_NOISE;
+  texture.noise = cuda_make_noise_texture(scale, perlin);
+  return texture;
+}
+
+// Checker texture implementation now that CudaTexture is defined.
+__device__ inline CudaColor
+cuda_checker_texture_value(const CudaCheckerTexture &texture, double u,
+                           double v, const CudaPoint3 &p) {
+  double inv_scale = 1.0 / texture.scale;
+
+  int x_index = int(floor(inv_scale * p.x));
+  int y_index = int(floor(inv_scale * p.y));
+  int z_index = int(floor(inv_scale * p.z));
+
+  bool is_even = (x_index + y_index + z_index) % 2 == 0;
+
+  extern __device__ CudaSceneContextView *d_scene_context;
+  const CudaTexture *textures = d_scene_context->textures;
+  return is_even
+             ? cuda_texture_value(textures[texture.even_texture_index], u, v, p)
+             : cuda_texture_value(textures[texture.odd_texture_index], u, v, p);
+}
 
 #endif // USE_CUDA

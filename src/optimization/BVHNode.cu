@@ -3,8 +3,8 @@
 #include "../core/Hittable.cuh"
 #include "BVHNode.cuh"
 
-__device__ CudaBVHNode cuda_make_bvh_node(CudaHittable *left,
-                                          CudaHittable *right, bool is_leaf) {
+CudaBVHNode cuda_make_bvh_node(CudaHittable *left, CudaHittable *right,
+                               bool is_leaf) {
   CudaBVHNode node;
   node.left = left;
   node.right = right;

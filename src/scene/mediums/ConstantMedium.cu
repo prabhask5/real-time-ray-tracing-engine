@@ -3,14 +3,6 @@
 #include "../../core/Hittable.cuh"
 #include "ConstantMedium.cuh"
 
-__device__ CudaConstantMedium cuda_make_constant_medium(
-    const CudaHittable *boundary, double density, CudaTexture *texture) {
-  CudaMaterial *phase_function = new CudaMaterial();
-  *phase_function = cuda_make_material_isotropic(texture);
-
-  return cuda_make_constant_medium(boundary, density, phase_function);
-}
-
 __device__ bool cuda_constant_medium_hit(const CudaConstantMedium &medium,
                                          const CudaRay &ray,
                                          CudaInterval t_range,
@@ -51,7 +43,7 @@ __device__ bool cuda_constant_medium_hit(const CudaConstantMedium &medium,
   rec.point = cuda_ray_at(ray, rec.t);
   rec.normal = cuda_make_vec3(1.0, 0.0, 0.0);
   rec.front_face = true;
-  rec.material = const_cast<CudaMaterial *>(medium.phase_function);
+  rec.material_index = medium.phase_function_index;
 
   return true;
 }

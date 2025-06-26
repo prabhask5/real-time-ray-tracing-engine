@@ -21,6 +21,12 @@ if (ENABLE_CUDA)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 endif()
 
+# Enable RDC
+if (ENABLE_CUDA)
+    set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --relocatable-device-code=true")
+endif()
+
 # Set the output directory for built objects and rpath for dylib files.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")

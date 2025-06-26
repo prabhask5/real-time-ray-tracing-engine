@@ -3,8 +3,8 @@
 #include "../../core/Hittable.cuh"
 #include "Translate.cuh"
 
-__device__ inline CudaTranslate cuda_make_translate(const CudaHittable *object,
-                                                    const CudaVec3 &offset) {
+CudaTranslate cuda_make_translate(const CudaHittable *object,
+                                  const CudaVec3 &offset) {
   CudaTranslate translate;
   translate.object = object;
   translate.offset = offset;

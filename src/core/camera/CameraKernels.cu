@@ -4,6 +4,7 @@
 #include "../../utils/math/PDF.cuh"
 #include "../../utils/math/Utility.cuh"
 #include "../../utils/math/Vec3Utility.cuh"
+#include "../../utils/memory/CudaSceneContext.cuh"
 #include "../ScatterRecord.cuh"
 #include "CameraKernels.cuh"
 
@@ -120,18 +121,18 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
   // scattering based on the material.
 
   // Get material from hit record.
-  const CudaMaterial *material = rec.material;
+  const CudaMaterial &material = cuda_get_material(rec.material_index);
 
   // Calculate emission color.
   CudaColor color_from_emission =
-      cuda_material_emitted(*material, ray, rec, rec.u, rec.v, rec.point);
+      cuda_material_emitted(material, ray, rec, rec.u, rec.v, rec.point);
 
   // Try to scatter the ray.
   CudaScatterRecord srec;
 
   // If the material does not scatter, we just return the material's emitted
   // color for that point.
-  if (!cuda_material_scatter(*material, ray, rec, srec, state))
+  if (!cuda_material_scatter(material, ray, rec, srec, state))
     return color_from_emission;
 
   // If the material scatters the ray in a specific direction without using a
@@ -155,10 +156,10 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
   CudaPDF mixture_pdf;
   if (lights.type != CudaHittableType::HITTABLE_LIST ||
       lights.hittable_list->count == 0)
-    mixture_pdf = cuda_make_pdf_mixture(srec.pdf, srec.pdf);
+    mixture_pdf = cuda_make_pdf_mixture(&srec.pdf, &srec.pdf);
   else {
     CudaPDF hittable_pdf = cuda_make_pdf_hittable(&lights, rec.point);
-    mixture_pdf = cuda_make_pdf_mixture(&hittable_pdf, srec.pdf);
+    mixture_pdf = cuda_make_pdf_mixture(&hittable_pdf, &srec.pdf);
   }
 
   // Sample from the mixture PDF.
@@ -176,7 +177,7 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
   // Ask the material what its theoretical scattering PDF is for this
   // interaction. This is needed for physically-based importance sampling.
   double scattering_pdf =
-      cuda_material_scattering_pdf(*material, ray, rec, scattered_ray);
+      cuda_material_scattering_pdf(material, ray, rec, scattered_ray);
 
   // Scale the returned color by:
   /// - `attenuation`: how much the material reduces the ray's energy.
@@ -184,11 +185,13 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
   /// direction.
   /// - `1 / pdf_value`: normalizes the estimate based on how likely we were to
   /// choose this ray.
-  CudaColor color_from_scatter =
-      (srec.attenuation * scattering_pdf *
-       ray_color_cuda(scattered_ray, depth - 1, world, lights, background,
-                      state)) /
-      pdf_value;
+  CudaColor color_from_scatter = cuda_make_vec3(0.0, 0.0, 0.0);
+  if (pdf_value > 1e-8) { // Avoid division by zero
+    color_from_scatter = (srec.attenuation * scattering_pdf *
+                          ray_color_cuda(scattered_ray, depth - 1, world,
+                                         lights, background, state)) /
+                         pdf_value;
+  }
 
   // Add any emitted light from the surface (like glowing surfaces) to the
   // scattered result.
@@ -246,8 +249,9 @@ __global__ void static_render_kernel(
   if (i >= image_width || j >= end_row)
     return;
 
-  int pixel_index = j * image_width + i;
-  curandState *state = &rand_states[pixel_index];
+  int pixel_index = (j - start_row) * image_width + i;
+  int global_pixel_index = j * image_width + i;
+  curandState *state = &rand_states[global_pixel_index];
 
   CudaColor pixel_color = cuda_make_vec3(0, 0, 0);
 
