@@ -2,9 +2,11 @@
 #include "../utils/math/Interval.hpp"
 #include "HitRecord.hpp"
 
-HittableList::HittableList() {}
+HittableList::HittableList() : m_bbox(EMPTY_AABB) {}
 
-HittableList::HittableList(HittablePtr object) { add(object); };
+HittableList::HittableList(HittablePtr object) : m_bbox(EMPTY_AABB) {
+  add(object);
+};
 
 AABB HittableList::get_bounding_box() const { return m_bbox; }
 

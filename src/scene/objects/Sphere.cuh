@@ -22,13 +22,6 @@ struct CudaSphere {
 
 // Sphere initialization functions.
 
-CudaSphere cuda_make_sphere(const CudaPoint3 &center, double radius,
-                            size_t material_index);
-
-CudaSphere cuda_make_sphere(const CudaPoint3 &before_center,
-                            const CudaPoint3 &after_center, double radius,
-                            size_t material_index);
-
 __host__ __device__ inline CudaSphere cuda_make_sphere(const CudaRay &center,
                                                        double radius,
                                                        size_t material_index,

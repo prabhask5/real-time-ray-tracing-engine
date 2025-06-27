@@ -195,7 +195,6 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
   }
 
   // Initialize CUDA scene using new comprehensive system.
-  std::clog << "DEBUG: Initializing CUDA scene" << std::endl;
   CudaSceneData cuda_scene_data = initialize_cuda_scene(world, lights);
   if (cuda_scene_data.world.get() == nullptr ||
       cuda_scene_data.lights.get() == nullptr) {
@@ -207,11 +206,9 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
   }
 
   // Copy CudaHittable structs from device to host for kernel launch.
-  std::clog << "DEBUG: Copying CudaHittable structs to host" << std::endl;
   CudaHittable cuda_world, cuda_lights;
   cudaMemcpyDeviceToHostSafe(&cuda_world, cuda_scene_data.world.get(), 1);
   cudaMemcpyDeviceToHostSafe(&cuda_lights, cuda_scene_data.lights.get(), 1);
-  std::clog << "DEBUG: CudaHittable structs copied successfully" << std::endl;
 
   int sqrt_spp = static_cast<int>(std::sqrt(m_samples_per_pixel));
 

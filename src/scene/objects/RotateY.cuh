@@ -21,9 +21,6 @@ struct CudaRotateY {
 
 // RotateY initialization functions.
 
-CudaRotateY cuda_make_rotate_y(const CudaHittable *object,
-                               double angle_degrees);
-
 __host__ __device__ inline CudaRotateY
 cuda_make_rotate_y(const CudaHittable *object, double sin_theta,
                    double cos_theta, const CudaAABB &bbox) {

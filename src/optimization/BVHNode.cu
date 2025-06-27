@@ -3,20 +3,6 @@
 #include "../core/Hittable.cuh"
 #include "BVHNode.cuh"
 
-CudaBVHNode cuda_make_bvh_node(CudaHittable *left, CudaHittable *right,
-                               bool is_leaf) {
-  CudaBVHNode node;
-  node.left = left;
-  node.right = right;
-  node.is_leaf = is_leaf;
-
-  // Compute bounding box from children.
-  CudaAABB left_box = cuda_hittable_get_bounding_box(*left);
-  CudaAABB right_box = cuda_hittable_get_bounding_box(*right);
-  node.bbox = cuda_make_aabb(left_box, right_box);
-  return node;
-}
-
 __device__ bool cuda_bvh_node_hit(const CudaBVHNode &node, const CudaRay &ray,
                                   CudaInterval t_values, CudaHitRecord &record,
                                   curandState *rand_state) {

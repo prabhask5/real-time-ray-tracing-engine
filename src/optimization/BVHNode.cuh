@@ -23,9 +23,6 @@ struct CudaBVHNode {
 
 // BVHNode initialization functions.
 
-CudaBVHNode cuda_make_bvh_node(CudaHittable *left, CudaHittable *right,
-                               bool is_leaf = false);
-
 __host__ __device__ inline CudaBVHNode
 cuda_make_bvh_node(CudaHittable *left, CudaHittable *right, bool is_leaf,
                    const CudaAABB &bbox) {

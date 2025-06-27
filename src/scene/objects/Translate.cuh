@@ -19,8 +19,6 @@ struct CudaTranslate {
 };
 
 // Translate initialization functions.
-CudaTranslate cuda_make_translate(const CudaHittable *object,
-                                  const CudaVec3 &offset);
 
 __host__ __device__ inline CudaTranslate
 cuda_make_translate(const CudaHittable *object, const CudaVec3 &offset,

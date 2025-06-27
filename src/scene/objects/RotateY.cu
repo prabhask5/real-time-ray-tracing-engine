@@ -3,44 +3,6 @@
 #include "../../core/Hittable.cuh"
 #include "RotateY.cuh"
 
-CudaRotateY cuda_make_rotate_y(const CudaHittable *object,
-                               double angle_degrees) {
-  CudaRotateY rotate;
-  rotate.object = object;
-
-  double radians = cuda_degrees_to_radians(angle_degrees);
-  rotate.sin_theta = sin(radians);
-  rotate.cos_theta = cos(radians);
-  rotate.bbox = cuda_hittable_get_bounding_box(*object);
-
-  CudaPoint3 min = cuda_make_vec3(CUDA_INF, CUDA_INF, CUDA_INF);
-  CudaPoint3 max = cuda_make_vec3(-CUDA_INF, -CUDA_INF, -CUDA_INF);
-
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
-      for (int k = 0; k < 2; k++) {
-        double x = i * rotate.bbox.x.max + (1 - i) * rotate.bbox.x.min;
-        double y = j * rotate.bbox.y.max + (1 - j) * rotate.bbox.y.min;
-        double z = k * rotate.bbox.z.max + (1 - k) * rotate.bbox.z.min;
-
-        double new_x = rotate.cos_theta * x + rotate.sin_theta * z;
-        double new_z = -rotate.sin_theta * x + rotate.cos_theta * z;
-
-        CudaVec3 tester = cuda_make_vec3(new_x, y, new_z);
-        for (int c = 0; c < 3; c++) {
-          cuda_vec3_set(min, c,
-                        fmin(cuda_vec3_get(min, c), cuda_vec3_get(tester, c)));
-          cuda_vec3_set(max, c,
-                        fmax(cuda_vec3_get(max, c), cuda_vec3_get(tester, c)));
-        }
-      }
-    }
-  }
-
-  rotate.bbox = cuda_make_aabb(min, max);
-  return rotate;
-}
-
 __device__ bool cuda_rotate_y_hit(const CudaRotateY &rotate, const CudaRay &ray,
                                   CudaInterval t_values, CudaHitRecord &record,
                                   curandState *rand_state) {

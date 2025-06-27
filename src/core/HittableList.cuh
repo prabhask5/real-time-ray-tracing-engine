@@ -20,7 +20,6 @@ struct CudaHittableList {
 };
 
 // HittableList initialization functions.
-CudaHittableList cuda_make_hittable_list(CudaHittable *hittables, int count);
 
 __host__ __device__ inline CudaHittableList
 cuda_make_hittable_list(CudaHittable *hittables, int count,

@@ -425,7 +425,8 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
 
   // Initialize CUDA scene using new comprehensive system.
   CudaSceneData cuda_scene_data = initialize_cuda_scene(world, lights);
-  if (cuda_scene_data.world.get() == nullptr || cuda_scene_data.lights.get()) {
+  if (cuda_scene_data.world.get() == nullptr ||
+      cuda_scene_data.lights.get() == nullptr) {
     std::cerr << "Failed to initialize CUDA scene" << std::endl;
     cudaFree(d_accumulation);
     cudaFree(d_rand_states);

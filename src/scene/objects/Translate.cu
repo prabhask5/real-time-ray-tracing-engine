@@ -3,18 +3,6 @@
 #include "../../core/Hittable.cuh"
 #include "Translate.cuh"
 
-CudaTranslate cuda_make_translate(const CudaHittable *object,
-                                  const CudaVec3 &offset) {
-  CudaTranslate translate;
-  translate.object = object;
-  translate.offset = offset;
-  CudaAABB object_bbox = cuda_hittable_get_bounding_box(*object);
-  translate.bbox =
-      cuda_make_aabb(object_bbox.x + offset.x, object_bbox.y + offset.y,
-                     object_bbox.z + offset.z);
-  return translate;
-}
-
 __device__ bool cuda_translate_hit(const CudaTranslate &translate,
                                    const CudaRay &ray, CudaInterval t_range,
                                    CudaHitRecord &rec,

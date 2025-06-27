@@ -4,21 +4,7 @@
 #include "Hittable.cuh"
 #include "HittableList.cuh"
 #include <assert.h>
-
-CudaHittableList cuda_make_hittable_list(CudaHittable *hittables, int count) {
-  CudaHittableList list;
-  list.hittables = hittables;
-  list.count = count;
-
-  // Calculate bounding box from all objects.
-  list.bbox = cuda_make_aabb();
-  for (int i = 0; i < count; i++) {
-    list.bbox =
-        cuda_make_aabb(list.bbox, cuda_hittable_get_bounding_box(hittables[i]));
-  }
-
-  return list;
-}
+#include <iostream>
 
 __device__ bool cuda_hittable_list_hit(const CudaHittableList &list,
                                        const CudaRay &ray, CudaInterval t_range,

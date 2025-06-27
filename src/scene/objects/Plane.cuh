@@ -26,7 +26,8 @@ struct CudaPlane {
 
 // Plane initialization functions.
 CudaPlane cuda_make_plane(const CudaPoint3 &corner, const CudaVec3 &u_side,
-                          const CudaVec3 &v_side, size_t material_index);
+                          const CudaVec3 &v_side, size_t material_index,
+                          const CudaAABB &bbox);
 
 // Plane utility functions.
 __device__ bool cuda_plane_hit(const CudaPlane &plane, const CudaRay &ray,

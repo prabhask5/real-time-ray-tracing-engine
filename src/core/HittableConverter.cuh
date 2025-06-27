@@ -48,195 +48,81 @@ public:
 
   // Convert CPU Hittable to CUDA Hittable with type detection.
   CudaHittable cpu_to_cuda_hittable(HittablePtr cpu_hittable) {
-    std::clog << "DEBUG: cpu_to_cuda_hittable: Starting conversion"
-              << std::endl;
-
-    if (!cpu_hittable) {
-      std::clog << "DEBUG ERROR: cpu_to_cuda_hittable: Null hittable pointer!"
-                << std::endl;
-      throw std::runtime_error("Null hittable pointer in conversion");
-    }
-
-    if (!cpu_hittable.get()) {
-      std::clog << "DEBUG ERROR: cpu_to_cuda_hittable: Null raw pointer from "
-                   "shared_ptr!"
-                << std::endl;
-      throw std::runtime_error(
-          "Null raw pointer from shared_ptr in conversion");
-    }
-
-    std::clog
-        << "DEBUG: cpu_to_cuda_hittable: About to start dynamic_cast checks"
-        << std::endl;
     CudaHittable cuda_hittable;
 
-    try {
-      std::clog
-          << "TEMP DEBUG: cpu_to_cuda_hittable: Trying Sphere cast on object "
-          << cpu_hittable.get() << " (REMOVE LATER)" << std::endl;
-      if (auto sphere = dynamic_cast<const Sphere *>(cpu_hittable.get())) {
-        std::clog << "DEBUG: cpu_to_cuda_hittable: Converting sphere"
-                  << std::endl;
-        cuda_hittable.type = CudaHittableType::HITTABLE_SPHERE;
-        std::clog << "DEBUG: cpu_to_cuda_hittable: Set sphere type"
-                  << std::endl;
-        cuda_hittable.sphere = m_context.suballocate<CudaSphere>(1);
-        std::clog << "DEBUG: cpu_to_cuda_hittable: Allocated sphere memory"
-                  << std::endl;
-        CudaSphere host_sphere = cpu_to_cuda_sphere(*sphere);
-        std::clog << "DEBUG: cpu_to_cuda_hittable: Converted sphere data"
-                  << std::endl;
-        cudaMemcpyHostToDeviceSafe(cuda_hittable.sphere, &host_sphere, 1);
-        std::clog << "DEBUG: cpu_to_cuda_hittable: Copied sphere to device"
-                  << std::endl;
-      } else {
-        std::clog << "TEMP DEBUG: cpu_to_cuda_hittable: Trying Plane cast "
-                     "(REMOVE LATER)"
-                  << std::endl;
-        if (auto plane = dynamic_cast<const Plane *>(cpu_hittable.get())) {
-          std::clog << "DEBUG: cpu_to_cuda_hittable: Converting plane"
-                    << std::endl;
-          cuda_hittable.type = CudaHittableType::HITTABLE_PLANE;
-          cuda_hittable.plane = m_context.suballocate<CudaPlane>(1);
-          CudaPlane host_plane = cpu_to_cuda_plane(*plane);
-          cudaMemcpyHostToDeviceSafe(cuda_hittable.plane, &host_plane, 1);
-        } else {
-          std::clog << "TEMP DEBUG: cpu_to_cuda_hittable: Trying other types "
-                       "(REMOVE LATER)..."
-                    << std::endl;
-          if (auto bvh_node =
-                  dynamic_cast<const BVHNode *>(cpu_hittable.get())) {
-            std::clog << "DEBUG: cpu_to_cuda_hittable: Converting BVH node"
-                      << std::endl;
-            cuda_hittable.type = CudaHittableType::HITTABLE_BVH_NODE;
-            cuda_hittable.bvh_node = m_context.suballocate<CudaBVHNode>(1);
-            CudaBVHNode host_bvh_node = cpu_to_cuda_bvh_node(*bvh_node);
-            cudaMemcpyHostToDeviceSafe(cuda_hittable.bvh_node, &host_bvh_node,
-                                       1);
-          } else if (auto constant_medium =
-                         dynamic_cast<const ConstantMedium *>(
-                             cpu_hittable.get())) {
-            cuda_hittable.type = CudaHittableType::HITTABLE_CONSTANT_MEDIUM;
-            cuda_hittable.constant_medium =
-                m_context.suballocate<CudaConstantMedium>(1);
-            CudaConstantMedium host_constant_medium =
-                cpu_to_cuda_constant_medium(*constant_medium);
-            cudaMemcpyHostToDeviceSafe(cuda_hittable.constant_medium,
-                                       &host_constant_medium, 1);
-          } else if (auto translate =
-                         dynamic_cast<const Translate *>(cpu_hittable.get())) {
-            std::clog << "TEMP DEBUG: cpu_to_cuda_hittable: Converting "
-                         "translate (REMOVE LATER)"
-                      << std::endl;
-            cuda_hittable.type = CudaHittableType::HITTABLE_TRANSLATE;
-            cuda_hittable.translate = m_context.suballocate<CudaTranslate>(1);
-            std::clog << "TEMP DEBUG: cpu_to_cuda_hittable: About to call "
-                         "cpu_to_cuda_translate (REMOVE LATER)"
-                      << std::endl;
-            CudaTranslate host_translate = cpu_to_cuda_translate(*translate);
-            std::clog << "TEMP DEBUG: cpu_to_cuda_hittable: "
-                         "cpu_to_cuda_translate completed (REMOVE LATER)"
-                      << std::endl;
-            cudaMemcpyHostToDeviceSafe(cuda_hittable.translate, &host_translate,
-                                       1);
-          } else if (auto rotate_y =
-                         dynamic_cast<const RotateY *>(cpu_hittable.get())) {
-            std::clog << "TEMP DEBUG: cpu_to_cuda_hittable: Converting "
-                         "rotate_y (REMOVE LATER)"
-                      << std::endl;
-            cuda_hittable.type = CudaHittableType::HITTABLE_ROTATE_Y;
-            cuda_hittable.rotate_y = m_context.suballocate<CudaRotateY>(1);
-            std::clog << "TEMP DEBUG: cpu_to_cuda_hittable: About to call "
-                         "cpu_to_cuda_rotate_y (REMOVE LATER)"
-                      << std::endl;
-            CudaRotateY host_rotate_y = cpu_to_cuda_rotate_y(*rotate_y);
-            std::clog << "TEMP DEBUG: cpu_to_cuda_hittable: "
-                         "cpu_to_cuda_rotate_y completed (REMOVE LATER)"
-                      << std::endl;
-            cudaMemcpyHostToDeviceSafe(cuda_hittable.rotate_y, &host_rotate_y,
-                                       1);
-          } else if (auto hittable_list = dynamic_cast<const HittableList *>(
-                         cpu_hittable.get())) {
-            std::clog << "DEBUG: cpu_to_cuda_hittable: Converting hittable list"
-                      << std::endl;
-            cuda_hittable.type = CudaHittableType::HITTABLE_LIST;
-            const std::vector<HittablePtr> &cpu_objects =
-                hittable_list->get_objects();
-            int object_count = (int)cpu_objects.size();
-            CudaHittable *cuda_hittables_buffer =
-                m_context.suballocate<CudaHittable>(object_count);
-            cuda_hittable.hittable_list =
-                m_context.suballocate<CudaHittableList>(1);
-            CudaHittableList host_hittable_list = cpu_to_cuda_hittable_list(
-                *hittable_list, cuda_hittables_buffer, object_count);
-            cudaMemcpyHostToDeviceSafe(cuda_hittable.hittable_list,
-                                       &host_hittable_list, 1);
-          } else {
-            std::clog << "TEMP DEBUG: cpu_to_cuda_hittable: Unknown hittable "
-                         "type! (REMOVE LATER)"
-                      << std::endl;
-            std::clog << "TEMP DEBUG: Object pointer: " << cpu_hittable.get()
-                      << " (REMOVE LATER)" << std::endl;
-            std::clog << "TEMP DEBUG: Trying to get type_info... (REMOVE LATER)"
-                      << std::endl;
-            try {
-              const std::type_info &type_info = typeid(*cpu_hittable.get());
-              std::clog << "TEMP DEBUG: Type name: " << type_info.name()
-                        << " (REMOVE LATER)" << std::endl;
-            } catch (...) {
-              std::clog << "TEMP DEBUG: Failed to get type_info - object is "
-                           "corrupted! (REMOVE LATER)"
-                        << std::endl;
-            }
-            throw std::runtime_error(
-                "HittableConversions.cuh::cpu_to_cuda_hittable: Unknown "
-                "hittable type encountered during CPU to CUDA conversion. "
-                "Unable to convert unrecognized hittable object.");
-          }
-        }
-      }
-    } catch (const std::exception &e) {
-      std::clog
-          << "TEMP DEBUG ERROR: Exception during dynamic_cast (REMOVE LATER): "
-          << e.what() << std::endl;
-      throw;
-    } catch (...) {
-      std::clog << "TEMP DEBUG ERROR: Unknown exception during dynamic_cast "
-                   "(REMOVE LATER)"
-                << std::endl;
-      throw;
+    if (auto sphere = dynamic_cast<const Sphere *>(cpu_hittable.get())) {
+      cuda_hittable.type = CudaHittableType::HITTABLE_SPHERE;
+      cuda_hittable.sphere = m_context.suballocate<CudaSphere>(1);
+      CudaSphere host_sphere = cpu_to_cuda_sphere(*sphere);
+      cudaMemcpyHostToDeviceSafe(cuda_hittable.sphere, &host_sphere, 1);
+    } else if (auto plane = dynamic_cast<const Plane *>(cpu_hittable.get())) {
+      cuda_hittable.type = CudaHittableType::HITTABLE_PLANE;
+      cuda_hittable.plane = m_context.suballocate<CudaPlane>(1);
+      CudaPlane host_plane = cpu_to_cuda_plane(*plane);
+      cudaMemcpyHostToDeviceSafe(cuda_hittable.plane, &host_plane, 1);
+    } else if (auto bvh_node =
+                   dynamic_cast<const BVHNode *>(cpu_hittable.get())) {
+      cuda_hittable.type = CudaHittableType::HITTABLE_BVH_NODE;
+      cuda_hittable.bvh_node = m_context.suballocate<CudaBVHNode>(1);
+      CudaBVHNode host_bvh_node = cpu_to_cuda_bvh_node(*bvh_node);
+      cudaMemcpyHostToDeviceSafe(cuda_hittable.bvh_node, &host_bvh_node, 1);
+    } else if (auto constant_medium =
+                   dynamic_cast<const ConstantMedium *>(cpu_hittable.get())) {
+      cuda_hittable.type = CudaHittableType::HITTABLE_CONSTANT_MEDIUM;
+      cuda_hittable.constant_medium =
+          m_context.suballocate<CudaConstantMedium>(1);
+      CudaConstantMedium host_constant_medium =
+          cpu_to_cuda_constant_medium(*constant_medium);
+      cudaMemcpyHostToDeviceSafe(cuda_hittable.constant_medium,
+                                 &host_constant_medium, 1);
+    } else if (auto translate =
+                   dynamic_cast<const Translate *>(cpu_hittable.get())) {
+      cuda_hittable.type = CudaHittableType::HITTABLE_TRANSLATE;
+      cuda_hittable.translate = m_context.suballocate<CudaTranslate>(1);
+      CudaTranslate host_translate = cpu_to_cuda_translate(*translate);
+      cudaMemcpyHostToDeviceSafe(cuda_hittable.translate, &host_translate, 1);
+    } else if (auto rotate_y =
+                   dynamic_cast<const RotateY *>(cpu_hittable.get())) {
+      cuda_hittable.type = CudaHittableType::HITTABLE_ROTATE_Y;
+      cuda_hittable.rotate_y = m_context.suballocate<CudaRotateY>(1);
+      CudaRotateY host_rotate_y = cpu_to_cuda_rotate_y(*rotate_y);
+      cudaMemcpyHostToDeviceSafe(cuda_hittable.rotate_y, &host_rotate_y, 1);
+    } else if (auto hittable_list =
+                   dynamic_cast<const HittableList *>(cpu_hittable.get())) {
+      cuda_hittable.type = CudaHittableType::HITTABLE_LIST;
+      const std::vector<HittablePtr> &cpu_objects =
+          hittable_list->get_objects();
+      int object_count = (int)cpu_objects.size();
+      CudaHittable *cuda_hittables_buffer =
+          m_context.suballocate<CudaHittable>(object_count);
+      cuda_hittable.hittable_list = m_context.suballocate<CudaHittableList>(1);
+      CudaHittableList host_hittable_list = cpu_to_cuda_hittable_list(
+          *hittable_list, cuda_hittables_buffer, object_count);
+      cudaMemcpyHostToDeviceSafe(cuda_hittable.hittable_list,
+                                 &host_hittable_list, 1);
+    } else {
+      throw std::runtime_error(
+          "HittableConversions.cuh::cpu_to_cuda_hittable: Unknown "
+          "hittable type encountered during CPU to CUDA conversion. "
+          "Unable to convert unrecognized hittable object.");
     }
 
-    std::clog << "DEBUG: cpu_to_cuda_hittable: Conversion complete"
-              << std::endl;
     return cuda_hittable;
   }
 
 private:
   // Convert CPU Sphere to CUDA Sphere POD struct.
   inline CudaSphere cpu_to_cuda_sphere(const Sphere &cpu_sphere) {
-    std::clog << "DEBUG: cpu_to_cuda_sphere: Starting sphere conversion"
-              << std::endl;
     Ray cpu_center = cpu_sphere.get_center();
-    std::clog << "DEBUG: cpu_to_cuda_sphere: Got center" << std::endl;
     double radius = cpu_sphere.get_radius();
-    std::clog << "DEBUG: cpu_to_cuda_sphere: Got radius" << std::endl;
     AABB bbox = cpu_sphere.get_bounding_box();
-    std::clog << "DEBUG: cpu_to_cuda_sphere: Got bounding box" << std::endl;
     MaterialPtr material = cpu_sphere.get_material();
-    std::clog << "DEBUG: cpu_to_cuda_sphere: Got material" << std::endl;
 
     CudaRay cuda_center = cpu_to_cuda_ray(cpu_center);
-    std::clog << "DEBUG: cpu_to_cuda_sphere: Converted ray" << std::endl;
     CudaAABB cuda_bbox = cpu_to_cuda_aabb(bbox);
-    std::clog << "DEBUG: cpu_to_cuda_sphere: Converted AABB" << std::endl;
-
     size_t material_index = m_material_converter.get_material_index(material);
-    std::clog << "DEBUG: cpu_to_cuda_sphere: Got material index" << std::endl;
-    CudaSphere result =
-        cuda_make_sphere(cuda_center, radius, material_index, cuda_bbox);
-    std::clog << "DEBUG: cpu_to_cuda_sphere: Created sphere POD" << std::endl;
-    return result;
+
+    return cuda_make_sphere(cuda_center, radius, material_index, cuda_bbox);
   }
 
   // Convert CPU Plane to CUDA Plane POD struct.
@@ -245,14 +131,16 @@ private:
     Vec3 u_side = cpu_plane.get_u_side();
     Vec3 v_side = cpu_plane.get_v_side();
     MaterialPtr material = cpu_plane.get_material();
+    AABB cpu_bbox = cpu_plane.get_bounding_box();
 
     CudaPoint3 cuda_corner = cpu_to_cuda_vec3(corner);
     CudaVec3 cuda_u_side = cpu_to_cuda_vec3(u_side);
     CudaVec3 cuda_v_side = cpu_to_cuda_vec3(v_side);
+    CudaAABB cuda_bbox = cpu_to_cuda_aabb(cpu_bbox);
 
     size_t material_index = m_material_converter.get_material_index(material);
     return cuda_make_plane(cuda_corner, cuda_u_side, cuda_v_side,
-                           material_index);
+                           material_index, cuda_bbox);
   }
 
   // Convert CPU RotateY to CUDA RotateY.
@@ -267,29 +155,19 @@ private:
     cudaMemcpyHostToDeviceSafe(cuda_object, &host_object, 1);
 
     double radians = angle_degrees * CUDA_PI / 180.0;
+    CudaAABB cuda_bbox = cpu_to_cuda_aabb(cpu_bbox);
+
     return cuda_make_rotate_y(cuda_object, sin(radians), cos(radians),
-                              cpu_to_cuda_aabb(cpu_bbox));
+                              cuda_bbox);
   }
 
   // Convert CPU Translate to CUDA Translate POD struct.
   inline CudaTranslate cpu_to_cuda_translate(const Translate &cpu_translate) {
-    std::clog << "TEMP DEBUG: cpu_to_cuda_translate: Starting translate "
-                 "conversion (REMOVE LATER)"
-              << std::endl;
     HittablePtr cpu_object = cpu_translate.get_object();
     Vec3 cpu_offset = cpu_translate.get_offset();
-    std::clog << "TEMP DEBUG: cpu_to_cuda_translate: Got object and offset "
-                 "(REMOVE LATER)"
-              << std::endl;
 
     CudaHittable *cuda_object = m_context.suballocate<CudaHittable>(1);
-    std::clog << "TEMP DEBUG: cpu_to_cuda_translate: About to recursively "
-                 "convert object (REMOVE LATER)"
-              << std::endl;
     CudaHittable host_object = cpu_to_cuda_hittable(cpu_object);
-    std::clog << "TEMP DEBUG: cpu_to_cuda_translate: Recursive conversion "
-                 "complete (REMOVE LATER)"
-              << std::endl;
     cudaMemcpyHostToDeviceSafe(cuda_object, &host_object, 1);
 
     CudaVec3 cuda_offset = cpu_to_cuda_vec3(cpu_offset);
@@ -316,28 +194,20 @@ private:
 
   // Convert CPU BVHNode to CUDA BVHNode POD struct.
   inline CudaBVHNode cpu_to_cuda_bvh_node(const BVHNode &cpu_bvh_node) {
-    std::clog << "TEMP DEBUG: cpu_to_cuda_bvh_node: Starting BVH conversion "
-                 "(REMOVE LATER)"
-              << std::endl;
     CudaHittable *left = m_context.suballocate<CudaHittable>(1);
     CudaHittable *right = m_context.suballocate<CudaHittable>(1);
-    std::clog << "TEMP DEBUG: cpu_to_cuda_bvh_node: Allocated memory, "
-                 "converting left child (REMOVE LATER)"
-              << std::endl;
-
     CudaHittable host_left = cpu_to_cuda_hittable(cpu_bvh_node.get_left());
-    std::clog << "TEMP DEBUG: cpu_to_cuda_bvh_node: Left child converted, "
-                 "converting right child (REMOVE LATER)"
-              << std::endl;
     CudaHittable host_right = cpu_to_cuda_hittable(cpu_bvh_node.get_right());
-
     cudaMemcpyHostToDeviceSafe(left, &host_left, 1);
     cudaMemcpyHostToDeviceSafe(right, &host_right, 1);
 
     bool is_leaf = host_left.type != CudaHittableType::HITTABLE_BVH_NODE &&
                    host_right.type != CudaHittableType::HITTABLE_BVH_NODE;
 
-    return cuda_make_bvh_node(left, right, is_leaf);
+    AABB cpu_bbox = cpu_bvh_node.get_bounding_box();
+    CudaAABB cuda_bbox = cpu_to_cuda_aabb(cpu_bbox);
+
+    return cuda_make_bvh_node(left, right, is_leaf, cuda_bbox);
   }
 
   // Convert CPU HittableList to CUDA HittableList.
@@ -349,6 +219,7 @@ private:
                             CudaHittable *cuda_hittables_buffer,
                             int num_objects) {
     const std::vector<HittablePtr> &cpu_objects = cpu_list.get_objects();
+    AABB cpu_bbox = cpu_list.get_bounding_box();
 
     // Convert each hittable object on host first, then copy to device.
     std::vector<CudaHittable> host_hittables(num_objects);
@@ -356,13 +227,15 @@ private:
       const HittablePtr &cpu_object = cpu_objects[i];
       host_hittables[i] = cpu_to_cuda_hittable(cpu_object);
     }
+    CudaAABB cuda_bbox = cpu_to_cuda_aabb(cpu_bbox);
 
     // Copy all hittables to device buffer at once.
     cudaMemcpyHostToDeviceSafe(cuda_hittables_buffer, host_hittables.data(),
                                num_objects);
 
     // Create CUDA hittable list using POD initialization function.
-    return cuda_make_hittable_list(cuda_hittables_buffer, num_objects);
+    return cuda_make_hittable_list(cuda_hittables_buffer, num_objects,
+                                   cuda_bbox);
   }
 };
 

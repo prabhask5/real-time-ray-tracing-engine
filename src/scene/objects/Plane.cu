@@ -3,7 +3,8 @@
 #include "Plane.cuh"
 
 CudaPlane cuda_make_plane(const CudaPoint3 &corner, const CudaVec3 &u_side,
-                          const CudaVec3 &v_side, size_t material_index) {
+                          const CudaVec3 &v_side, size_t material_index,
+                          const CudaAABB &bbox) {
   CudaPlane plane;
   plane.corner = corner;
   plane.u_side = u_side;
@@ -16,14 +17,7 @@ CudaPlane cuda_make_plane(const CudaPoint3 &corner, const CudaVec3 &u_side,
   plane.w = cuda_vec3_divide_scalar(n, cuda_vec3_dot_product(n, n));
   plane.surface_area = cuda_vec3_length(n);
 
-  CudaPoint3 p0 = corner;
-  CudaPoint3 p1 = cuda_vec3_add(corner, u_side);
-  CudaPoint3 p2 = cuda_vec3_add(corner, v_side);
-  CudaPoint3 p3 = cuda_vec3_add(cuda_vec3_add(corner, u_side), v_side);
-
-  CudaAABB box1 = cuda_make_aabb(p0, p3);
-  CudaAABB box2 = cuda_make_aabb(p1, p2);
-  plane.bbox = cuda_make_aabb(box1, box2);
+  plane.bbox = bbox;
   return plane;
 }
 
@@ -63,7 +57,7 @@ __device__ bool cuda_plane_hit(const CudaPlane &plane, const CudaRay &ray,
 __device__ double cuda_plane_pdf_value(const CudaPlane &plane,
                                        const CudaPoint3 &origin,
                                        const CudaVec3 &direction) {
-  CudaRay ray = cuda_make_ray(origin, direction);
+  CudaRay ray = cuda_make_ray(origin, direction, 0.0);
   CudaHitRecord record;
   if (!cuda_plane_hit(plane, ray, cuda_make_interval(0.001, CUDA_INF), record,
                       nullptr))
