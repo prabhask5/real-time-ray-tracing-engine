@@ -20,6 +20,9 @@
 #include "objects/Translate.hpp"
 #include "textures/CheckerTexture.hpp"
 #include "textures/TextureConverter.cuh"
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <memory>
 #include <unordered_set>
 
@@ -66,6 +69,38 @@ struct SceneComplexityStats {
     if (estimated_total_memory < 16 * 1024 * 1024) {
       estimated_total_memory = 16 * 1024 * 1024;
     }
+  }
+
+  void print_scene_stats() {
+    if (!std::filesystem::exists("logs"))
+      std::filesystem::create_directories("logs");
+
+    std::clog << "[DEBUG] Printing CUDA scene complexity/memory information to "
+                 "logs/cuda_scene_complexity_debug.txt"
+              << std::endl;
+    std::ofstream out("logs/cuda_scene_complexity_debug.txt",
+                      std::ios::out | std::ios::trunc);
+
+    out << "Scene Complexity Statistics:" << std::endl;
+    out << "  Object counts:" << std::endl;
+    out << "    Spheres: " << sphere_count << std::endl;
+    out << "    Planes: " << plane_count << std::endl;
+    out << "    BVH nodes: " << bvh_node_count << std::endl;
+    out << "    RotateY: " << rotate_y_count << std::endl;
+    out << "    Translate: " << translate_count << std::endl;
+    out << "    Constant mediums: " << constant_medium_count << std::endl;
+    out << "    Hittable lists: " << hittable_list_count << std::endl;
+    out << "    Total list objects: " << total_list_objects << std::endl;
+    out << "  Resource counts:" << std::endl;
+    out << "    Materials: " << material_count << std::endl;
+    out << "    Textures: " << texture_count << std::endl;
+    out << "  Memory estimates:" << std::endl;
+    out << "    Object memory: " << (estimated_object_memory / 1024) << " KB"
+        << std::endl;
+    out << "    Total memory: " << (estimated_total_memory / (1024 * 1024))
+        << " MB" << std::endl;
+
+    out.close();
   }
 };
 
@@ -212,13 +247,16 @@ analyze_scene_complexity(const Hittable &cpu_world,
 
 // Main initialization function.
 inline CudaSceneData initialize_cuda_scene(const Hittable &cpu_world,
-                                           const Hittable &cpu_lights) {
+                                           const Hittable &cpu_lights,
+                                           bool use_debug = false) {
   // Get singleton scene context.
   CudaSceneContext &context = CudaSceneContext::get_context();
 
   // Perform comprehensive scene analysis.
   SceneComplexityStats complexity_stats =
       analyze_scene_complexity(cpu_world, cpu_lights);
+  if (use_debug)
+    complexity_stats.print_scene_stats();
 
   // Calculate buffer size in MB (add extra safety margin).
   size_t buffer_size_mb = std::max(

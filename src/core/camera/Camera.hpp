@@ -4,6 +4,10 @@
 #include "../Vec3Types.hpp"
 #include "CameraConfig.hpp"
 
+#ifdef USE_CUDA
+struct CudaHittable; // From Hittable.cuh.
+#endif
+
 class Hittable;     // From Hittable.hpp.
 class HittableList; // From HittableList.hpp.
 class Ray;          // From Ray.hpp.
@@ -86,6 +90,9 @@ protected:
   // Control CUDA GPU rendering.
   bool m_use_gpu = false;
 
+  // Constol debug more for more logging.
+  bool m_use_debug = false;
+
   // Cold data: configuration parameters (used mainly during initialization).
 
   // Scene background color.
@@ -103,6 +110,21 @@ protected:
 protected:
   // Calculates all internal fields used to construct rays.
   void initialize();
+
+  // Print JSON representation of a HittableList top level object representing
+  // a scene (world or lights).
+  void output_cpu_scene_json(const HittableList &obj,
+                             const std::string file_name);
+
+#ifdef USE_CUDA
+  // Print JSON representation of a CudaHittable top level object representing
+  // a scene (world or lights).
+  void output_cuda_scene_json(const CudaHittable &obj,
+                              const std::string file_name);
+
+  // Print JSON representation of the CudaSceneContext.
+  void output_cuda_scene_context_json();
+#endif
 
   // Construct a camera ray originating from the defocus disk and directed at a
   // randomly sampled point around the pixel location i, j for stratified sample

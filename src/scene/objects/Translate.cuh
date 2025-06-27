@@ -48,4 +48,7 @@ cuda_translate_get_bounding_box(const CudaTranslate &translate) {
   return translate.bbox;
 }
 
+// JSON serialization function for CudaTranslate.
+std::string cuda_json_translate(const CudaTranslate &obj);
+
 #endif // USE_CUDA

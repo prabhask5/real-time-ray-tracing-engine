@@ -12,6 +12,8 @@
 #include "../../utils/math/Vec3Utility.cuh"
 #include "../../utils/memory/CudaSceneContext.cuh"
 #include "../textures/Texture.cuh"
+#include <iomanip>
+#include <sstream>
 
 enum class CudaMaterialType {
   MATERIAL_LAMBERTIAN,
@@ -304,6 +306,100 @@ cuda_make_material_isotropic(size_t texture_index) {
   material.type = CudaMaterialType::MATERIAL_ISOTROPIC;
   material.isotropic = cuda_make_isotropic_material(texture_index);
   return material;
+}
+
+// JSON serialization functions for CUDA materials.
+inline std::string cuda_json_metal_material(const CudaMetalMaterial &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaMetalMaterial\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"albedo\":" << cuda_json_vec3(obj.albedo) << ",";
+  oss << "\"fuzz\":" << obj.fuzz;
+  oss << "}";
+  return oss.str();
+}
+
+inline std::string
+cuda_json_lambertian_material(const CudaLambertianMaterial &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaLambertianMaterial\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"texture_index\":" << obj.texture_index;
+  oss << "}";
+  return oss.str();
+}
+
+inline std::string
+cuda_json_dielectric_material(const CudaDielectricMaterial &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaDielectricMaterial\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"refraction_index\":" << obj.refraction_index;
+  oss << "}";
+  return oss.str();
+}
+
+inline std::string
+cuda_json_diffuse_light_material(const CudaDiffuseLightMaterial &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaDiffuseLightMaterial\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"texture_index\":" << obj.texture_index;
+  oss << "}";
+  return oss.str();
+}
+
+inline std::string
+cuda_json_isotropic_material(const CudaIsotropicMaterial &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaIsotropicMaterial\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"texture_index\":" << obj.texture_index;
+  oss << "}";
+  return oss.str();
+}
+
+inline std::string cuda_json_material(const CudaMaterial &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaMaterial\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"material_type\":";
+  switch (obj.type) {
+  case CudaMaterialType::MATERIAL_LAMBERTIAN:
+    oss << "\"LAMBERTIAN\",";
+    oss << "\"lambertian\":" << cuda_json_lambertian_material(obj.lambertian);
+    break;
+  case CudaMaterialType::MATERIAL_METAL:
+    oss << "\"METAL\",";
+    oss << "\"metal\":" << cuda_json_metal_material(obj.metal);
+    break;
+  case CudaMaterialType::MATERIAL_DIELECTRIC:
+    oss << "\"DIELECTRIC\",";
+    oss << "\"dielectric\":" << cuda_json_dielectric_material(obj.dielectric);
+    break;
+  case CudaMaterialType::MATERIAL_DIFFUSE_LIGHT:
+    oss << "\"DIFFUSE_LIGHT\",";
+    oss << "\"diffuse\":" << cuda_json_diffuse_light_material(obj.diffuse);
+    break;
+  case CudaMaterialType::MATERIAL_ISOTROPIC:
+    oss << "\"ISOTROPIC\",";
+    oss << "\"isotropic\":" << cuda_json_isotropic_material(obj.isotropic);
+    break;
+  }
+  oss << "}";
+  return oss.str();
 }
 
 #endif // USE_CUDA

@@ -5,8 +5,11 @@
 #include "../../core/Vec3Types.hpp"
 #include "../../utils/math/SimdOps.hpp"
 #include "../../utils/math/SimdTypes.hpp"
+#include "../materials/Material.hpp"
 #include "../materials/MaterialTypes.hpp"
 #include "../textures/TextureTypes.hpp"
+#include <iomanip>
+#include <sstream>
 
 // Represents a participating medium—such as smoke, fog, or gas—that can scatter
 // rays randomly inside a volume instead of just reflecting off surfaces. It
@@ -39,6 +42,21 @@ public:
   double get_density() const;
 
   MaterialPtr get_phase_function() const;
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"ConstantMedium\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"density\":" << m_density << ",";
+    oss << "\"boundary\":" << (m_boundary ? m_boundary->json() : "null") << ",";
+    oss << "\"phase_function\":\""
+        << (m_phase_function ? m_phase_function->json() : "null") << "\"";
+    oss << "}";
+    return oss.str();
+  }
 
 private:
   // Hot data: density used in scattering probability calculations.

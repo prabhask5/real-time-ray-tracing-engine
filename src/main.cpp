@@ -155,6 +155,7 @@ int main(int argc, char **argv) {
       .use_parallelism = options.use_parallelism,
       .use_bvh = options.use_bvh,
       .use_gpu = is_cuda_enabled && options.use_gpu,
+      .use_debug = options.debug,
   };
 
   populate_cornell_box_scene(world, lights, cam_config);

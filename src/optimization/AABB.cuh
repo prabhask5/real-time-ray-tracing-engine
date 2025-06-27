@@ -5,6 +5,8 @@
 #include "../core/Ray.cuh"
 #include "../core/Vec3Types.cuh"
 #include "../utils/math/Interval.cuh"
+#include <iomanip>
+#include <sstream>
 
 // POD struct representing an Axis-Aligned Bounding Box.
 struct CudaAABB {
@@ -132,5 +134,19 @@ __device__ inline CudaAABB cuda_universe_aabb() {
 // For compatibility, define macros.
 #define CUDA_EMPTY_AABB cuda_empty_aabb()
 #define CUDA_UNIVERSE_AABB cuda_universe_aabb()
+
+// JSON serialization function for CudaAABB.
+inline std::string cuda_json_aabb(const CudaAABB &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaAABB\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"x\":" << cuda_json_interval(obj.x) << ",";
+  oss << "\"y\":" << cuda_json_interval(obj.y) << ",";
+  oss << "\"z\":" << cuda_json_interval(obj.z);
+  oss << "}";
+  return oss.str();
+}
 
 #endif // USE_CUDA

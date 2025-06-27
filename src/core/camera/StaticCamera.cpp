@@ -39,13 +39,19 @@ void StaticCamera::render_cpu(HittableList &world, HittableList &lights) {
       lights = HittableList(std::make_shared<BVHNode>(lights));
   }
 
+  if (m_use_debug) {
+    output_cpu_scene_json(world, "cpu_world_debug.json");
+    output_cpu_scene_json(lights, "cpu_lights_debug.json");
+  }
+
   if (!std::filesystem::exists("output"))
     std::filesystem::create_directories("output");
 
   std::ofstream image("output/" + m_output_file,
                       std::ios::out | std::ios::trunc);
   if (!image) {
-    std::cerr << "Failed to open output/image.ppm for writing." << std::endl;
+    std::cerr << "[ERROR] Failed to open output/image.ppm for writing."
+              << std::endl;
     return;
   }
   image << "P3\n" << m_image_width << ' ' << m_image_height << "\n255\n";
@@ -55,8 +61,8 @@ void StaticCamera::render_cpu(HittableList &world, HittableList &lights) {
     std::vector<Color> row_colors(m_image_width);
 
     for (int j = 0; j < m_image_height; ++j) {
-      std::clog << "\rScanlines remaining: " << (m_image_height - j) << ' '
-                << std::flush;
+      std::clog << "\r[INFO] Scanlines remaining: " << (m_image_height - j)
+                << ' ' << std::flush;
       pool.start();
 
       for (int i = 0; i < m_image_width; ++i) {
@@ -94,8 +100,8 @@ void StaticCamera::render_cpu(HittableList &world, HittableList &lights) {
     }
   } else {
     for (int j = 0; j < m_image_height; ++j) {
-      std::clog << "\rScanlines remaining: " << (m_image_height - j) << ' '
-                << std::flush;
+      std::clog << "\r[INFO] Scanlines remaining: " << (m_image_height - j)
+                << ' ' << std::flush;
       for (int i = 0; i < m_image_width; ++i) {
         Color pixel_color(0, 0, 0);
 
@@ -124,7 +130,7 @@ void StaticCamera::render_cpu(HittableList &world, HittableList &lights) {
     }
   }
 
-  std::clog << "\rDone.                 \n";
+  std::clog << "\r[INFO] Done.                 \n";
 }
 
 void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
@@ -144,8 +150,8 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
   std::ofstream image("output/" + m_output_file,
                       std::ios::out | std::ios::trunc);
   if (!image) {
-    std::cerr << "Failed to open output/" << m_output_file << " for writing."
-              << std::endl;
+    std::cerr << "[ERROR] Failed to open output/" << m_output_file
+              << " for writing." << std::endl;
     return;
   }
   image << "P3\n" << m_image_width << ' ' << m_image_height << "\n255\n";
@@ -158,12 +164,13 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
       m_image_width * m_image_height * sizeof(curandState);
 
   if (cudaMalloc(&d_pixel_colors, colors_size) != cudaSuccess) {
-    std::cerr << "Failed to allocate CUDA memory for pixel colors" << std::endl;
+    std::cerr << "[ERROR] Failed to allocate CUDA memory for pixel colors"
+              << std::endl;
     render_cpu(world, lights);
     return;
   }
   if (cudaMalloc(&d_rand_states, rand_states_size) != cudaSuccess) {
-    std::cerr << "Failed to allocate CUDA memory for random states"
+    std::cerr << "[ERROR] Failed to allocate CUDA memory for random states"
               << std::endl;
     cudaFree(d_pixel_colors);
     render_cpu(world, lights);
@@ -180,7 +187,7 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
                                 (unsigned long)time(nullptr), grid_size,
                                 block_size);
   if (cudaDeviceSynchronize() != cudaSuccess) {
-    std::cerr << "Failed to initialize CUDA random states" << std::endl;
+    std::cerr << "[ERROR] Failed to initialize CUDA random states" << std::endl;
     cudaFree(d_pixel_colors);
     cudaFree(d_rand_states);
     render_cpu(world, lights);
@@ -190,15 +197,16 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
   // Check for CUDA errors before proceeding
   cudaError_t cuda_error = cudaGetLastError();
   if (cuda_error != cudaSuccess) {
-    std::cerr << "CUDA error before scene init: "
+    std::cerr << "[ERROR] CUDA error before scene init: "
               << cudaGetErrorString(cuda_error) << std::endl;
   }
 
   // Initialize CUDA scene using new comprehensive system.
-  CudaSceneData cuda_scene_data = initialize_cuda_scene(world, lights);
+  CudaSceneData cuda_scene_data =
+      initialize_cuda_scene(world, lights, m_use_debug);
   if (cuda_scene_data.world.get() == nullptr ||
       cuda_scene_data.lights.get() == nullptr) {
-    std::cerr << "Failed to initialize CUDA scene" << std::endl;
+    std::cerr << "[ERROR] Failed to initialize CUDA scene" << std::endl;
     cudaFree(d_pixel_colors);
     cudaFree(d_rand_states);
     render_cpu(world, lights);
@@ -209,6 +217,12 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
   CudaHittable cuda_world, cuda_lights;
   cudaMemcpyDeviceToHostSafe(&cuda_world, cuda_scene_data.world.get(), 1);
   cudaMemcpyDeviceToHostSafe(&cuda_lights, cuda_scene_data.lights.get(), 1);
+
+  if (m_use_debug) {
+    output_cuda_scene_json(cuda_world, "cuda_world_debug.json");
+    output_cuda_scene_json(cuda_lights, "cuda_lights_debug.json");
+    output_cuda_scene_context_json();
+  }
 
   int sqrt_spp = static_cast<int>(std::sqrt(m_samples_per_pixel));
 
@@ -227,8 +241,8 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
   // Process rows in batches to avoid memory issues.
   const int batch_size = 64; // Process 64 rows at a time.
   for (int start_row = 0; start_row < m_image_height; start_row += batch_size) {
-    std::clog << "\rScanlines remaining: " << (m_image_height - start_row)
-              << ' ' << std::flush;
+    std::clog << "\r[INFO] Scanlines remaining: "
+              << (m_image_height - start_row) << ' ' << std::flush;
 
     int end_row = std::min(start_row + batch_size, m_image_height);
 
@@ -236,7 +250,7 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
     if (cudaMemset(d_pixel_colors + start_row * m_image_width, 0,
                    (end_row - start_row) * m_image_width * sizeof(CudaColor)) !=
         cudaSuccess) {
-      std::cerr << "Failed to clear GPU memory for batch " << start_row
+      std::cerr << "[ERROR] Failed to clear GPU memory for batch " << start_row
                 << std::endl;
       cleanup_cuda_scene(cuda_scene_data);
       cudaFree(d_pixel_colors);
@@ -259,7 +273,7 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
         d_rand_states, batch_grid_size, block_size);
 
     if (cudaDeviceSynchronize() != cudaSuccess) {
-      std::cerr << "CUDA kernel execution failed at batch " << start_row
+      std::cerr << "[ERROR] CUDA kernel execution failed at batch " << start_row
                 << std::endl;
       cleanup_cuda_scene(cuda_scene_data);
       cudaFree(d_pixel_colors);
@@ -274,8 +288,8 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
                    d_pixel_colors + start_row * m_image_width,
                    (end_row - start_row) * m_image_width * sizeof(CudaColor),
                    cudaMemcpyDeviceToHost) != cudaSuccess) {
-      std::cerr << "Failed to copy results from GPU at batch " << start_row
-                << std::endl;
+      std::cerr << "[ERROR] Failed to copy results from GPU at batch "
+                << start_row << std::endl;
       cleanup_cuda_scene(cuda_scene_data);
       cudaFree(d_pixel_colors);
       cudaFree(d_rand_states);
@@ -292,7 +306,7 @@ void StaticCamera::render_gpu(HittableList &world, HittableList &lights) {
     }
   }
 
-  std::clog << "\rDone.                 \n";
+  std::clog << "\r[INFO] Done.                 \n";
 
   // Cleanup CUDA memory and scene data.
   cleanup_cuda_scene(cuda_scene_data);

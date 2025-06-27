@@ -4,6 +4,8 @@
 #include "../../utils/math/SimdOps.hpp"
 #include "../../utils/math/SimdTypes.hpp"
 #include "Texture.hpp"
+#include <iomanip>
+#include <sstream>
 
 // Memory layout optimized for noise pattern generation.
 class alignas(16) NoiseTexture : public Texture {
@@ -19,6 +21,19 @@ public:
   double get_scale() const;
 
   const PerlinNoise &get_perlin() const;
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"NoiseTexture\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"scale\":" << m_scale << ",";
+    oss << "\"perlin\":" << m_perlin.json();
+    oss << "}";
+    return oss.str();
+  }
 
 private:
   // Hot data: frequently accessed scale parameter.

@@ -156,4 +156,15 @@ __device__ inline CudaPDF cuda_make_pdf_mixture(const CudaPDF *pdf0,
   return pdf;
 }
 
+// JSON serialization function declarations for CUDA PDF structures.
+std::string cuda_json_sphere_pdf(const CudaSpherePDF &obj);
+
+std::string cuda_json_cosine_pdf(const CudaCosinePDF &obj);
+
+std::string cuda_json_hittable_pdf(const CudaHittablePDF &obj);
+
+std::string cuda_json_mixture_pdf(const CudaMixturePDF &obj);
+
+std::string cuda_json_pdf(const CudaPDF &obj);
+
 #endif // USE_CUDA

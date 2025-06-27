@@ -5,6 +5,8 @@
 #include "../utils/math/Vec3Utility.cuh"
 #include "Ray.cuh"
 #include "Vec3Types.cuh"
+#include <iomanip>
+#include <sstream>
 
 // Forward declarations to avoid circular dependency.
 struct CudaMaterial;
@@ -44,6 +46,24 @@ cuda_hit_record_set_face_normal(CudaHitRecord &rec, const CudaRay &ray,
   rec.front_face = cuda_vec3_dot_product(ray.direction, outward_normal) < 0.0;
   rec.normal =
       rec.front_face ? outward_normal : cuda_vec3_negate(outward_normal);
+}
+
+// JSON serialization function for CudaHitRecord.
+inline std::string cuda_json_hit_record(const CudaHitRecord &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaHitRecord\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"point\":" << cuda_json_vec3(obj.point) << ",";
+  oss << "\"normal\":" << cuda_json_vec3(obj.normal) << ",";
+  oss << "\"material_index\":" << obj.material_index << ",";
+  oss << "\"t\":" << obj.t << ",";
+  oss << "\"front_face\":" << (obj.front_face ? "true" : "false") << ",";
+  oss << "\"u\":" << obj.u << ",";
+  oss << "\"v\":" << obj.v;
+  oss << "}";
+  return oss.str();
 }
 
 #endif // USE_CUDA

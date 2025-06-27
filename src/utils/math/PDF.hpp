@@ -7,7 +7,9 @@
 #include "Vec3.hpp"
 #include "Vec3Utility.hpp"
 #include <cmath>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 
 // Abstract base class for probability density functions.
 // Memory layout optimized for PDF calculations.
@@ -17,6 +19,9 @@ public:
 
   virtual double value(const Vec3 &direction) const = 0;
   virtual Vec3 generate() const = 0;
+
+  // JSON serialization method.
+  virtual std::string json() const = 0;
 };
 
 // Uniform sampling over the unit sphere.
@@ -30,6 +35,17 @@ public:
   }
 
   Vec3 generate() const override { return random_unit_vector(); }
+
+  // JSON serialization method.
+  std::string json() const override {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"SpherePDF\",";
+    oss << "\"address\":\"" << this << "\"";
+    oss << "}";
+    return oss.str();
+  }
 };
 
 // Cosine-weighted hemisphere sampling PDF.
@@ -48,6 +64,18 @@ public:
   }
 
   const ONB &get_onb() const { return m_uvw; }
+
+  // JSON serialization method.
+  std::string json() const override {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"CosinePDF\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"uvw\":" << m_uvw.json();
+    oss << "}";
+    return oss.str();
+  }
 
 private:
   ONB m_uvw;
@@ -69,6 +97,19 @@ public:
   const Hittable &get_objects() const { return m_objects; }
 
   Point3 get_origin() const { return m_origin; }
+
+  // JSON serialization method.
+  std::string json() const override {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"HittablePDF\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"origin\":" << m_origin.json() << ",";
+    oss << "\"objects\":" << m_objects.json();
+    oss << "}";
+    return oss.str();
+  }
 
 private:
   // Hot data: origin point used in sampling calculations.
@@ -104,6 +145,19 @@ public:
   PDFPtr get_p0() const { return m_p[0]; }
 
   PDFPtr get_p1() const { return m_p[1]; }
+
+  // JSON serialization method.
+  std::string json() const override {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"MixturePDF\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"p0\":" << (m_p[0] ? m_p[0]->json() : "null") << ",";
+    oss << "\"p1\":" << (m_p[1] ? m_p[1]->json() : "null");
+    oss << "}";
+    return oss.str();
+  }
 
 private:
   PDFPtr m_p[2];

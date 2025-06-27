@@ -4,6 +4,8 @@
 
 #include "Vec3Utility.cuh"
 #include <curand_kernel.h>
+#include <iomanip>
+#include <sstream>
 
 // Number of random gradient vectors and permutations.
 static const int CUDA_PERLIN_POINT_COUNT = 256;
@@ -131,6 +133,22 @@ cuda_perlin_interp(const CudaVec3 c[2][2][2], double u, double v, double w) {
       }
 
   return accum;
+}
+
+// JSON serialization function for CudaPerlinNoise.
+inline std::string cuda_json_perlin_noise(const CudaPerlinNoise &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaPerlinNoise\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"point_count\":" << CUDA_PERLIN_POINT_COUNT << ",";
+  oss << "\"rand_vec\":\"" << obj.rand_vec << "\",";
+  oss << "\"perm_x\":\"" << obj.perm_x << "\",";
+  oss << "\"perm_y\":\"" << obj.perm_y << "\",";
+  oss << "\"perm_z\":\"" << obj.perm_z << "\"";
+  oss << "}";
+  return oss.str();
 }
 
 #endif // USE_CUDA

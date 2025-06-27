@@ -19,6 +19,8 @@ ARGS=("$@")
 OUTPUT_FILE="image.ppm"
 STATIC_RENDER=false
 CAMERA_SET=false
+DEBUG_ENABLED=false
+GPU_ENABLED=false
 
 for ((i = 0; i < ${#ARGS[@]}; i++)); do
     case "${ARGS[i]}" in
@@ -34,6 +36,12 @@ for ((i = 0; i < ${#ARGS[@]}; i++)); do
                     STATIC_RENDER=true
                 fi
             fi
+            ;;
+        --debug|-d)
+            DEBUG_ENABLED=true
+            ;;
+        --gpu|-g)
+            GPU_ENABLED=true
             ;;
     esac
 done
@@ -67,6 +75,25 @@ if [[ "$MODE" == "cloud" ]]; then
     ssh cloudgpu "cd /workspace/real-time-ray-tracing-engine && $CLOUD_BIN ${ARGS[@]} 2>&1"
     REMOTE_EXIT_CODE=$?
 
+    if $DEBUG_ENABLED; then
+        echo "[INFO] Copying debug logs from cloud to local..."
+        mkdir -p logs
+
+        if $GPU_ENABLED; then
+            DEBUG_FILES=("cuda_world_debug.json" "cuda_lights_debug.json" "cuda_scene_complexity_debug.txt" "cuda_context_debug.json")
+        else
+            DEBUG_FILES=("cpu_world_debug.json" "cpu_lights_debug.json")
+        fi
+
+        for FILE in "${DEBUG_FILES[@]}"; do
+            REMOTE_PATH="/workspace/real-time-ray-tracing-engine/logs/$FILE"
+            LOCAL_PATH="logs/$FILE"
+            scp -q cloudgpu:"$REMOTE_PATH" "$LOCAL_PATH" >/dev/null 2>&1 && \
+                echo "[INFO] Copied $FILE" || \
+                echo "[WARN] $FILE not found on cloud."
+        done
+    fi
+
     if [[ $REMOTE_EXIT_CODE -ne 0 ]]; then
         echo "[ERROR] Cloud raytracer exited with status $REMOTE_EXIT_CODE."
         exit $REMOTE_EXIT_CODE
@@ -75,7 +102,7 @@ if [[ "$MODE" == "cloud" ]]; then
     if $STATIC_RENDER; then
         echo "[INFO] Copying output/$OUTPUT_FILE from cloud to local..."
         mkdir -p output
-        scp cloudgpu:/workspace/real-time-ray-tracing-engine/output/"$OUTPUT_FILE" output/"$OUTPUT_FILE" || {
+        scp -q cloudgpu:/workspace/real-time-ray-tracing-engine/output/"$OUTPUT_FILE" output/"$OUTPUT_FILE" >/dev/null 2>&1 || {
             echo "[WARN] Failed to copy output file from cloud."
         }
         echo "[INFO] Output image saved locally to output/$OUTPUT_FILE."

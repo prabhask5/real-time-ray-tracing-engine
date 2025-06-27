@@ -44,4 +44,7 @@ public:
   // object define this to change how random sampling works for each type of
   // object.
   virtual Vec3 random(const Point3 &origin) const { return Vec3(1, 0, 0); }
+
+  // JSON serialization method.
+  virtual std::string json() const = 0;
 };

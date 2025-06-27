@@ -6,6 +6,8 @@
 #include "Ray.cuh"
 #include "Vec3Types.cuh"
 #include <climits>
+#include <iomanip>
+#include <sstream>
 
 // Used in a ray tracer to describe the result of a material's scatter()
 // function — that is, how a ray interacts with a surface (reflection,
@@ -34,5 +36,20 @@ struct CudaScatterRecord {
   // mirrors or dielectrics).
   CudaRay skip_pdf_ray;
 };
+
+// JSON serialization function for CudaScatterRecord.
+inline std::string cuda_json_scatter_record(const CudaScatterRecord &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaScatterRecord\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"attenuation\":" << cuda_json_vec3(obj.attenuation) << ",";
+  oss << "\"pdf\":\"" << &obj.pdf << "\",";
+  oss << "\"skip_pdf\":" << (obj.skip_pdf ? "true" : "false") << ",";
+  oss << "\"skip_pdf_ray\":" << cuda_json_ray(obj.skip_pdf_ray);
+  oss << "}";
+  return oss.str();
+}
 
 #endif // USE_CUDA

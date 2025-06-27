@@ -4,6 +4,8 @@
 #include "SimdTypes.hpp"
 #include "Vec3Utility.hpp"
 #include <algorithm>
+#include <iomanip>
+#include <sstream>
 
 static const int PERLIN_POINT_COUNT = 256;
 
@@ -74,6 +76,22 @@ public:
     }
 
     return std::fabs(accum);
+  }
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"PerlinNoise\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"point_count\":" << PERLIN_POINT_COUNT << ",";
+    oss << "\"rand_vec\":\"" << m_rand_vec << "\",";
+    oss << "\"perm_x\":\"" << m_perm_x << "\",";
+    oss << "\"perm_y\":\"" << m_perm_y << "\",";
+    oss << "\"perm_z\":\"" << m_perm_z << "\"";
+    oss << "}";
+    return oss.str();
   }
 
 private:

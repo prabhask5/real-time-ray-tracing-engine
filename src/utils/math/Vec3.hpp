@@ -4,6 +4,8 @@
 #include "SimdTypes.hpp"
 #include "Utility.hpp"
 #include <cmath>
+#include <iomanip>
+#include <sstream>
 
 // SIMD-optimized Vec3 class with comprehensive ARM NEON and x86 SSE/AVX
 // support. Uses double precision for mathematical accuracy with SIMD
@@ -160,6 +162,20 @@ public:
       return result;
     }
     return Vec3(1.0, 0.0, 0.0);
+  }
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"Vec3\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"x\":" << m_coordinates[0] << ",";
+    oss << "\"y\":" << m_coordinates[1] << ",";
+    oss << "\"z\":" << m_coordinates[2];
+    oss << "}";
+    return oss.str();
   }
 
 private:

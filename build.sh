@@ -34,7 +34,7 @@ if [[ "$ENABLE_CUDA" == "ON" && "$IS_REMOTE" != "true" ]]; then
 
         echo "Syncing log from remote to local logs/cloudlog.txt..."
         mkdir -p logs
-        scp cloudgpu:/workspace/real-time-ray-tracing-engine/logs/log.txt logs/cloudlog.txt || echo "Failed to copy logs from cloud."
+        scp -q cloudgpu:/workspace/real-time-ray-tracing-engine/logs/log.txt logs/cloudlog.txt >/dev/null 2>&1 || echo "Failed to copy logs from cloud."
 
         if [[ $REMOTE_EXIT_CODE -ne 0 ]]; then
             echo "Remote build failed with exit code $REMOTE_EXIT_CODE."

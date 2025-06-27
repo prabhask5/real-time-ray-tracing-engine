@@ -40,4 +40,7 @@ __device__ bool cuda_constant_medium_hit(const CudaConstantMedium &medium,
 __host__ __device__ CudaAABB
 cuda_constant_medium_get_bounding_box(const CudaConstantMedium &medium);
 
+// JSON serialization function for CudaConstantMedium.
+std::string cuda_json_constant_medium(const CudaConstantMedium &obj);
+
 #endif // USE_CUDA

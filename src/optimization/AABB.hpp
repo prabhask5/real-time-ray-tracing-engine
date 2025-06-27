@@ -4,6 +4,8 @@
 #include "../utils/math/Interval.hpp"
 #include "../utils/math/SimdOps.hpp"
 #include "../utils/math/SimdTypes.hpp"
+#include <iomanip>
+#include <sstream>
 
 class Ray; // From Ray.hpp.
 
@@ -48,6 +50,20 @@ public:
   // This function checks if the ray hits the hittable object with the t values
   // in the interval range ray_t.
   bool hit(const Ray &r, Interval t_values) const;
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"AABB\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"x\":" << m_x.json() << ",";
+    oss << "\"y\":" << m_y.json() << ",";
+    oss << "\"z\":" << m_z.json();
+    oss << "}";
+    return oss.str();
+  }
 
 private:
   // Adjust the AABB so that no side is narrower than some delta, padding if

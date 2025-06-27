@@ -153,6 +153,14 @@ public:
   size_t get_material_count() const { return m_material_count; }
   size_t get_texture_count() const { return m_texture_count; }
 
+  // Get host arrays (for JSON serialization).
+  const std::vector<CudaMaterial> &get_host_materials() const {
+    return m_host_materials;
+  }
+  const std::vector<CudaTexture> &get_host_textures() const {
+    return m_host_textures;
+  }
+
   // Sub-allocate from the large buffer.
   template <typename T> T *suballocate(size_t count) {
     size_t size = count * sizeof(T);

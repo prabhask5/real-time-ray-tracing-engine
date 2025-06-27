@@ -5,6 +5,7 @@
 #include "../optimization/AABB.cuh"
 #include "../utils/math/Interval.cuh"
 #include "../utils/math/Utility.cuh"
+#include "../utils/memory/CudaMemoryUtility.cuh"
 #include "HitRecord.cuh"
 #include "Ray.cuh"
 #include "Vec3Types.cuh"
@@ -62,6 +63,9 @@ __device__ CudaVec3 cuda_hittable_random(const CudaHittable &hittable,
 
 __host__ __device__ CudaAABB
 cuda_hittable_get_bounding_box(const CudaHittable &hittable);
+
+// JSON serialization function for CudaHittable.
+std::string cuda_json_hittable(const CudaHittable &obj);
 
 // Include HittableList.cuh after CudaHittable is defined to avoid circular
 // dependency.

@@ -5,6 +5,8 @@
 #include "AABB.hpp"
 #include <array>
 #include <execution>
+#include <iomanip>
+#include <sstream>
 #include <vector>
 
 class HittableList; // From HittableList.hpp.
@@ -22,6 +24,22 @@ struct SAHSplit {
   double cost;
   size_t left_count;
   size_t right_count;
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"SAHSplit\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"axis\":" << axis << ",";
+    oss << "\"position\":" << position << ",";
+    oss << "\"cost\":" << cost << ",";
+    oss << "\"left_count\":" << left_count << ",";
+    oss << "\"right_count\":" << right_count;
+    oss << "}";
+    return oss.str();
+  }
 };
 
 // Flattened BVH node for cache-efficient traversal,
@@ -39,6 +57,26 @@ struct alignas(32) FlatNode {
   };
   uint8_t is_leaf;
   uint8_t padding[3];
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"FlatNode\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"bbox\":" << bbox.json() << ",";
+    oss << "\"is_leaf\":" << (is_leaf ? "true" : "false") << ",";
+    if (is_leaf) {
+      oss << "\"prim_offset\":" << leaf.prim_offset << ",";
+      oss << "\"prim_count\":" << leaf.prim_count;
+    } else {
+      oss << "\"left_offset\":" << inner.left_offset << ",";
+      oss << "\"right_offset\":" << inner.right_offset;
+    }
+    oss << "}";
+    return oss.str();
+  }
 };
 
 class alignas(16) BVHNode : public Hittable {
@@ -71,6 +109,24 @@ public:
   bool hit(const Ray &ray, Interval t_values, HitRecord &record) const override;
   double pdf_value(const Point3 &origin, const Vec3 &direction) const override;
   Vec3 random(const Point3 &origin) const override;
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"BVHNode\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"bbox\":" << m_bbox.json() << ",";
+    oss << "\"left\":" << (m_left ? m_left->json() : "null") << ",";
+    oss << "\"right\":" << (m_right ? m_right->json() : "null") << ",";
+    oss << "\"is_leaf\":" << (is_leaf() ? "true" : "false") << ",";
+    oss << "\"use_flattened\":" << (m_use_flattened ? "true" : "false") << ",";
+    oss << "\"flat_nodes_count\":" << m_flat_nodes.size() << ",";
+    oss << "\"primitives_count\":" << m_primitives.size();
+    oss << "}";
+    return oss.str();
+  }
 
 private:
   // Build flattened representation after construction.

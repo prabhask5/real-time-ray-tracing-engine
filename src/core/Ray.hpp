@@ -4,6 +4,8 @@
 #include "../utils/math/SimdTypes.hpp"
 #include "../utils/math/Vec3.hpp"
 #include "Vec3Types.hpp"
+#include <iomanip>
+#include <sstream>
 
 // Represents a light ray, represented through the parametric equation Vec3
 // point = r.origin() + t * r.direction(), t is how far along the way you are (t
@@ -58,6 +60,20 @@ public:
                   m_origin.y() + t * m_direction.y(),
                   m_origin.z() + t * m_direction.z());
 #endif
+  }
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"Ray\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"origin\":" << m_origin.json() << ",";
+    oss << "\"direction\":" << m_direction.json() << ",";
+    oss << "\"time\":" << m_time;
+    oss << "}";
+    return oss.str();
   }
 
 private:

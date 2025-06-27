@@ -4,6 +4,8 @@
 #include "../../core/HittableTypes.hpp"
 #include "../../optimization/AABB.hpp"
 #include "../../utils/math/Vec3.hpp"
+#include <iomanip>
+#include <sstream>
 
 // Wrapper class. Moves (translates) a hittable object by an offset vector in
 // world space.
@@ -30,6 +32,20 @@ public:
   double pdf_value(const Point3 &origin, const Vec3 &direction) const override;
 
   Vec3 random(const Point3 &origin) const override;
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"Translate\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"offset\":" << m_offset.json() << ",";
+    oss << "\"bbox\":" << m_bbox.json() << ",";
+    oss << "\"object\":" << (m_object ? m_object->json() : "null");
+    oss << "}";
+    return oss.str();
+  }
 
 private:
   // Hot data: translation offset used in every transform.

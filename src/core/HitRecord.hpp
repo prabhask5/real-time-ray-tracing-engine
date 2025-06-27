@@ -1,10 +1,13 @@
 #pragma once
 
+#include "../scene/materials/Material.hpp"
 #include "../scene/materials/MaterialTypes.hpp"
 #include "../utils/math/Vec3.hpp"
 #include "../utils/math/Vec3Utility.hpp"
 #include "Ray.hpp"
 #include "Vec3Types.hpp"
+#include <iomanip>
+#include <sstream>
 
 // Represents captured info from a ray hitting a hittable object.
 // Memory layout optimized for cache efficiency and SIMD compatibility.
@@ -44,5 +47,23 @@ struct alignas(16) HitRecord {
   void set_face_normal(const Ray &ray, const Vec3 &outward_normal) {
     frontFace = dot_product(ray.direction(), outward_normal) < 0;
     normal = frontFace ? outward_normal : -outward_normal;
+  }
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"HitRecord\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"point\":" << point.json() << ",";
+    oss << "\"normal\":" << normal.json() << ",";
+    oss << "\"t\":" << t << ",";
+    oss << "\"u\":" << u << ",";
+    oss << "\"v\":" << v << ",";
+    oss << "\"material\":" << (material ? material->json() : "null") << ",";
+    oss << "\"frontFace\":" << (frontFace ? "true" : "false");
+    oss << "}";
+    return oss.str();
   }
 };

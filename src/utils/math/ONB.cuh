@@ -4,6 +4,8 @@
 
 #include "../../core/Vec3Types.cuh"
 #include "Vec3Utility.cuh"
+#include <iomanip>
+#include <sstream>
 
 // POD struct representing an orthonormal basis.
 struct CudaONB {
@@ -42,6 +44,20 @@ __device__ inline CudaVec3 cuda_onb_transform(const CudaONB &onb,
           cuda_vec3_multiply_scalar(onb.axis[0], cuda_vec3_get(v, 0)),
           cuda_vec3_multiply_scalar(onb.axis[1], cuda_vec3_get(v, 1))),
       cuda_vec3_multiply_scalar(onb.axis[2], cuda_vec3_get(v, 2)));
+}
+
+// JSON serialization function for CudaONB.
+inline std::string cuda_json_onb(const CudaONB &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaONB\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"u\":" << cuda_json_vec3(obj.axis[0]) << ",";
+  oss << "\"v\":" << cuda_json_vec3(obj.axis[1]) << ",";
+  oss << "\"w\":" << cuda_json_vec3(obj.axis[2]);
+  oss << "}";
+  return oss.str();
 }
 
 #endif // USE_CUDA

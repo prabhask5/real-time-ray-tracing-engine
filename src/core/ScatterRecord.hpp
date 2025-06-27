@@ -1,9 +1,12 @@
 #pragma once
 
+#include "../utils/math/PDF.hpp"
 #include "../utils/math/PDFTypes.hpp"
 #include "../utils/math/Vec3.hpp"
 #include "Ray.hpp"
 #include "Vec3Types.hpp"
+#include <iomanip>
+#include <sstream>
 
 // Used in a ray tracer to describe the result of a material's scatter()
 // function — that is, how a ray interacts with a surface (reflection,
@@ -39,4 +42,19 @@ public:
   // Represents the actual scattered ray (for deterministic materials like
   // mirrors or dielectrics).
   Ray skip_pdf_ray;
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"ScatterRecord\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"attenuation\":" << attenuation.json() << ",";
+    oss << "\"pdf\":\"" << (pdf ? pdf->json() : "null") << "\",";
+    oss << "\"skip_pdf\":" << (skip_pdf ? "true" : "false") << ",";
+    oss << "\"skip_pdf_ray\":" << skip_pdf_ray.json();
+    oss << "}";
+    return oss.str();
+  }
 };

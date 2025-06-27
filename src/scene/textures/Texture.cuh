@@ -6,6 +6,8 @@
 #include "../../utils/math/PerlinNoise.cuh"
 #include "../../utils/math/Vec3.cuh"
 #include "../../utils/memory/CudaSceneContext.cuh"
+#include <iomanip>
+#include <sstream>
 
 enum class CudaTextureType { TEXTURE_SOLID, TEXTURE_CHECKER, TEXTURE_NOISE };
 
@@ -151,6 +153,69 @@ cuda_checker_texture_value(const CudaCheckerTexture &texture, double u,
   return is_even
              ? cuda_texture_value(textures[texture.even_texture_index], u, v, p)
              : cuda_texture_value(textures[texture.odd_texture_index], u, v, p);
+}
+
+// JSON serialization functions for CUDA textures.
+inline std::string
+cuda_json_solid_color_texture(const CudaSolidColorTexture &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaSolidColorTexture\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"albedo\":" << cuda_json_vec3(obj.albedo);
+  oss << "}";
+  return oss.str();
+}
+
+inline std::string cuda_json_checker_texture(const CudaCheckerTexture &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaCheckerTexture\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"scale\":" << obj.scale << ",";
+  oss << "\"even_texture_index\":" << obj.even_texture_index << ",";
+  oss << "\"odd_texture_index\":" << obj.odd_texture_index;
+  oss << "}";
+  return oss.str();
+}
+
+inline std::string cuda_json_noise_texture(const CudaNoiseTexture &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaNoiseTexture\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"scale\":" << obj.scale << ",";
+  oss << "\"perlin\":" << cuda_json_perlin_noise(obj.perlin);
+  oss << "}";
+  return oss.str();
+}
+
+inline std::string cuda_json_texture(const CudaTexture &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaTexture\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"texture_type\":";
+  switch (obj.type) {
+  case CudaTextureType::TEXTURE_SOLID:
+    oss << "\"SOLID\",";
+    oss << "\"solid\":" << cuda_json_solid_color_texture(obj.solid);
+    break;
+  case CudaTextureType::TEXTURE_CHECKER:
+    oss << "\"CHECKER\",";
+    oss << "\"checker\":" << cuda_json_checker_texture(obj.checker);
+    break;
+  case CudaTextureType::TEXTURE_NOISE:
+    oss << "\"NOISE\",";
+    oss << "\"noise\":" << cuda_json_noise_texture(obj.noise);
+    break;
+  }
+  oss << "}";
+  return oss.str();
 }
 
 #endif // USE_CUDA

@@ -4,6 +4,8 @@
 #include "SimdTypes.hpp"
 #include "Vec3.hpp"
 #include "Vec3Utility.hpp"
+#include <iomanip>
+#include <sstream>
 
 // This ONB (orthonormal basis) class constructs and manages a local coordinate
 // system — often used in ray tracing to convert vectors between local and world
@@ -60,6 +62,20 @@ public:
     }
 #endif
     return (v[0] * m_axis[0]) + (v[1] * m_axis[1]) + (v[2] * m_axis[2]);
+  }
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"ONB\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"u\":" << m_axis[0].json() << ",";
+    oss << "\"v\":" << m_axis[1].json() << ",";
+    oss << "\"w\":" << m_axis[2].json();
+    oss << "}";
+    return oss.str();
   }
 
 private:

@@ -52,6 +52,11 @@ void DynamicCamera::render_cpu(HittableList &world, HittableList &lights) {
       lights = HittableList(std::make_shared<BVHNode>(lights));
   }
 
+  if (m_use_debug) {
+    output_cpu_scene_json(world, "cpu_world_debug.json");
+    output_cpu_scene_json(lights, "cpu_lights_debug.json");
+  }
+
   // Initialize SDL subsystems.
   SDL_Init(SDL_INIT_VIDEO);
   TTF_Init();
@@ -391,13 +396,14 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
       m_image_width * m_image_height * sizeof(curandState);
 
   if (cudaMalloc(&d_accumulation, accumulation_size) != cudaSuccess) {
-    std::cerr << "Failed to allocate CUDA memory for accumulation buffer"
-              << std::endl;
+    std::cerr
+        << "[ERROR] Failed to allocate CUDA memory for accumulation buffer"
+        << std::endl;
     render_cpu(world, lights);
     return;
   }
   if (cudaMalloc(&d_rand_states, rand_states_size) != cudaSuccess) {
-    std::cerr << "Failed to allocate CUDA memory for random states"
+    std::cerr << "[ERROR] Failed to allocate CUDA memory for random states"
               << std::endl;
     cudaFree(d_accumulation);
     render_cpu(world, lights);
@@ -416,7 +422,7 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
                                 (unsigned long)time(nullptr), grid_size,
                                 block_size);
   if (cudaDeviceSynchronize() != cudaSuccess) {
-    std::cerr << "Failed to initialize CUDA random states" << std::endl;
+    std::cerr << "[ERROR] Failed to initialize CUDA random states" << std::endl;
     cudaFree(d_accumulation);
     cudaFree(d_rand_states);
     render_cpu(world, lights);
@@ -424,17 +430,27 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
   }
 
   // Initialize CUDA scene using new comprehensive system.
-  CudaSceneData cuda_scene_data = initialize_cuda_scene(world, lights);
+  CudaSceneData cuda_scene_data =
+      initialize_cuda_scene(world, lights, m_use_debug);
   if (cuda_scene_data.world.get() == nullptr ||
       cuda_scene_data.lights.get() == nullptr) {
-    std::cerr << "Failed to initialize CUDA scene" << std::endl;
+    std::cerr << "[ERROR] Failed to initialize CUDA scene" << std::endl;
     cudaFree(d_accumulation);
     cudaFree(d_rand_states);
     render_cpu(world, lights);
     return;
   }
-  CudaHittable cuda_world = *cuda_scene_data.world;
-  CudaHittable cuda_lights = *cuda_scene_data.lights;
+
+  // Copy CudaHittable structs from device to host for kernel launch.
+  CudaHittable cuda_world, cuda_lights;
+  cudaMemcpyDeviceToHostSafe(&cuda_world, cuda_scene_data.world.get(), 1);
+  cudaMemcpyDeviceToHostSafe(&cuda_lights, cuda_scene_data.lights.get(), 1);
+
+  if (m_use_debug) {
+    output_cuda_scene_json(cuda_world, "cuda_world_debug.json");
+    output_cuda_scene_json(cuda_lights, "cuda_lights_debug.json");
+    output_cuda_scene_context_json();
+  }
 
   bool running = true;
 

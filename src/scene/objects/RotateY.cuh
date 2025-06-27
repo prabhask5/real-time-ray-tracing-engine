@@ -50,4 +50,7 @@ cuda_rotate_y_get_bounding_box(const CudaRotateY &rotate) {
   return rotate.bbox;
 }
 
+// JSON serialization function for CudaRotateY.
+std::string cuda_json_rotate_y(const CudaRotateY &obj);
+
 #endif // USE_CUDA

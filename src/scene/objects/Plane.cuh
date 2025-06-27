@@ -10,6 +10,8 @@
 #include "../../utils/math/Vec3Utility.cuh"
 #include "../materials/Material.cuh"
 #include <curand_kernel.h>
+#include <iomanip>
+#include <sstream>
 
 // POD struct representing a planar parallelogram.
 struct CudaPlane {
@@ -45,6 +47,26 @@ __device__ CudaVec3 cuda_plane_random(const CudaPlane &plane,
 __host__ __device__ inline CudaAABB
 cuda_plane_get_bounding_box(const CudaPlane &plane) {
   return plane.bbox;
+}
+
+// JSON serialization function for CudaPlane.
+inline std::string cuda_json_plane(const CudaPlane &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaPlane\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"corner\":" << cuda_json_vec3(obj.corner) << ",";
+  oss << "\"u_side\":" << cuda_json_vec3(obj.u_side) << ",";
+  oss << "\"v_side\":" << cuda_json_vec3(obj.v_side) << ",";
+  oss << "\"w\":" << cuda_json_vec3(obj.w) << ",";
+  oss << "\"normal\":" << cuda_json_vec3(obj.normal) << ",";
+  oss << "\"D\":" << obj.D << ",";
+  oss << "\"surface_area\":" << obj.surface_area << ",";
+  oss << "\"bbox\":" << cuda_json_aabb(obj.bbox) << ",";
+  oss << "\"material_index\":" << obj.material_index;
+  oss << "}";
+  return oss.str();
 }
 
 #endif // USE_CUDA

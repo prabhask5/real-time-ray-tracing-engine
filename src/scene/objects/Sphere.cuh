@@ -11,6 +11,8 @@
 #include "../../utils/math/Vec3Utility.cuh"
 #include "../materials/Material.cuh"
 #include <curand_kernel.h>
+#include <iomanip>
+#include <sstream>
 
 // POD struct representing a sphere hittable object.
 struct CudaSphere {
@@ -50,6 +52,21 @@ __device__ CudaVec3 cuda_sphere_random(const CudaSphere &sphere,
 __host__ __device__ inline CudaAABB
 cuda_sphere_get_bounding_box(const CudaSphere &sphere) {
   return sphere.bbox;
+}
+
+// JSON serialization function for CudaSphere.
+inline std::string cuda_json_sphere(const CudaSphere &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaSphere\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"center\":" << cuda_json_ray(obj.center) << ",";
+  oss << "\"radius\":" << obj.radius << ",";
+  oss << "\"material_index\":" << obj.material_index << ",";
+  oss << "\"bbox\":" << cuda_json_aabb(obj.bbox);
+  oss << "}";
+  return oss.str();
 }
 
 #endif // USE_CUDA

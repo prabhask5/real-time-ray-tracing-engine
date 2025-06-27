@@ -5,6 +5,16 @@
 #include "../HitRecord.hpp"
 #include "../HittableList.hpp"
 #include "../ScatterRecord.hpp"
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+
+#ifdef USE_CUDA
+#include "../../scene/materials/Material.cuh"
+#include "../../scene/textures/Texture.cuh"
+#include "../../utils/memory/CudaSceneContext.cuh"
+#include "../Hittable.cuh"
+#endif
 
 Camera::Camera(const CameraConfig &config)
     : m_aspect_ratio(config.aspect_ratio), m_image_width(config.image_width),
@@ -14,7 +24,7 @@ Camera::Camera(const CameraConfig &config)
       m_vup(config.vup), m_defocus_angle(config.defocus_angle),
       m_focus_dist(config.focus_dist),
       m_use_parallelism(config.use_parallelism), m_use_bvh(config.use_bvh),
-      m_use_gpu(config.use_gpu) {}
+      m_use_gpu(config.use_gpu), m_use_debug(config.use_debug) {}
 
 Camera::~Camera() {}
 
@@ -61,6 +71,83 @@ void Camera::initialize() {
   m_defocus_disk_u = m_u * defocus_radius;
   m_defocus_disk_v = m_v * defocus_radius;
 }
+
+void Camera::output_cpu_scene_json(const HittableList &obj,
+                                   const std::string file_name) {
+  if (!std::filesystem::exists("logs"))
+    std::filesystem::create_directories("logs");
+
+  std::clog << "[DEBUG] Printing JSON representation of CPU scene to "
+            << "logs/" + file_name << std::endl;
+  std::ofstream out("logs/" + file_name, std::ios::out | std::ios::trunc);
+  out << obj.json();
+  out.close();
+}
+
+#ifdef USE_CUDA
+void Camera::output_cuda_scene_json(const CudaHittable &obj,
+                                    const std::string file_name) {
+  if (!std::filesystem::exists("logs"))
+    std::filesystem::create_directories("logs");
+
+  std::clog << "[DEBUG] Printing JSON representation of CUDA GPU scene to "
+            << "logs/" + file_name << std::endl;
+  std::ofstream out("logs/" + file_name, std::ios::out | std::ios::trunc);
+  out << cuda_json_hittable(obj);
+  out.close();
+}
+
+void Camera::output_cuda_scene_context_json() {
+  // Get singleton scene context.
+  CudaSceneContext &context = CudaSceneContext::get_context();
+
+  if (!std::filesystem::exists("logs"))
+    std::filesystem::create_directories("logs");
+
+  std::clog << "[DEBUG] Printing JSON representation of CUDA Scene Context to "
+               "logs/cuda_context_debug.json"
+            << std::endl;
+
+  std::ofstream out("logs/cuda_context_debug.json",
+                    std::ios::out | std::ios::trunc);
+
+  out << "{\n";
+  out << "  \"type\": \"CudaSceneContext\",\n";
+  out << "  \"material_count\": " << context.get_material_count() << ",\n";
+  out << "  \"texture_count\": " << context.get_texture_count() << ",\n";
+
+  // Output materials array with index mapping.
+  out << "  \"materials\": [\n";
+  const auto &materials = context.get_host_materials();
+  for (size_t i = 0; i < materials.size(); ++i) {
+    out << "    {\n";
+    out << "      \"index\": " << i << ",\n";
+    out << "      \"material\": " << cuda_json_material(materials[i]) << "\n";
+    out << "    }";
+    if (i < materials.size() - 1)
+      out << ",";
+    out << "\n";
+  }
+  out << "  ],\n";
+
+  // Output textures array with index mapping.
+  out << "  \"textures\": [\n";
+  const auto &textures = context.get_host_textures();
+  for (size_t i = 0; i < textures.size(); ++i) {
+    out << "    {\n";
+    out << "      \"index\": " << i << ",\n";
+    out << "      \"texture\": " << cuda_json_texture(textures[i]) << "\n";
+    out << "    }";
+    if (i < textures.size() - 1)
+      out << ",";
+    out << "\n";
+  }
+  out << "  ]\n";
+
+  out << "}\n";
+  out.close();
+}
+#endif
 
 Ray Camera::get_ray(int i, int j, int s_i, int s_j) const {
   // Computes a jittered offset within the pixel grid cell defined by (s_i,

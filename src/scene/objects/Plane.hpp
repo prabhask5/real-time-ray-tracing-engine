@@ -7,6 +7,8 @@
 #include "../../utils/math/Vec3.hpp"
 #include "../materials/Material.hpp"
 #include "../materials/MaterialTypes.hpp"
+#include <iomanip>
+#include <sstream>
 
 // Memory layout optimized for ray-plane intersection performance.
 class alignas(16) Plane : public Hittable {
@@ -31,6 +33,25 @@ public:
   double pdf_value(const Point3 &origin, const Vec3 &direction) const override;
 
   Vec3 random(const Point3 &origin) const override;
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"Plane\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"corner\":" << m_corner.json() << ",";
+    oss << "\"u_side\":" << m_u_side.json() << ",";
+    oss << "\"v_side\":" << m_v_side.json() << ",";
+    oss << "\"normal\":" << m_normal.json() << ",";
+    oss << "\"w\":" << m_w.json() << ",";
+    oss << "\"d\":" << m_D << ",";
+    oss << "\"surface_area\":" << m_surface_area << ",";
+    oss << "\"material\":" << (m_material ? m_material->json() : "null");
+    oss << "}";
+    return oss.str();
+  }
 
 private:
   // Hot data: core geometry accessed in every ray-plane intersection.

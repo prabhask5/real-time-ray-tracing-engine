@@ -40,4 +40,7 @@ public:
                                 const Ray &scattered) const {
     return 0;
   }
+
+  // JSON serialization method.
+  virtual std::string json() const = 0;
 };

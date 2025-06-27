@@ -7,7 +7,10 @@
 #include "../../utils/math/SimdOps.hpp"
 #include "../../utils/math/SimdTypes.hpp"
 #include "../../utils/math/Vec3.hpp"
+#include "../materials/Material.hpp"
 #include "../materials/MaterialTypes.hpp"
+#include <iomanip>
+#include <sstream>
 
 // Represents a sphere hittable object.
 // Memory layout optimized for ray-sphere intersection performance.
@@ -36,6 +39,21 @@ public:
   double pdf_value(const Point3 &origin, const Vec3 &direction) const override;
 
   Vec3 random(const Point3 &origin) const override;
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"Sphere\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"center\":" << m_center.json() << ",";
+    oss << "\"radius\":" << m_radius << ",";
+    oss << "\"bbox\":" << m_bbox.json() << ",";
+    oss << "\"material\":" << (m_material ? m_material->json() : "null");
+    oss << "}";
+    return oss.str();
+  }
 
 private:
   // Hot data: most frequently accessed in ray-sphere intersection.

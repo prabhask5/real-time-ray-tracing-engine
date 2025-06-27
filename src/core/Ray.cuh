@@ -5,6 +5,8 @@
 #include "../utils/math/Vec3.cuh"
 #include "../utils/math/Vec3Utility.cuh"
 #include "Vec3Types.cuh"
+#include <iomanip>
+#include <sstream>
 
 // POD struct representing a light ray.
 struct CudaRay {
@@ -28,6 +30,20 @@ __host__ __device__ inline CudaRay cuda_make_ray(const CudaPoint3 &origin,
 __device__ __forceinline__ CudaPoint3 cuda_ray_at(const CudaRay &ray,
                                                   double t) {
   return ray.origin + t * ray.direction;
+}
+
+// JSON serialization function for CudaRay.
+inline std::string cuda_json_ray(const CudaRay &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaRay\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"origin\":" << cuda_json_vec3(obj.origin) << ",";
+  oss << "\"direction\":" << cuda_json_vec3(obj.direction) << ",";
+  oss << "\"time\":" << obj.time;
+  oss << "}";
+  return oss.str();
 }
 
 #endif // USE_CUDA

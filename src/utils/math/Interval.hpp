@@ -3,6 +3,8 @@
 #include "SimdOps.hpp"
 #include "SimdTypes.hpp"
 #include "Utility.hpp"
+#include <iomanip>
+#include <sstream>
 
 // SIMD-optimized Interval class with optimal memory layout and SIMD operations.
 class alignas(16) Interval {
@@ -80,6 +82,19 @@ public:
   void set_interval(double min, double max) {
     m_min = min;
     m_max = max;
+  }
+
+  // JSON serialization method.
+  std::string json() const {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "{";
+    oss << "\"type\":\"Interval\",";
+    oss << "\"address\":\"" << this << "\",";
+    oss << "\"min\":" << m_min << ",";
+    oss << "\"max\":" << m_max;
+    oss << "}";
+    return oss.str();
   }
 
 private:

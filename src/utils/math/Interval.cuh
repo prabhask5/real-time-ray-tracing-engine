@@ -4,6 +4,8 @@
 
 #include "Utility.cuh"
 #include <cmath>
+#include <iomanip>
+#include <sstream>
 
 // POD struct representing a numeric interval [min, max].
 struct CudaInterval {
@@ -76,5 +78,18 @@ __host__ __device__ inline CudaInterval cuda_universe_interval() {
 // For compatibility, define macros.
 #define CUDA_EMPTY_INTERVAL cuda_empty_interval()
 #define CUDA_UNIVERSE_INTERVAL cuda_universe_interval()
+
+// JSON serialization function for CudaInterval.
+inline std::string cuda_json_interval(const CudaInterval &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaInterval\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"min\":" << obj.min << ",";
+  oss << "\"max\":" << obj.max;
+  oss << "}";
+  return oss.str();
+}
 
 #endif // USE_CUDA

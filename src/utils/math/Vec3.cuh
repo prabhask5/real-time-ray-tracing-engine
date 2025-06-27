@@ -4,6 +4,8 @@
 
 #include "Utility.cuh"
 #include <curand_kernel.h>
+#include <iomanip>
+#include <sstream>
 
 // POD vector type optimized for CUDA.
 struct CudaVec3 {
@@ -81,6 +83,20 @@ __device__ inline CudaVec3 cuda_vec3_random(double min, double max,
   return cuda_make_vec3(cuda_random_double(state, min, max),
                         cuda_random_double(state, min, max),
                         cuda_random_double(state, min, max));
+}
+
+// JSON serialization function for CudaVec3.
+inline std::string cuda_json_vec3(const CudaVec3 &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaVec3\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  oss << "\"x\":" << obj.x << ",";
+  oss << "\"y\":" << obj.y << ",";
+  oss << "\"z\":" << obj.z;
+  oss << "}";
+  return oss.str();
 }
 
 #endif // USE_CUDA

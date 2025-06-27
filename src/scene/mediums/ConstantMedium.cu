@@ -1,7 +1,10 @@
 #ifdef USE_CUDA
 
 #include "../../core/Hittable.cuh"
+#include "../../utils/memory/CudaMemoryUtility.cuh"
 #include "ConstantMedium.cuh"
+#include <iomanip>
+#include <sstream>
 
 __device__ bool cuda_constant_medium_hit(const CudaConstantMedium &medium,
                                          const CudaRay &ray,
@@ -51,6 +54,26 @@ __device__ bool cuda_constant_medium_hit(const CudaConstantMedium &medium,
 __device__ CudaAABB
 cuda_constant_medium_get_bounding_box(const CudaConstantMedium &medium) {
   return cuda_hittable_get_bounding_box(*medium.boundary);
+}
+
+// JSON serialization function for CudaConstantMedium.
+std::string cuda_json_constant_medium(const CudaConstantMedium &obj) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(6);
+  oss << "{";
+  oss << "\"type\":\"CudaConstantMedium\",";
+  oss << "\"address\":\"" << &obj << "\",";
+  if (obj.boundary) {
+    CudaHittable host_boundary;
+    cudaMemcpyDeviceToHostSafe(&host_boundary, obj.boundary, 1);
+    oss << "\"boundary\":" << cuda_json_hittable(host_boundary) << ",";
+  } else {
+    oss << "\"boundary\":null,";
+  }
+  oss << "\"neg_inv_density\":" << obj.neg_inv_density << ",";
+  oss << "\"phase_function_index\":" << obj.phase_function_index;
+  oss << "}";
+  return oss.str();
 }
 
 #endif // USE_CUDA

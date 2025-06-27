@@ -52,4 +52,7 @@ cuda_bvh_node_get_bounding_box(const CudaBVHNode &node) {
   return node.bbox;
 }
 
+// JSON serialization function for CudaBVHNode.
+std::string cuda_json_bvh_node(const CudaBVHNode &obj);
+
 #endif // USE_CUDA

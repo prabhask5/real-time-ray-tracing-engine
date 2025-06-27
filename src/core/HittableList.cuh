@@ -50,4 +50,7 @@ cuda_hittable_list_get_bounding_box(const CudaHittableList &list) {
   return list.bbox;
 }
 
+// JSON serialization function for CudaHittableList.
+std::string cuda_json_hittable_list(const CudaHittableList &obj);
+
 #endif // USE_CUDA
