@@ -7,6 +7,8 @@
 #include "../../utils/memory/CudaSceneContext.cuh"
 #include "../ScatterRecord.cuh"
 #include "CameraKernels.cuh"
+#include <climits>
+#include <cstdint>
 
 // Initialize random states for each pixel.
 
@@ -95,15 +97,15 @@ __device__ CudaRay get_ray_cuda(int i, int j, int s_i, int s_j, int sqrt_spp,
 // Forward declaration.
 
 __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
-                                    const CudaHittable &world,
-                                    const CudaHittable &lights,
+                                    const CudaHittable *world,
+                                    const CudaHittable *lights,
                                     CudaColor background, curandState *state);
 
 // Device function: Ray color computation with proper material handling.
 
 __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
-                                    const CudaHittable &world,
-                                    const CudaHittable &lights,
+                                    const CudaHittable *world,
+                                    const CudaHittable *lights,
                                     CudaColor background, curandState *state) {
   // Base case: if we've exceeded the ray bounce limit, no more light is
   // gathered.
@@ -113,7 +115,7 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
   CudaHitRecord rec;
 
   // If the ray hits nothing, return the background color.
-  if (!cuda_hittable_hit(world, ray, cuda_make_interval(0.001, CUDA_INF), rec,
+  if (!cuda_hittable_hit(*world, ray, cuda_make_interval(0.001, CUDA_INF), rec,
                          state))
     return background;
 
@@ -154,11 +156,12 @@ __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
   // toward the lights. This is a mixture of importance sampling strategies to
   // improve convergence.
   CudaPDF mixture_pdf;
-  if (lights.type != CudaHittableType::HITTABLE_LIST ||
-      lights.hittable_list->count == 0)
+
+  if (lights->type != CudaHittableType::HITTABLE_LIST ||
+      lights->hittable_list->count == 0)
     mixture_pdf = cuda_make_pdf_mixture(&srec.pdf, &srec.pdf);
   else {
-    CudaPDF hittable_pdf = cuda_make_pdf_hittable(&lights, rec.point);
+    CudaPDF hittable_pdf = cuda_make_pdf_hittable(lights, rec.point);
     mixture_pdf = cuda_make_pdf_mixture(&hittable_pdf, &srec.pdf);
   }
 
@@ -206,8 +209,8 @@ __global__ void dynamic_render_tile_kernel(
     int max_depth, CudaPoint3 center, CudaPoint3 pixel00_loc,
     CudaVec3 pixel_delta_u, CudaVec3 pixel_delta_v, CudaVec3 u, CudaVec3 v,
     CudaVec3 w, CudaVec3 defocus_disk_u, CudaVec3 defocus_disk_v,
-    double defocus_angle, CudaColor background, CudaHittable world,
-    CudaHittable lights, curandState *rand_states) {
+    double defocus_angle, CudaColor background, const CudaHittable *world,
+    const CudaHittable *lights, curandState *rand_states) {
 
   int i = blockIdx.x * blockDim.x + threadIdx.x + start_c;
   int j = blockIdx.y * blockDim.y + threadIdx.y + start_r;
@@ -240,7 +243,7 @@ __global__ void static_render_kernel(
     CudaPoint3 pixel00_loc, CudaVec3 pixel_delta_u, CudaVec3 pixel_delta_v,
     CudaVec3 u, CudaVec3 v, CudaVec3 w, CudaVec3 defocus_disk_u,
     CudaVec3 defocus_disk_v, double defocus_angle, double pixel_samples_scale,
-    CudaColor background, CudaHittable world, CudaHittable lights,
+    CudaColor background, const CudaHittable *world, const CudaHittable *lights,
     curandState *rand_states) {
 
   int i = blockIdx.x * blockDim.x + threadIdx.x;

@@ -14,6 +14,9 @@ enum class CudaTextureType { TEXTURE_SOLID, TEXTURE_CHECKER, TEXTURE_NOISE };
 // Forward declarations.
 struct CudaTexture;
 
+// Forward declaration of global device functions.
+__device__ const CudaTexture &cuda_get_texture(size_t index);
+
 // POD struct for solid color texture.
 struct CudaSolidColorTexture {
   CudaColor albedo;
@@ -148,11 +151,11 @@ cuda_checker_texture_value(const CudaCheckerTexture &texture, double u,
 
   bool is_even = (x_index + y_index + z_index) % 2 == 0;
 
-  extern __device__ CudaSceneContextView *d_scene_context;
-  const CudaTexture *textures = d_scene_context->textures;
   return is_even
-             ? cuda_texture_value(textures[texture.even_texture_index], u, v, p)
-             : cuda_texture_value(textures[texture.odd_texture_index], u, v, p);
+             ? cuda_texture_value(cuda_get_texture(texture.even_texture_index),
+                                  u, v, p)
+             : cuda_texture_value(cuda_get_texture(texture.odd_texture_index),
+                                  u, v, p);
 }
 
 // JSON serialization functions for CUDA textures.

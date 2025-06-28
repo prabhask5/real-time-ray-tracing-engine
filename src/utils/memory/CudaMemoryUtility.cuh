@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <cuda_runtime.h>
 
-// CUDA error checking utility function.
 inline void cuda_check_error(cudaError_t error, const char *file, int line) {
   if (error != cudaSuccess) {
     fprintf(stderr, "CUDA Error: %s at %s:%d\n", cudaGetErrorString(error),
@@ -15,72 +14,98 @@ inline void cuda_check_error(cudaError_t error, const char *file, int line) {
   }
 }
 
-// Internal Macro for simplified error checking.
-#define CUDA_CHECK(call) cuda_check_error((call), __FILE__, __LINE__)
+#define CUDA_CHECK_AT(call, file, line) cuda_check_error((call), (file), (line))
+#define CUDA_CHECK(call) CUDA_CHECK_AT((call), __FILE__, __LINE__)
 
-// Safe CUDA memory allocation with error checking.
-template <typename T> inline T *cudaMallocSafe(size_t count) {
+template <typename T>
+inline T *cudaMallocSafe_impl(size_t count, const char *file, int line) {
   T *ptr = nullptr;
   size_t size = count * sizeof(T);
-  CUDA_CHECK(cudaMalloc(&ptr, size));
+  CUDA_CHECK_AT(cudaMalloc(&ptr, size), file, line);
   return ptr;
 }
+#define cudaMallocSafe(T, count)                                               \
+  cudaMallocSafe_impl<T>((count), __FILE__, __LINE__)
 
-// Safe CUDA memory allocation with initialization to zero.
-template <typename T> inline T *cudaMallocSafeZero(size_t count) {
-  T *ptr = cudaMallocSafe<T>(count);
+template <typename T>
+inline T *cudaMallocSafeZero_impl(size_t count, const char *file, int line) {
+  T *ptr = cudaMallocSafe_impl<T>(count, file, line);
   size_t size = count * sizeof(T);
-  CUDA_CHECK(cudaMemset(ptr, 0, size));
+  CUDA_CHECK_AT(cudaMemset(ptr, 0, size), file, line);
   return ptr;
 }
+#define cudaMallocSafeZero(T, count)                                           \
+  cudaMallocSafeZero_impl<T>((count), __FILE__, __LINE__)
 
-// Safe CUDA memory copy from host to device.
 template <typename T>
-inline void cudaMemcpyHostToDeviceSafe(T *device_ptr, const T *host_ptr,
-                                       size_t count) {
+inline void cudaMemcpyHostToDeviceSafe_impl(T *device_ptr, const T *host_ptr,
+                                            size_t count, const char *file,
+                                            int line) {
   size_t size = count * sizeof(T);
-  CUDA_CHECK(cudaMemcpy(device_ptr, host_ptr, size, cudaMemcpyHostToDevice));
+  CUDA_CHECK_AT(cudaMemcpy(device_ptr, host_ptr, size, cudaMemcpyHostToDevice),
+                file, line);
 }
+#define cudaMemcpyHostToDeviceSafe(device_ptr, host_ptr, count)                \
+  cudaMemcpyHostToDeviceSafe_impl((device_ptr), (host_ptr), (count), __FILE__, \
+                                  __LINE__)
 
-// Safe CUDA memory copy from device to host.
 template <typename T>
-inline void cudaMemcpyDeviceToHostSafe(T *host_ptr, const T *device_ptr,
-                                       size_t count) {
+inline void cudaMemcpyDeviceToHostSafe_impl(T *host_ptr, const T *device_ptr,
+                                            size_t count, const char *file,
+                                            int line) {
   size_t size = count * sizeof(T);
-  CUDA_CHECK(cudaMemcpy(host_ptr, device_ptr, size, cudaMemcpyDeviceToHost));
+  CUDA_CHECK_AT(cudaMemcpy(host_ptr, device_ptr, size, cudaMemcpyDeviceToHost),
+                file, line);
 }
+#define cudaMemcpyDeviceToHostSafe(host_ptr, device_ptr, count)                \
+  cudaMemcpyDeviceToHostSafe_impl((host_ptr), (device_ptr), (count), __FILE__, \
+                                  __LINE__)
 
-// Safe CUDA memory copy from device to device.
 template <typename T>
-inline void cudaMemcpyDeviceToDeviceSafe(T *dest_ptr, const T *src_ptr,
-                                         size_t count) {
+inline void cudaMemcpyDeviceToDeviceSafe_impl(T *dest_ptr, const T *src_ptr,
+                                              size_t count, const char *file,
+                                              int line) {
   size_t size = count * sizeof(T);
-  CUDA_CHECK(cudaMemcpy(dest_ptr, src_ptr, size, cudaMemcpyDeviceToDevice));
+  CUDA_CHECK_AT(cudaMemcpy(dest_ptr, src_ptr, size, cudaMemcpyDeviceToDevice),
+                file, line);
 }
+#define cudaMemcpyDeviceToDeviceSafe(dest_ptr, src_ptr, count)                 \
+  cudaMemcpyDeviceToDeviceSafe_impl((dest_ptr), (src_ptr), (count), __FILE__,  \
+                                    __LINE__)
 
-// Safe CUDA memory free.
-inline void cudaFreeSafe(void *ptr) {
+inline void cudaFreeSafe_impl(void *ptr, const char *file, int line) {
   if (ptr != nullptr) {
-    CUDA_CHECK(cudaFree(ptr));
+    CUDA_CHECK_AT(cudaFree(ptr), file, line);
   }
 }
+#define cudaFreeSafe(ptr) cudaFreeSafe_impl((ptr), __FILE__, __LINE__)
 
-// CUDA device synchronization with error checking.
-inline void cudaDeviceSynchronizeSafe() { CUDA_CHECK(cudaDeviceSynchronize()); }
+inline void cudaDeviceSynchronizeSafe_impl(const char *file, int line) {
+  CUDA_CHECK_AT(cudaDeviceSynchronize(), file, line);
+}
+#define cudaDeviceSynchronizeSafe()                                            \
+  cudaDeviceSynchronizeSafe_impl(__FILE__, __LINE__)
 
-// Get CUDA device properties.
-inline cudaDeviceProp cudaGetDevicePropertiesSafe(int device = 0) {
+inline cudaDeviceProp
+cudaGetDevicePropertiesSafe_impl(int device, const char *file, int line) {
   cudaDeviceProp prop;
-  CUDA_CHECK(cudaGetDeviceProperties(&prop, device));
+  CUDA_CHECK_AT(cudaGetDeviceProperties(&prop, device), file, line);
   return prop;
 }
+#define cudaGetDevicePropertiesSafe(device)                                    \
+  cudaGetDevicePropertiesSafe_impl((device), __FILE__, __LINE__)
 
-// Set CUDA device.
-inline void cudaSetDeviceSafe(int device) { CUDA_CHECK(cudaSetDevice(device)); }
-
-// Get available memory on device.
-inline void cudaMemGetInfoSafe(size_t *free_bytes, size_t *total_bytes) {
-  CUDA_CHECK(cudaMemGetInfo(free_bytes, total_bytes));
+inline void cudaSetDeviceSafe_impl(int device, const char *file, int line) {
+  CUDA_CHECK_AT(cudaSetDevice(device), file, line);
 }
+#define cudaSetDeviceSafe(device)                                              \
+  cudaSetDeviceSafe_impl((device), __FILE__, __LINE__)
+
+inline void cudaMemGetInfoSafe_impl(size_t *free_bytes, size_t *total_bytes,
+                                    const char *file, int line) {
+  CUDA_CHECK_AT(cudaMemGetInfo(free_bytes, total_bytes), file, line);
+}
+#define cudaMemGetInfoSafe(free_bytes, total_bytes)                            \
+  cudaMemGetInfoSafe_impl((free_bytes), (total_bytes), __FILE__, __LINE__)
 
 #endif // USE_CUDA

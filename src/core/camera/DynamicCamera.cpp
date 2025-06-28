@@ -8,6 +8,7 @@
 
 #ifdef USE_CUDA
 #include "../../scene/CudaSceneInitialization.cuh"
+#include "../../utils/memory/CudaMemoryUtility.cuh"
 #include "CameraKernelWrappers.cuh"
 #include "CameraKernels.cuh"
 #include <ctime>
@@ -405,7 +406,7 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
   if (cudaMalloc(&d_rand_states, rand_states_size) != cudaSuccess) {
     std::cerr << "[ERROR] Failed to allocate CUDA memory for random states"
               << std::endl;
-    cudaFree(d_accumulation);
+    cudaFreeSafe(d_accumulation);
     render_cpu(world, lights);
     return;
   }
@@ -423,8 +424,8 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
                                 block_size);
   if (cudaDeviceSynchronize() != cudaSuccess) {
     std::cerr << "[ERROR] Failed to initialize CUDA random states" << std::endl;
-    cudaFree(d_accumulation);
-    cudaFree(d_rand_states);
+    cudaFreeSafe(d_accumulation);
+    cudaFreeSafe(d_rand_states);
     render_cpu(world, lights);
     return;
   }
@@ -435,8 +436,8 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
   if (cuda_scene_data.world.get() == nullptr ||
       cuda_scene_data.lights.get() == nullptr) {
     std::cerr << "[ERROR] Failed to initialize CUDA scene" << std::endl;
-    cudaFree(d_accumulation);
-    cudaFree(d_rand_states);
+    cudaFreeSafe(d_accumulation);
+    cudaFreeSafe(d_rand_states);
     render_cpu(world, lights);
     return;
   }
@@ -507,8 +508,9 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
             start_c, end_c, s_i, s_j, sqrt_spp, m_max_depth, cuda_center,
             cuda_pixel00_loc, cuda_pixel_delta_u, cuda_pixel_delta_v, cuda_u,
             cuda_v, cuda_w, cuda_defocus_disk_u, cuda_defocus_disk_v,
-            m_defocus_angle, cuda_background, cuda_world, cuda_lights,
-            d_rand_states, tile_grid_size, tile_block_size);
+            m_defocus_angle, cuda_background, cuda_scene_data.world.get(),
+            cuda_scene_data.lights.get(), d_rand_states, tile_grid_size,
+            tile_block_size);
 
         cudaDeviceSynchronize();
       }
@@ -553,8 +555,8 @@ void DynamicCamera::render_gpu(HittableList &world, HittableList &lights) {
 
   // Cleanup CUDA memory and scene data.
   cleanup_cuda_scene(cuda_scene_data);
-  cudaFree(d_accumulation);
-  cudaFree(d_rand_states);
+  cudaFreeSafe(d_accumulation);
+  cudaFreeSafe(d_rand_states);
 #else
   // Fall back to CPU rendering if CUDA is not available.
   render_cpu(world, lights);

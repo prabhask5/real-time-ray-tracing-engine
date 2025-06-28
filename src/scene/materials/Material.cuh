@@ -23,6 +23,10 @@ enum class CudaMaterialType {
   MATERIAL_ISOTROPIC
 };
 
+// Forward declaration of global device functions.
+__device__ const CudaMaterial &cuda_get_material(size_t index);
+__device__ const CudaTexture &cuda_get_texture(size_t index);
+
 // POD struct for metallic (specular) surfaces like brushed aluminum or mirrors.
 struct CudaMetalMaterial {
   CudaColor albedo;
@@ -73,9 +77,7 @@ __device__ inline bool
 cuda_lambertian_material_scatter(const CudaLambertianMaterial &material,
                                  const CudaRay &ray, const CudaHitRecord &rec,
                                  CudaScatterRecord &srec, curandState *state) {
-  extern __device__ CudaSceneContextView *d_scene_context;
-  const CudaTexture &texture =
-      d_scene_context->textures[material.texture_index];
+  const CudaTexture &texture = cuda_get_texture(material.texture_index);
   srec.attenuation = cuda_texture_value(texture, rec.u, rec.v, rec.point);
 
   // Create cosine PDF for this scatter.
@@ -159,9 +161,7 @@ __device__ inline CudaColor cuda_diffuse_light_material_emitted(
   if (!rec.front_face)
     return cuda_make_vec3(0.0, 0.0, 0.0);
 
-  extern __device__ CudaSceneContextView *d_scene_context;
-  const CudaTexture &texture =
-      d_scene_context->textures[material.texture_index];
+  const CudaTexture &texture = cuda_get_texture(material.texture_index);
   return cuda_texture_value(texture, u, v, p);
 }
 
@@ -183,9 +183,7 @@ __device__ inline bool
 cuda_isotropic_material_scatter(const CudaIsotropicMaterial &material,
                                 const CudaRay &ray, const CudaHitRecord &rec,
                                 CudaScatterRecord &srec, curandState *state) {
-  extern __device__ CudaSceneContextView *d_scene_context;
-  const CudaTexture &texture =
-      d_scene_context->textures[material.texture_index];
+  const CudaTexture &texture = cuda_get_texture(material.texture_index);
   srec.attenuation = cuda_texture_value(texture, rec.u, rec.v, rec.point);
 
   // Create sphere PDF for isotropic scattering.

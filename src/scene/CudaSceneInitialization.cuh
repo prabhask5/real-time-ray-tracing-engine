@@ -300,10 +300,6 @@ inline CudaSceneData initialize_cuda_scene(const Hittable &cpu_world,
 
 // Cleanup CUDA scene data.
 inline void cleanup_cuda_scene(CudaSceneData &scene_data) {
-  // CudaUniquePtr will automatically clean up when destructed.
-  scene_data.world.reset();
-  scene_data.lights.reset();
-
   // Clean up device context.
   cleanup_device_scene_context();
 

@@ -20,8 +20,8 @@ __global__ void dynamic_render_tile_kernel(
     int max_depth, CudaPoint3 center, CudaPoint3 pixel00_loc,
     CudaVec3 pixel_delta_u, CudaVec3 pixel_delta_v, CudaVec3 u, CudaVec3 v,
     CudaVec3 w, CudaVec3 defocus_disk_u, CudaVec3 defocus_disk_v,
-    double defocus_angle, CudaColor background, CudaHittable world,
-    CudaHittable lights, curandState *rand_states);
+    double defocus_angle, CudaColor background, const CudaHittable *world,
+    const CudaHittable *lights, curandState *rand_states);
 
 // CUDA kernel for static camera rendering.
 
@@ -31,7 +31,7 @@ __global__ void static_render_kernel(
     CudaPoint3 pixel00_loc, CudaVec3 pixel_delta_u, CudaVec3 pixel_delta_v,
     CudaVec3 u, CudaVec3 v, CudaVec3 w, CudaVec3 defocus_disk_u,
     CudaVec3 defocus_disk_v, double defocus_angle, double pixel_samples_scale,
-    CudaColor background, CudaHittable world, CudaHittable lights,
+    CudaColor background, const CudaHittable *world, const CudaHittable *lights,
     curandState *rand_states);
 
 // CUDA kernel for initializing random states.
@@ -61,8 +61,8 @@ __device__ CudaPoint3 defocus_disk_sample_cuda(CudaVec3 defocus_disk_u,
                                                curandState *state);
 
 __device__ CudaColor ray_color_cuda(const CudaRay &ray, int depth,
-                                    const CudaHittable &world,
-                                    const CudaHittable &lights,
+                                    const CudaHittable *world,
+                                    const CudaHittable *lights,
                                     CudaColor background, curandState *state);
 
 #endif // USE_CUDA

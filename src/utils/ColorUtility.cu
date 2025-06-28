@@ -1,4 +1,5 @@
 #include "ColorUtility.cuh"
+#include "memory/CudaMemoryUtility.cuh"
 
 #ifdef USE_CUDA
 
@@ -38,7 +39,7 @@ void cuda_convert_colors_to_rgb(const CudaColor *d_colors,
 
   cuda_colors_to_bytes_kernel<<<gridSize, blockSize>>>(
       d_colors, d_rgb_data, width, height, samples_per_pixel);
-  cudaDeviceSynchronize();
+  cudaDeviceSynchronizeSafe();
 }
 
 // Optimized color accumulation kernel.
@@ -62,7 +63,7 @@ void cuda_accumulate_colors(CudaColor *d_accumulation_buffer,
   int numBlocks = (count + blockSize - 1) / blockSize;
   cuda_accumulate_colors_kernel<<<numBlocks, blockSize>>>(
       d_accumulation_buffer, d_new_colors, count, sample_number);
-  cudaDeviceSynchronize();
+  cudaDeviceSynchronizeSafe();
 }
 
 #endif // USE_CUDA

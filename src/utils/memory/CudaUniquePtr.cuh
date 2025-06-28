@@ -71,7 +71,7 @@ public:
 // Factory function to create CudaUniquePtr with single object.
 template <typename T, typename... Args>
 CudaUniquePtr<T> make_cuda_unique(Args &&...args) {
-  T *ptr = cudaMallocSafe<T>(1);
+  T *ptr = cudaMallocSafe(T, 1);
 
   // Create object on host and copy to device.
   T host_obj(std::forward<Args>(args)...);
@@ -82,21 +82,21 @@ CudaUniquePtr<T> make_cuda_unique(Args &&...args) {
 
 // Factory function to create CudaUniquePtr with array.
 template <typename T> CudaUniquePtr<T> make_cuda_unique_array(size_t count) {
-  T *ptr = cudaMallocSafe<T>(count);
+  T *ptr = cudaMallocSafe(T, count);
   return CudaUniquePtr<T>(ptr);
 }
 
 // Factory function to create CudaUniquePtr with zero-initialized array.
 template <typename T>
 CudaUniquePtr<T> make_cuda_unique_array_zero(size_t count) {
-  T *ptr = cudaMallocSafeZero<T>(count);
+  T *ptr = cudaMallocSafeZero(T, count);
   return CudaUniquePtr<T>(ptr);
 }
 
 // Factory function to create CudaUniquePtr from host data.
 template <typename T>
 CudaUniquePtr<T> make_cuda_unique_from_host(const T *host_data, size_t count) {
-  T *ptr = cudaMallocSafe<T>(count);
+  T *ptr = cudaMallocSafe(T, count);
   cudaMemcpyHostToDeviceSafe(ptr, host_data, count);
   return CudaUniquePtr<T>(ptr);
 }

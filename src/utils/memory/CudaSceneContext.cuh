@@ -70,9 +70,6 @@ public:
   // Initialize the scene context with estimated counts.
   void initialize(size_t estimated_materials, size_t estimated_textures,
                   size_t buffer_size_mb = 128) {
-    // Clear existing data.
-    clear();
-
     // Reserve host storage.
     m_host_materials.reserve(estimated_materials);
     m_host_textures.reserve(estimated_textures);
@@ -83,18 +80,6 @@ public:
 
     // Allocate large buffer for sub-allocation.
     m_device_buffer = make_cuda_unique_array_zero<char>(m_buffer_size);
-  }
-
-  // Clear all data.
-  void clear() {
-    m_host_materials.clear();
-    m_host_textures.clear();
-    m_device_materials.reset();
-    m_device_textures.reset();
-    m_device_buffer.reset();
-    m_material_count = 0;
-    m_texture_count = 0;
-    m_buffer_offset = 0;
   }
 
   // Add material and return index.
