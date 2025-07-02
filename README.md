@@ -1,5 +1,34 @@
 # Real Time Ray Tracing Engine
 
+<table align="center">
+  <tr>
+    <td valign="middle" align="center">
+      <img src="https://github.com/user-attachments/assets/a1eae075-62bd-4256-890f-3cae7f53f48c" alt="Raytracer_Renderer" width="400"/>
+    </td>
+    <td valign="middle" align="center">
+      <img src="https://github.com/user-attachments/assets/fb1ff4e5-b770-458d-af29-b851bc76de6a" alt="Another Image" width="400"/>
+    </td>
+  </tr>
+</table>
+
+An implementation of a dual CPU/GPU rendering ray tracing engine. With this engine, you are able to view scenes of geometric objects with custom textures and materials on a custom background with light simulation. Additionally, you can either render to a static image (like on the right above) or render dynamically to a real-time SDL3 window, which takes in keyboard input to move the camera around.
+
+## Features
+- CLI interface to allow users to control rendering options
+- Custom scene configuration via JSON file input
+- Render scenes using either CPU or GPU acceleration
+  - Enable multithreading for faster CPU rendering
+- Choose between static image output or real-time interactive window
+  - Control camera with WASD keys and mouse look in dynamic mode
+  - Preview renders progressively with sample accumulation
+- Accelerate ray tracing with BVH spatial data structures
+- Apply realistic materials including diffuse, metal, glass, and emissive surfaces
+- Add procedural textures like checkerboards and Perlin noise
+- Create volumetric effects such as fog, smoke, and clouds
+- Generate soft shadows with area light sources
+- Simulate depth of field with adjustable aperture and focus distance
+- Animate objects with motion blur support
+
 ## Get Started
 
 ### Local (Simple)
